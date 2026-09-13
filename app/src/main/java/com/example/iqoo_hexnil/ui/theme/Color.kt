@@ -2,10 +2,15 @@ package com.example.iqoo_hexnil.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
-
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Hexnil Dark Visual Language
+val HexnilBackground = Color(0xFF111111)
+val HexnilCard = Color(0xFF1A1A1A)
+val HexnilSecondaryCard = Color(0xFF222222)
+val HexnilPrimaryText = Color(0xFFF5F5F5)
+val HexnilSecondaryText = Color(0xFFA0A0A0)
+val HexnilBorder = Color(0xFF303030)
+val HexnilMainAccent = Color(0xFFFF5A36)
+val HexnilAccentGlow = Color(0xFFFF6B45)
+val HexnilSuccess = Color(0xFF4CAF7D)
+val HexnilWarning = Color(0xFFF5A623)
+val HexnilError = Color(0xFFE55353)

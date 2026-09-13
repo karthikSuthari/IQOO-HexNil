@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -76,36 +78,50 @@ fun HexnilCompanionScreen(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // App Header
-        Column {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "HEXNIL",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Black,
-                    color = HexnilMainAccent,
-                    letterSpacing = 2.sp
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Surface(
-                    shape = RoundedCornerShape(4.dp),
-                    color = HexnilSecondaryCard,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, HexnilBorder)
-                ) {
-                    Text(
-                        text = "PHASE 1",
-                        color = HexnilAccentGlow,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Mobile Release-Validation Intelligence",
-                color = HexnilSecondaryText,
-                fontSize = 13.sp
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.hexnil_logo),
+                contentDescription = "Hexnil Logo",
+                modifier = Modifier
+                    .size(46.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .border(1.dp, HexnilBorder, RoundedCornerShape(10.dp))
             )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "HEXNIL",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Black,
+                        color = HexnilMainAccent,
+                        letterSpacing = 2.sp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = HexnilSecondaryCard,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, HexnilBorder)
+                    ) {
+                        Text(
+                            text = "PHASE 1",
+                            color = HexnilAccentGlow,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Mobile Release-Validation Intelligence",
+                    color = HexnilSecondaryText,
+                    fontSize = 12.sp
+                )
+            }
         }
 
         // Connection Status Card

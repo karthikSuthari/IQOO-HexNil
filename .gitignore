@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Hexnil experiment data
+data/experiments/*.tmp
+
+# Gradle and Android
+.gradle/
+build/
+app/build/
+local.properties
+.cxx/
+
+# Android Studio / IntelliJ / VSCode
+.idea/
+*.iml
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -69,7 +69,8 @@ fun WorkloadStatusChip(
                 color = fgColor,
                 fontSize = 9.sp,
                 fontWeight = FontWeight.Bold,
-                letterSpacing = 0.5.sp
+                letterSpacing = 0.5.sp,
+                maxLines = 1
             )
         }
     }
@@ -93,11 +94,12 @@ fun PriorityChip(
         border = BorderStroke(1.dp, HexnilBorder)
     ) {
         Text(
-            text = "PRIORITY: ${priority.label}",
+            text = "${priority.label} PRIORITY",
             color = fgColor,
             fontSize = 9.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            maxLines = 1
         )
     }
 }
@@ -124,7 +126,8 @@ fun RiskChip(
             color = fgColor,
             fontSize = 9.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            maxLines = 1
         )
     }
 }
@@ -164,7 +167,8 @@ fun ValidationStatusChip(
                 color = fgColor,
                 fontSize = 9.sp,
                 fontWeight = FontWeight.Bold,
-                letterSpacing = 0.5.sp
+                letterSpacing = 0.5.sp,
+                maxLines = 1
             )
         }
     }
@@ -194,7 +198,8 @@ fun EvidenceAvailabilityChip(
             color = fgColor,
             fontSize = 9.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            maxLines = 1
         )
     }
 }

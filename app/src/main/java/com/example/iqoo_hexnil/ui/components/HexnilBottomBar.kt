@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,6 +30,7 @@ import com.example.iqoo_hexnil.ui.theme.HexnilAccentSubtle
 import com.example.iqoo_hexnil.ui.theme.HexnilBorder
 import com.example.iqoo_hexnil.ui.theme.HexnilCard
 import com.example.iqoo_hexnil.ui.theme.HexnilMainAccent
+import com.example.iqoo_hexnil.ui.theme.HexnilPrimaryText
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryText
 
 @Composable
@@ -51,35 +53,42 @@ fun HexnilBottomBar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp, horizontal = 12.dp),
+                    .padding(vertical = 6.dp, horizontal = 8.dp),
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 BottomTab.values().forEach { tab ->
                     val isSelected = tab == selectedTab
-                    val textColor = if (isSelected) HexnilMainAccent else HexnilSecondaryText
-                    val bgColor = if (isSelected) HexnilAccentSubtle else Color.Transparent
-                    val borderColor = if (isSelected) HexnilMainAccent.copy(alpha = 0.4f) else Color.Transparent
+                    val textColor = if (isSelected) HexnilPrimaryText else HexnilSecondaryText
+                    val iconColor = if (isSelected) HexnilMainAccent else HexnilSecondaryText.copy(alpha = 0.6f)
 
                     Column(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(bgColor)
-                            .border(1.dp, borderColor, RoundedCornerShape(8.dp))
+                            .weight(1f)
                             .clickable { onTabSelected(tab) }
-                            .padding(horizontal = 14.dp, vertical = 6.dp),
+                            .padding(vertical = 4.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        // Subtle top indicator pill when selected
+                        Box(
+                            modifier = Modifier
+                                .width(20.dp)
+                                .height(2.dp)
+                                .clip(RoundedCornerShape(1.dp))
+                                .background(if (isSelected) HexnilMainAccent else Color.Transparent)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = tab.iconSymbol,
-                            fontSize = 17.sp
+                            fontSize = 18.sp,
+                            color = iconColor
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = tab.label,
                             color = textColor,
                             fontSize = 11.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                         )
                     }
                 }

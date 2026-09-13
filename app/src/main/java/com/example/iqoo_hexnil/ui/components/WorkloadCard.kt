@@ -76,7 +76,7 @@ fun WorkloadCard(
         color = HexnilCard
     ) {
         Column(modifier = Modifier.padding(HexnilSpacing.md)) {
-            // Top row: ID, priority chip, selection status & execution status chip
+            // Top row: ID, Selection badge on left; Priority & Execution Status on right
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -84,7 +84,7 @@ fun WorkloadCard(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(HexnilSpacing.xxs)
+                    horizontalArrangement = Arrangement.spacedBy(HexnilSpacing.xs)
                 ) {
                     Text(
                         text = workload.id,
@@ -93,27 +93,28 @@ fun WorkloadCard(
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace
                     )
-                    PriorityChip(priority = workload.priority)
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = if (workload.isSelected) HexnilAccentSubtle else HexnilSecondaryCard,
-                        border = BorderStroke(1.dp, if (workload.isSelected) HexnilMainAccent.copy(alpha = 0.5f) else HexnilBorder)
-                    ) {
-                        Text(
-                            text = if (workload.isSelected) "SELECTED" else "OPTIONAL",
-                            color = if (workload.isSelected) HexnilMainAccent else HexnilSecondaryText,
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                        )
+                    if (workload.isSelected) {
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = HexnilAccentSubtle,
+                            border = BorderStroke(1.dp, HexnilMainAccent.copy(alpha = 0.5f))
+                        ) {
+                            Text(
+                                text = "SELECTED",
+                                color = HexnilMainAccent,
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                            )
+                        }
                     }
                 }
 
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(HexnilSpacing.xxs),
+                    horizontalArrangement = Arrangement.spacedBy(HexnilSpacing.xs),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    EvidenceAvailabilityChip(availability = workload.evidenceAvailability)
+                    PriorityChip(priority = workload.priority)
                     WorkloadStatusChip(status = workload.status)
                 }
             }
@@ -138,21 +139,24 @@ fun WorkloadCard(
 
             Spacer(modifier = Modifier.height(HexnilSpacing.sm))
 
-            // Engineering Details Row (Inline, no nested cards)
+            // Engineering Details Row (Inline, clean spacing)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.metadata))
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                    .padding(horizontal = 10.dp, vertical = 7.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "Evidence: ", color = HexnilSecondaryText, fontSize = 10.sp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(HexnilSpacing.xs)
+                ) {
+                    EvidenceAvailabilityChip(availability = workload.evidenceAvailability)
                     Text(text = targetTelemetry, color = HexnilAccentGlow, fontSize = 10.sp, fontWeight = FontWeight.Medium)
                 }
                 Text(
-                    text = "Hash: #${workload.configHash}",
+                    text = "#${workload.configHash}",
                     color = HexnilSecondaryText,
                     fontSize = 9.sp,
                     fontFamily = FontFamily.Monospace

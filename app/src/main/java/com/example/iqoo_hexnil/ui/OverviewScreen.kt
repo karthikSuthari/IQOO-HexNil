@@ -173,92 +173,47 @@ private fun DeviceUpdateContextCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "RELEASE VALIDATION TARGET",
+                    color = HexnilSecondaryText,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+                Surface(
+                    shape = RoundedCornerShape(HexnilRadius.metadata),
+                    color = HexnilSuccessSubtle,
+                    border = BorderStroke(1.dp, HexnilSuccess.copy(alpha = 0.4f))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(modifier = Modifier.size(5.dp).background(HexnilSuccess, CircleShape))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "HEXNIL",
-                            color = HexnilMainAccent,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.5.sp
+                            text = "AUDITED",
+                            color = HexnilSuccess,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold
                         )
-                        Spacer(modifier = Modifier.width(HexnilSpacing.xs))
-                        Surface(
-                            shape = RoundedCornerShape(4.dp),
-                            color = HexnilSecondaryCard,
-                            border = BorderStroke(1.dp, HexnilBorder)
-                        ) {
-                            Text(
-                                text = "v1.1",
-                                color = HexnilAccentGlow,
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
-                            )
-                        }
                     }
-                    Text(
-                        text = "Engineering Validation Intelligence",
-                        color = HexnilSecondaryText,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(modifier = Modifier.size(7.dp).background(HexnilSuccess, CircleShape))
-                    Spacer(modifier = Modifier.width(HexnilSpacing.xxs))
-                    Text(
-                        text = "EVIDENCE AUDITED",
-                        color = HexnilSuccess,
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.5.sp
-                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(HexnilSpacing.sm))
+            Spacer(modifier = Modifier.height(HexnilSpacing.xs))
 
-            // Clean context metadata rows (no nested heavy card)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "Target Device", color = HexnilSecondaryText, fontSize = 11.sp)
                 Text(
                     text = "${device.manufacturer} ${device.model}",
                     color = HexnilPrimaryText,
-                    fontSize = 11.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
-            }
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(text = "Operating System", color = HexnilSecondaryText, fontSize = 11.sp)
-                Text(
-                    text = "Android ${device.androidRelease} / SDK ${device.sdkInt}",
-                    color = HexnilPrimaryText,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(text = "Comparison ID", color = HexnilSecondaryText, fontSize = 11.sp)
                 Text(
                     text = comparisonId,
                     color = HexnilAccentGlow,
@@ -268,20 +223,23 @@ private fun DeviceUpdateContextCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(2.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "Software Delta", color = HexnilSecondaryText, fontSize = 11.sp)
+                Text(
+                    text = "Android ${device.androidRelease} (SDK ${device.sdkInt})",
+                    color = HexnilSecondaryText,
+                    fontSize = 11.sp
+                )
                 Text(
                     text = "$v0Exp ➔ $v1Exp",
-                    color = HexnilPrimaryText,
+                    color = HexnilSecondaryText,
                     fontSize = 10.sp,
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Medium
+                    fontFamily = FontFamily.Monospace
                 )
             }
         }
@@ -315,7 +273,7 @@ private fun PrimaryOutcomeHeroCard(
                 Text(
                     text = "PRIMARY OUTCOME HERO",
                     color = HexnilMainAccent,
-                    fontSize = 11.sp,
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
                 )
@@ -333,11 +291,13 @@ private fun PrimaryOutcomeHeroCard(
                 Column {
                     Text(
                         text = deltaPercentText,
-                        style = DisplayLargeNumber,
-                        color = HexnilPrimaryText
+                        fontSize = 38.sp,
+                        fontWeight = FontWeight.Black,
+                        color = HexnilPrimaryText,
+                        letterSpacing = (-0.5).sp
                     )
                     Text(
-                        text = deltaAbsText,
+                        text = "$deltaAbsText absolute shift",
                         style = MonospaceSmall,
                         color = HexnilAccentGlow
                     )
@@ -346,29 +306,30 @@ private fun PrimaryOutcomeHeroCard(
                 Surface(
                     shape = RoundedCornerShape(HexnilRadius.metadata),
                     color = HexnilSecondaryCard,
-                    border = BorderStroke(1.dp, HexnilSuccess.copy(alpha = 0.5f))
+                    border = BorderStroke(1.dp, HexnilBorder)
                 ) {
                     Column(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        horizontalAlignment = Alignment.End
                     ) {
                         Text(
-                            text = "STATUS",
+                            text = "THRESHOLD",
                             color = HexnilSecondaryText,
                             fontSize = 8.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = metric.verdict.label,
-                            color = HexnilSuccess,
+                            text = "≤ ${metric.thresholdPercent ?: 5.0}%",
+                            color = HexnilPrimaryText,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Black
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(HexnilSpacing.xs))
+            Spacer(modifier = Modifier.height(HexnilSpacing.sm))
 
             Text(
                 text = metric.displayName,
@@ -387,29 +348,29 @@ private fun PrimaryOutcomeHeroCard(
             Spacer(modifier = Modifier.height(HexnilSpacing.sm))
 
             // V0 -> V1 comparison row
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.metadata))
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(HexnilRadius.metadata),
+                color = HexnilSecondaryCard
             ) {
-                Column {
-                    Text(text = "V0 BASELINE", color = HexnilSecondaryText, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                    Text(text = v0Text, style = MonospaceValue)
-                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(text = "V0 BASELINE", color = HexnilSecondaryText, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        Text(text = v0Text, style = MonospaceValue, color = HexnilPrimaryText)
+                    }
 
-                Text(text = "➔", color = HexnilSecondaryText, fontSize = 12.sp)
+                    Text(text = "➔", color = HexnilSecondaryText, fontSize = 13.sp)
 
-                Column {
-                    Text(text = "V1 CANDIDATE", color = HexnilSecondaryText, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                    Text(text = v1Text, style = MonospaceValue)
-                }
-
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(text = "DELTA SHIFT", color = HexnilSecondaryText, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                    Text(text = deltaPercentText, style = MonospaceValue, color = HexnilSuccess)
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(text = "V1 CANDIDATE", color = HexnilSecondaryText, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        Text(text = v1Text, style = MonospaceValue, color = HexnilPrimaryText)
+                    }
                 }
             }
 
@@ -420,10 +381,10 @@ private fun PrimaryOutcomeHeroCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Top
             ) {
-                Text(text = "ℹ", color = HexnilSecondaryText, fontSize = 11.sp)
+                Text(text = "✓", color = HexnilSuccess, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.width(HexnilSpacing.xxs))
                 Text(
-                    text = "Engineering threshold: ${metric.thresholdPercent ?: 5.0}% · Observed shift ($deltaPercentText) is within the configured threshold (p=${metric.pValue?.let { "%.4f".format(it) } ?: "0.0116"}). Authoritatively UNCHANGED.",
+                    text = "Observed shift ($deltaPercentText) is within the ${metric.thresholdPercent ?: 5.0}% engineering threshold (p=${metric.pValue?.let { "%.4f".format(it) } ?: "0.0116"}). Authoritatively UNCHANGED.",
                     color = HexnilSecondaryText,
                     fontSize = 10.sp,
                     lineHeight = 14.sp

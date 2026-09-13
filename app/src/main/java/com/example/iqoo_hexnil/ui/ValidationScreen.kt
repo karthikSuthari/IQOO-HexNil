@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -218,7 +219,7 @@ fun ValidationScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "ENGINEERING INSPECTION PANEL",
+                            text = "INSPECTION PANEL",
                             color = HexnilMainAccent,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
@@ -226,7 +227,7 @@ fun ValidationScreen(
                         )
                         PriorityChip(priority = wl.priority)
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "${wl.id.uppercase()} — ${wl.name}",
                         color = HexnilPrimaryText,
@@ -240,7 +241,7 @@ fun ValidationScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // SECTION 1: PURPOSE
                     InspectionSectionBlock(
@@ -248,11 +249,15 @@ fun ValidationScreen(
                         content = wl.purpose
                     )
 
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(HexnilBorder.copy(alpha = 0.5f)))
+
                     // SECTION 2: WHY SELECTED
                     InspectionSectionBlock(
                         title = "2. WHY SELECTED",
                         content = "Mandatory declarative benchmark locked under Phase 3. Configured to detect regressions in ${wl.name.lowercase()} with deterministic execution reproducibility across V0 and V1 builds."
                     )
+
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(HexnilBorder.copy(alpha = 0.5f)))
 
                     // SECTION 3: MEASUREMENTS
                     InspectionSectionBlock(
@@ -260,60 +265,52 @@ fun ValidationScreen(
                         content = targetMeasurements
                     )
 
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(HexnilBorder.copy(alpha = 0.5f)))
+
                     // SECTION 4: PRECONDITIONS
                     InspectionSectionBlock(
                         title = "4. PRECONDITIONS",
-                        content = "Battery Level >= 20% · Thermal State <= NORMAL (0-1) · Device Screen ON · Background Benchmarks Suspended"
+                        content = "Battery Level ≥ 20% · Thermal State ≤ NORMAL (0-1) · Device Screen ON · Background Benchmarks Suspended"
                     )
 
-                    // SECTION 5: EXECUTION PARAMETERS
-                    Surface(
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(HexnilBorder.copy(alpha = 0.5f)))
+
+                    // SECTION 5: EXECUTION PARAMETERS (Clean typographic list, no nested card)
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(HexnilRadius.metadata),
-                        color = HexnilSecondaryCard,
-                        border = BorderStroke(1.dp, HexnilBorder)
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(10.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = "5. EXECUTION PARAMETERS",
-                                color = HexnilSecondaryText,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.5.sp
-                            )
-                            InspectionPropertyRow("Action Intent", wl.action, isMonospace = true)
-                            InspectionPropertyRow("Config Hash", "#${wl.configHash}", isMonospace = true)
-                            InspectionPropertyRow("Deterministic Seed", "42 (Locked)", isMonospace = true)
-                            InspectionPropertyRow("Matched Runs", "${wl.matchedRunsCount} iterations", isMonospace = true)
-                        }
+                        Text(
+                            text = "5. EXECUTION PARAMETERS",
+                            color = HexnilAccentGlow,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp
+                        )
+                        InspectionPropertyRow("Action Intent", wl.action, isMonospace = true)
+                        InspectionPropertyRow("Config Hash", "#${wl.configHash}", isMonospace = true)
+                        InspectionPropertyRow("Deterministic Seed", "42 (Locked)", isMonospace = true)
+                        InspectionPropertyRow("Matched Runs", "${wl.matchedRunsCount} iterations", isMonospace = true)
                     }
 
-                    // SECTION 6: EVIDENCE STATUS
-                    Surface(
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(HexnilBorder.copy(alpha = 0.5f)))
+
+                    // SECTION 6: EVIDENCE STATUS (Clean typographic list, no nested card)
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(HexnilRadius.metadata),
-                        color = HexnilSecondaryCard,
-                        border = BorderStroke(1.dp, HexnilBorder)
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(10.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = "6. EVIDENCE STATUS",
-                                color = HexnilSecondaryText,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.5.sp
-                            )
-                            InspectionPropertyRow("Availability", wl.evidenceAvailability)
-                            InspectionPropertyRow("Selection State", if (wl.isSelected) "LOCKED & SELECTED" else "OPTIONAL")
-                            InspectionPropertyRow("Last Baseline Duration", "${String.format("%.1f", wl.lastDurationMs ?: 5000.0)} ms", isMonospace = true)
-                            InspectionPropertyRow("Threshold Target", "5.0% Engineering Margin")
-                        }
+                        Text(
+                            text = "6. EVIDENCE STATUS",
+                            color = HexnilAccentGlow,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp
+                        )
+                        InspectionPropertyRow("Availability", wl.evidenceAvailability)
+                        InspectionPropertyRow("Selection State", if (wl.isSelected) "LOCKED & SELECTED" else "OPTIONAL")
+                        InspectionPropertyRow("Last Baseline Duration", "${String.format("%.1f", wl.lastDurationMs ?: 5000.0)} ms", isMonospace = true)
+                        InspectionPropertyRow("Threshold Target", "5.0% Engineering Margin")
                     }
                 }
             },
@@ -335,7 +332,7 @@ fun ValidationScreen(
                     shape = RoundedCornerShape(HexnilRadius.button)
                 ) {
                     Text(
-                        text = "Use Workload",
+                        text = "Use Workload ➔",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -375,7 +372,7 @@ private fun WorkloadFilterChip(
 
     Surface(
         modifier = modifier.clickable { onClick() },
-        shape = RoundedCornerShape(6.dp),
+        shape = RoundedCornerShape(HexnilRadius.metadata),
         color = bgColor,
         border = BorderStroke(1.dp, borderColor)
     ) {
@@ -397,18 +394,19 @@ private fun InspectionPropertyRow(
     isMonospace: Boolean = false
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Top
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = label, color = HexnilSecondaryText, fontSize = 10.sp, modifier = Modifier.weight(0.4f))
+        Text(text = label, color = HexnilSecondaryText, fontSize = 11.sp)
         Text(
             text = value,
             color = if (isMonospace) HexnilAccentGlow else HexnilPrimaryText,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Medium,
-            fontFamily = if (isMonospace) FontFamily.Monospace else FontFamily.Default,
-            modifier = Modifier.weight(0.6f)
+            fontSize = 11.sp,
+            fontWeight = if (isMonospace) FontWeight.Bold else FontWeight.Medium,
+            fontFamily = if (isMonospace) FontFamily.Monospace else FontFamily.Default
         )
     }
 }
@@ -418,29 +416,22 @@ private fun InspectionSectionBlock(
     title: String,
     content: String
 ) {
-    Surface(
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(HexnilRadius.metadata),
-        color = HexnilSecondaryCard,
-        border = BorderStroke(1.dp, HexnilBorder)
+        verticalArrangement = Arrangement.spacedBy(3.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(10.dp),
-            verticalArrangement = Arrangement.spacedBy(3.dp)
-        ) {
-            Text(
-                text = title,
-                color = HexnilSecondaryText,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.5.sp
-            )
-            Text(
-                text = content,
-                color = HexnilPrimaryText,
-                fontSize = 11.sp,
-                lineHeight = 15.sp
-            )
-        }
+        Text(
+            text = title,
+            color = HexnilAccentGlow,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.5.sp
+        )
+        Text(
+            text = content,
+            color = HexnilPrimaryText,
+            fontSize = 12.sp,
+            lineHeight = 16.sp
+        )
     }
 }

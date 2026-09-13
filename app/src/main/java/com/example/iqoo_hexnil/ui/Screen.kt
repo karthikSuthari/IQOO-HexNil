@@ -6,6 +6,7 @@ enum class BottomTab(
     val title: String
 ) {
     OVERVIEW("Overview", "⚡", "Update Intelligence Overview"),
+    AI_ANALYST("AI Analyst", "🧠", "AI Engineering Intelligence"),
     VALIDATION("Validation", "⚙", "Deterministic Workload Engine"),
     RESULTS("Results", "📈", "Statistical Comparison & Verdicts"),
     DEVICE("Device", "📱", "Hardware Identity & Telemetry")
@@ -14,6 +15,7 @@ enum class BottomTab(
 sealed class AppDestination(val title: String) {
     // Bottom tab primary roots
     data object Overview : AppDestination("Update Intelligence Overview")
+    data object AiExplanation : AppDestination("AI Engineering Intelligence Advisor")
     data object Validation : AppDestination("Deterministic Workload Engine")
     data object Results : AppDestination("Statistical Comparison & Verdicts")
     data object Device : AppDestination("Hardware Identity & Telemetry")
@@ -23,6 +25,5 @@ sealed class AppDestination(val title: String) {
     data object V0V1Comparison : AppDestination("V0 vs V1 Differential Comparison")
     data class MetricDetail(val metricKey: String) : AppDestination("Metric Evidence & Statistics")
     data object ExperimentDetail : AppDestination("Experiment Audit & Provenance")
-    data object AiExplanation : AppDestination("Evidence & AI Interpretation")
     data object SettingsAbout : AppDestination("Settings & Methodology")
 }

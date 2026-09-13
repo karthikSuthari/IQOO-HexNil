@@ -69,7 +69,9 @@ fun ResultBadge(
                 color = fgColor,
                 fontSize = if (isCompact) 10.sp else 11.sp,
                 fontWeight = FontWeight.Bold,
-                letterSpacing = 0.5.sp
+                letterSpacing = 0.5.sp,
+                maxLines = 1,
+                softWrap = false
             )
         }
     }

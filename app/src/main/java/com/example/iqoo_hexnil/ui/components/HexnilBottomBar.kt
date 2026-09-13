@@ -87,8 +87,9 @@ fun HexnilBottomBar(
                         Text(
                             text = tab.label,
                             color = textColor,
-                            fontSize = 11.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                            fontSize = 10.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            maxLines = 1
                         )
                     }
                 }

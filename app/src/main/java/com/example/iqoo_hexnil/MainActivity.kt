@@ -139,6 +139,7 @@ fun HexnilCompanionApp(
             // Synchronize bottom tab if root
             when (previous) {
                 is AppDestination.Overview -> selectedBottomTab = BottomTab.OVERVIEW
+                is AppDestination.AiExplanation -> selectedBottomTab = BottomTab.AI_ANALYST
                 is AppDestination.Validation -> selectedBottomTab = BottomTab.VALIDATION
                 is AppDestination.Results -> selectedBottomTab = BottomTab.RESULTS
                 is AppDestination.Device -> selectedBottomTab = BottomTab.DEVICE
@@ -152,6 +153,7 @@ fun HexnilCompanionApp(
         backStack = emptyList() // reset stack on tab switch
         currentDestination = when (tab) {
             BottomTab.OVERVIEW -> AppDestination.Overview
+            BottomTab.AI_ANALYST -> AppDestination.AiExplanation
             BottomTab.VALIDATION -> AppDestination.Validation
             BottomTab.RESULTS -> AppDestination.Results
             BottomTab.DEVICE -> AppDestination.Device

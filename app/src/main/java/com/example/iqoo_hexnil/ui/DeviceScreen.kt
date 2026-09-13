@@ -167,10 +167,10 @@ private fun TaxonomyTile(
 @Composable
 private fun LiveTelemetrySignalsCard(records: List<TelemetryRecord>) {
     val batteryLevel = records.find { it.metric.name == "battery_level_percent" }?.metric?.value
-    val batteryState = records.find { it.metric.name == "battery_charging_state" }?.metric?.value ?: "DISCHARGING"
+    val batteryState = records.find { it.metric.name == "battery_charging_state" }?.metric?.value
     val appHeap = records.find { it.metric.name == "app_heap_allocated_mb" }?.metric?.value
     val devMemAvail = records.find { it.metric.name == "device_memory_available_mb" }?.metric?.value
-    val thermalStatus = records.find { it.metric.name == "thermal_status_name" }?.metric?.value ?: "NORMAL"
+    val thermalStatus = records.find { it.metric.name == "thermal_status_name" }?.metric?.value
     val startupDuration = records.find { it.metric.name == "app_startup_duration_ms" }?.metric?.value
 
     Surface(
@@ -181,11 +181,42 @@ private fun LiveTelemetrySignalsCard(records: List<TelemetryRecord>) {
         color = HexnilCard
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            TelemetryRow("Battery Level", if (batteryLevel != null) "${"%.1f".format(batteryLevel)}% ($batteryState)" else "98.0% (DISCHARGING)", CapabilityStatus.UNIVERSAL)
-            TelemetryRow("JVM Heap Allocated", if (appHeap != null) "${"%.1f".format(appHeap)} MB" else "24.5 MB", CapabilityStatus.UNIVERSAL)
-            TelemetryRow("Device Available RAM", if (devMemAvail != null) "${"%.0f".format(devMemAvail)} MB free" else "3420 MB free", CapabilityStatus.UNIVERSAL)
-            TelemetryRow("Thermal Throttling State", thermalStatus.toString(), CapabilityStatus.UNIVERSAL)
-            TelemetryRow("Cold Startup Latency", if (startupDuration != null) "$startupDuration ms" else "7797.4 ms", CapabilityStatus.CONDITIONAL)
+            val batteryText = if (batteryLevel != null) {
+                val stateText = if (batteryState != null) " ($batteryState)" else ""
+                "${"%.1f".format(batteryLevel)}%$stateText"
+            } else {
+                "No live telemetry (Capture snapshot)"
+            }
+            TelemetryRow(
+                "Battery Level",
+                batteryText,
+                if (batteryLevel != null) CapabilityStatus.UNIVERSAL else CapabilityStatus.UNSUPPORTED
+            )
+
+            TelemetryRow(
+                "JVM Heap Allocated",
+                if (appHeap != null) "${"%.1f".format(appHeap)} MB" else "No live telemetry",
+                if (appHeap != null) CapabilityStatus.UNIVERSAL else CapabilityStatus.UNSUPPORTED
+            )
+
+            TelemetryRow(
+                "Device Available RAM",
+                if (devMemAvail != null) "${"%.0f".format(devMemAvail)} MB free" else "No live telemetry",
+                if (devMemAvail != null) CapabilityStatus.UNIVERSAL else CapabilityStatus.UNSUPPORTED
+            )
+
+            TelemetryRow(
+                "Thermal Throttling State",
+                thermalStatus?.toString() ?: "No live telemetry",
+                if (thermalStatus != null) CapabilityStatus.UNIVERSAL else CapabilityStatus.UNSUPPORTED
+            )
+
+            TelemetryRow(
+                "Cold Startup Latency",
+                if (startupDuration != null) "$startupDuration ms" else "Awaiting workload run",
+                if (startupDuration != null) CapabilityStatus.CONDITIONAL else CapabilityStatus.UNSUPPORTED
+            )
+
             TelemetryRow("Raw SoC Silicon Temp", "UNSUPPORTED", CapabilityStatus.UNSUPPORTED)
         }
     }

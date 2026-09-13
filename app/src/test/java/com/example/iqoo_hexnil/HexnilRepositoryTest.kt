@@ -1,12 +1,15 @@
 package com.example.iqoo_hexnil
 
 import com.example.iqoo_hexnil.data.ClaimRiskLevel
+import com.example.iqoo_hexnil.data.ExplanationSource
+import com.example.iqoo_hexnil.data.HardwareEvidenceState
 import com.example.iqoo_hexnil.data.HexnilRepository
 import com.example.iqoo_hexnil.data.MetricStatus
 import com.example.iqoo_hexnil.data.VerdictType
 import com.example.iqoo_hexnil.data.WorkloadPriority
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -84,4 +87,45 @@ class HexnilRepositoryTest {
         assertEquals("video_power_01", claim1.recommendedWorkload)
         assertEquals("Battery / Power", claim1.subsystem)
     }
+
+    @Test
+    fun testDeviceHardwareInfoHonestFallbacks() {
+        val device = HexnilRepository.getDeviceHardwareInfo(null)
+        // Must NEVER fabricate 98%, DISCHARGING, or NORMAL (0) without live Android context
+        assertNull("Battery percent must be null when context is unavailable", device.batteryPercent)
+        assertEquals("NO_LIVE_EVIDENCE", device.chargingState)
+        assertEquals("NO_LIVE_EVIDENCE", device.thermalStatus)
+        assertEquals(HardwareEvidenceState.UNAVAILABLE, device.evidenceState)
+        assertEquals(false, device.adbConnected)
+    }
+
+    @Test
+    fun testComparisonAnalysisEvidenceState() {
+        val analysis = HexnilRepository.getComparisonAnalysis()
+        assertEquals("HISTORICAL_VERIFIED", analysis.evidenceState)
+        assertEquals("2026-09-13T09:00:00Z", analysis.recordTimestamp)
+        assertEquals("CMP-20260913-001", analysis.comparisonId)
+    }
+
+    @Test
+    fun testAiExplanationContracts() {
+        val detExplanation = HexnilRepository.getAiExplanation(overrideSource = ExplanationSource.DETERMINISTIC_ANALYSIS)
+        assertEquals(ExplanationSource.DETERMINISTIC_ANALYSIS, detExplanation.source)
+        assertEquals("COMPLETED", detExplanation.verdict)
+        assertEquals("NONE", detExplanation.severity)
+        assertTrue(detExplanation.summary.contains("Zero regressions"))
+        assertTrue(detExplanation.observedChanges.isNotEmpty())
+        assertTrue(detExplanation.claimAssessments.isNotEmpty())
+        assertTrue(detExplanation.evidenceReferences.isNotEmpty())
+
+        val groqExplanation = HexnilRepository.getAiExplanation(overrideSource = ExplanationSource.GROQ_AI)
+        assertEquals(ExplanationSource.GROQ_AI, groqExplanation.source)
+        assertEquals("llama-3.3-70b-versatile", groqExplanation.model)
+        assertEquals("COMPLETED", groqExplanation.verdict)
+
+        val fallbackExplanation = HexnilRepository.getAiExplanation(overrideSource = ExplanationSource.DETERMINISTIC_FALLBACK)
+        assertEquals(ExplanationSource.DETERMINISTIC_FALLBACK, fallbackExplanation.source)
+        assertTrue(fallbackExplanation.summary.contains("fallback"))
+    }
+
 }

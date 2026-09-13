@@ -120,8 +120,17 @@ data class ComparisonAnalysis(
     val metricsUnsupported: Int,
     val evidenceCoverage: String,
     val summaryVerdict: String,
-    val metricResults: List<StatisticalMetricResult>
+    val metricResults: List<StatisticalMetricResult>,
+    val evidenceState: String = "HISTORICAL_VERIFIED",
+    val recordTimestamp: String = "2026-09-13T09:00:00Z"
 )
+
+enum class HardwareEvidenceState {
+    LIVE,
+    UNAVAILABLE,
+    UNSUPPORTED,
+    STALE_CACHED
+}
 
 data class DeviceHardwareInfo(
     val manufacturer: String,
@@ -138,5 +147,48 @@ data class DeviceHardwareInfo(
     val universalMetricsCount: Int,
     val conditionalMetricsCount: Int,
     val unsupportedMetricsCount: Int,
-    val adbConnected: Boolean
+    val adbConnected: Boolean,
+    val evidenceState: HardwareEvidenceState = HardwareEvidenceState.UNAVAILABLE
+)
+
+// Phase 8: Evidence-Grounded AI Analyst Models
+
+enum class ExplanationSource(val label: String) {
+    GROQ_AI("AI EXPLANATION — GROQ"),
+    DETERMINISTIC_ANALYSIS("DETERMINISTIC ANALYSIS"),
+    DETERMINISTIC_FALLBACK("DETERMINISTIC FALLBACK")
+}
+
+data class ClaimAssessment(
+    val claimId: String,
+    val claimText: String,
+    val targetMetric: String,
+    val status: String, // "SUPPORTED", "CONTRADICTED", "INCONCLUSIVE", "UNSUPPORTED_METRIC"
+    val explanation: String
+)
+
+data class EvidenceReference(
+    val referenceId: String,
+    val type: String, // "metric", "workload", "comparison", "experiment", "claim"
+    val identifier: String,
+    val artifactPath: String?,
+    val description: String
+)
+
+data class AiExplanation(
+    val explanationId: String,
+    val comparisonId: String,
+    val source: ExplanationSource,
+    val model: String?,
+    val verdict: String,
+    val severity: String,
+    val summary: String,
+    val claimAssessments: List<ClaimAssessment>,
+    val observedChanges: List<String>,
+    val statisticalInterpretation: String,
+    val limitations: List<String>,
+    val recommendedNextStep: String,
+    val evidenceReferences: List<EvidenceReference>,
+    val isCached: Boolean,
+    val createdAt: String
 )

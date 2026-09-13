@@ -18,6 +18,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import com.example.iqoo_hexnil.data.HexnilRepository
 import com.example.iqoo_hexnil.telemetry.TelemetryEngine
 import com.example.iqoo_hexnil.telemetry.TelemetryRecord
@@ -100,10 +101,11 @@ fun HexnilCompanionApp(
     initialExperimentId: String?,
     onExecuteSession: (String, String, String, Int) -> List<TelemetryRecord>
 ) {
+    val context = LocalContext.current
     val analysis = remember { HexnilRepository.getComparisonAnalysis() }
     val workloads = remember { HexnilRepository.getWorkloads() }
     val claims = remember { HexnilRepository.getReleaseClaims() }
-    val deviceInfo = remember { HexnilRepository.getDeviceHardwareInfo() }
+    val deviceInfo = remember { HexnilRepository.getDeviceHardwareInfo(context) }
 
     var selectedBottomTab by remember { mutableStateOf(BottomTab.OVERVIEW) }
     var currentDestination by remember { mutableStateOf<AppDestination>(AppDestination.Overview) }
@@ -250,7 +252,9 @@ fun HexnilCompanionApp(
                     analysis = analysis
                 )
 
-                is AppDestination.AiExplanation -> AiExplanationScreen()
+                is AppDestination.AiExplanation -> AiExplanationScreen(
+                    analysis = analysis
+                )
 
                 is AppDestination.SettingsAbout -> SettingsAboutScreen()
             }

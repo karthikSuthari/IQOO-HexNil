@@ -68,6 +68,10 @@ class ComparisonStore:
         """Get the directory path for a comparison."""
         return self.comparisons_dir / comparison_id
 
+    def has_comparison(self, comparison_id: str) -> bool:
+        """Check if a comparison record exists on disk."""
+        return (self.get_comparison_dir(comparison_id) / "comparison.json").is_file()
+
     def ensure_comparison_dir(self, comparison_id: str) -> Path:
         """Ensure the comparison directory and subfolders exist."""
         cmp_dir = self.get_comparison_dir(comparison_id)

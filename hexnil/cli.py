@@ -57,6 +57,15 @@ from hexnil.predict import (
     structure_claim,
 )
 
+from hexnil.explain import (
+    EvidenceExplanation,
+    EvidenceExplanationOrchestrator,
+    EvidencePackage,
+    ExplanationSource,
+    build_evidence_package,
+    validate_evidence_eligibility,
+)
+
 logger = logging.getLogger("hexnil.cli")
 
 
@@ -1425,6 +1434,180 @@ def handle_predict_quality(args: argparse.Namespace, config: HexnilConfig) -> in
     return 0
 
 
+def format_human_explanation(explanation: EvidenceExplanation) -> str:
+    """Format an EvidenceExplanation for human CLI presentation."""
+    lines = [
+        "Hexnil Evidence-Grounded Engineering Explanation",
+        "================================================",
+        f"Explanation ID:        {explanation.explanation_id}",
+        f"Comparison ID:         {explanation.comparison_id}",
+        f"Source:                {explanation.source.value}",
+        f"Model:                 {explanation.model or 'Deterministic Engine'}",
+        f"Verdict:               {explanation.verdict}",
+        f"Severity:              {explanation.severity}",
+        f"Cached:                {'YES' if explanation.is_cached else 'NO'}",
+        f"Created At:            {explanation.created_at}",
+        "",
+        "Executive Summary:",
+        f"  {explanation.summary}",
+        "",
+        f"Observed Changes ({len(explanation.observed_changes)}):",
+        "-------------------",
+    ]
+    for ch in explanation.observed_changes:
+        lines.append(f"  • {ch}")
+
+    lines.append("")
+    lines.append("Statistical Interpretation:")
+    lines.append("---------------------------")
+    for sil in explanation.statistical_interpretation.splitlines():
+        lines.append(f"  {sil}")
+
+    lines.append("")
+    lines.append(f"Claim Assessments ({len(explanation.claim_assessment)}):")
+    lines.append("--------------------")
+    for ca in explanation.claim_assessment:
+        lines.append(f"  [{ca.claim_id}] {ca.claim_text}")
+        lines.append(f"    Target Metric:     {ca.target_metric}")
+        lines.append(f"    Status:            {ca.status}")
+        lines.append(f"    Explanation:       {ca.explanation}")
+
+    if explanation.limitations:
+        lines.append("")
+        lines.append(f"Evidence Limitations ({len(explanation.limitations)}):")
+        lines.append("---------------------")
+        for lim in explanation.limitations:
+            lines.append(f"  • {lim}")
+
+    lines.append("")
+    lines.append("Recommended Next Step:")
+    lines.append("----------------------")
+    lines.append(f"  {explanation.recommended_next_step}")
+
+    if explanation.evidence_references:
+        lines.append("")
+        lines.append(f"Evidence References ({len(explanation.evidence_references)}):")
+        lines.append("--------------------")
+        for ref in explanation.evidence_references:
+            lines.append(f"  [{ref.reference_id}] {ref.type.upper()}: {ref.identifier}")
+            if ref.artifact_path:
+                lines.append(f"    Path:              {ref.artifact_path}")
+            lines.append(f"    Description:       {ref.description}")
+
+    return "\n".join(lines)
+
+
+def handle_explain_inspect(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Inspect a comparison package and verify evidence eligibility for AI explanation."""
+    comp_store = ComparisonStore(config.data_dir / "comparisons")
+    stats_store = StatisticalAnalysisStore(config.data_dir / "comparisons")
+    pred_store = PredictionStore(config.predictions_dir)
+    
+    if not stats_store.has_analysis(args.comparison_id):
+        print(f"[ERROR] No statistical analysis found for comparison '{args.comparison_id}'.", file=sys.stderr)
+        return 1
+
+    analysis = stats_store.load_analysis(args.comparison_id)
+    comparison = comp_store.load_comparison(args.comparison_id) if comp_store.has_comparison(args.comparison_id) else None
+    plans = pred_store.list_plans()
+    plan = pred_store.load_plan(plans[0]) if plans else None
+
+    package = build_evidence_package(analysis, comparison, plan)
+    is_eligible, state, reasons = validate_evidence_eligibility(package)
+
+    if getattr(args, "json", False):
+        res = {
+            "comparison_id": package.comparison_id,
+            "evidence_state": state.value,
+            "is_eligible": is_eligible,
+            "metrics_count": len(package.metrics),
+            "claims_count": len(package.claims),
+            "reasons": reasons,
+            "evidence_hash": package.evidence_hash,
+        }
+        print(json.dumps(res, indent=2))
+        return 0 if is_eligible else 1
+
+    print("Hexnil AI Analyst Evidence Eligibility Inspection")
+    print("--------------------------------------------------")
+    print(f"Comparison ID:       {package.comparison_id}")
+    print(f"Evidence State:      {state.value}")
+    print(f"Eligible for AI:     {'YES' if is_eligible else 'NO'}")
+    print(f"Metrics in Package:  {len(package.metrics)}")
+    print(f"Claims in Package:   {len(package.claims)}")
+    print(f"Evidence Hash:       {package.evidence_hash[:16]}...")
+    if reasons:
+        print("\nFindings & Notes:")
+        for r in reasons:
+            print(f"  • {r}")
+    return 0 if is_eligible else 1
+
+
+def handle_explain_package(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Export compact structured EvidencePackage JSON for a comparison."""
+    comp_store = ComparisonStore(config.data_dir / "comparisons")
+    stats_store = StatisticalAnalysisStore(config.data_dir / "comparisons")
+    pred_store = PredictionStore(config.predictions_dir)
+
+    if not stats_store.has_analysis(args.comparison_id):
+        print(f"[ERROR] No statistical analysis found for comparison '{args.comparison_id}'.", file=sys.stderr)
+        return 1
+
+    analysis = stats_store.load_analysis(args.comparison_id)
+    comparison = comp_store.load_comparison(args.comparison_id) if comp_store.has_comparison(args.comparison_id) else None
+    plans = pred_store.list_plans()
+    plan = pred_store.load_plan(plans[0]) if plans else None
+
+    package = build_evidence_package(analysis, comparison, plan)
+    print(package.model_dump_json(indent=2))
+    return 0
+
+
+def handle_explain_generate(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Generate and persist evidence-grounded AI explanation (or deterministic fallback)."""
+    orchestrator = EvidenceExplanationOrchestrator(
+        comparisons_dir=config.data_dir / "comparisons",
+        predictions_dir=config.predictions_dir,
+    )
+    offline = getattr(args, "offline", False)
+    use_cache = not getattr(args, "no_cache", False)
+    model = getattr(args, "model", None)
+
+    explanation = orchestrator.explain_comparison(
+        comparison_id=args.comparison_id,
+        offline=offline,
+        use_cache=use_cache,
+        model=model,
+    )
+
+    if getattr(args, "json", False):
+        print(explanation.model_dump_json(indent=2))
+        return 0
+
+    print(format_human_explanation(explanation))
+    return 0
+
+
+def handle_explain_show(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Display persisted explanation for a comparison."""
+    store = ExplanationStore(config.data_dir / "comparisons")
+    explanation = store.load_explanation(args.comparison_id)
+    if not explanation:
+        # Generate on demand
+        orchestrator = EvidenceExplanationOrchestrator(
+            comparisons_dir=config.data_dir / "comparisons",
+            predictions_dir=config.predictions_dir,
+        )
+        explanation = orchestrator.explain_comparison(args.comparison_id, offline=True)
+
+    if getattr(args, "json", False):
+        print(explanation.model_dump_json(indent=2))
+        return 0
+
+    print(format_human_explanation(explanation))
+    return 0
+
+
 def create_parser() -> argparse.ArgumentParser:
 
 
@@ -1958,6 +2141,68 @@ def create_parser() -> argparse.ArgumentParser:
         help="Output quality audit as JSON.",
     )
 
+    # 9. 'explain' command group (Phase 8)
+    explain_parser = subparsers.add_parser(
+        "explain", help="Phase 8 Evidence-Grounded AI Analyst (Groq)"
+    )
+    explain_subparsers = explain_parser.add_subparsers(
+        dest="subcommand", help="Explanation subcommands"
+    )
+
+    # explain inspect <comparison_id>
+    exp_insp_parser = explain_subparsers.add_parser(
+        "inspect", help="Inspect comparison evidence eligibility for AI explanation"
+    )
+    exp_insp_parser.add_argument("comparison_id", help="Comparison ID to inspect")
+    exp_insp_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output inspection results as JSON.",
+    )
+
+    # explain package <comparison_id>
+    exp_pkg_parser = explain_subparsers.add_parser(
+        "package", help="Export structured EvidencePackage JSON for a comparison"
+    )
+    exp_pkg_parser.add_argument("comparison_id", help="Comparison ID to export")
+
+    # explain generate <comparison_id>
+    exp_gen_parser = explain_subparsers.add_parser(
+        "generate", help="Generate and persist evidence-grounded explanation"
+    )
+    exp_gen_parser.add_argument("comparison_id", help="Comparison ID to analyze")
+    exp_gen_parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="Force deterministic offline explanation without calling Groq.",
+    )
+    exp_gen_parser.add_argument(
+        "--model",
+        default=None,
+        help="Groq model override (default: llama-3.3-70b-versatile).",
+    )
+    exp_gen_parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        help="Bypass cache and force fresh inference.",
+    )
+    exp_gen_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output explanation as JSON.",
+    )
+
+    # explain show <comparison_id>
+    exp_show_parser = explain_subparsers.add_parser(
+        "show", help="Show persisted or generated explanation for a comparison"
+    )
+    exp_show_parser.add_argument("comparison_id", help="Comparison ID to display")
+    exp_show_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output explanation as JSON.",
+    )
+
     return parser
 
 
@@ -2080,6 +2325,20 @@ def main(argv=None) -> int:
             else:
                 parser.print_help()
                 return 1
+
+        elif args.command == "explain":
+            if args.subcommand in (None, "inspect"):
+                return handle_explain_inspect(args, config)
+            elif args.subcommand == "package":
+                return handle_explain_package(args, config)
+            elif args.subcommand == "generate":
+                return handle_explain_generate(args, config)
+            elif args.subcommand == "show":
+                return handle_explain_show(args, config)
+            else:
+                parser.print_help()
+                return 1
+
 
     except HexnilError as exc:
         if is_json:

@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.iqoo_hexnil.data.ComparisonAnalysis
 import com.example.iqoo_hexnil.data.DeviceHardwareInfo
+import com.example.iqoo_hexnil.data.StatisticalMetricResult
 import com.example.iqoo_hexnil.data.VerdictType
 import com.example.iqoo_hexnil.ui.components.EvidenceCoverageCard
 import com.example.iqoo_hexnil.ui.components.HexnilPrimaryButton
@@ -79,10 +80,16 @@ fun OverviewScreen(
         // Primary Result Section: Update Validation & Evidence Coverage
         EvidenceCoverageCard(analysis = analysis)
 
-        // Hero Measured Change Highlight: Video Workload (12.4s -> 12.8s, +3.0%, UNCHANGED)
-        HeroMeasuredChangeCard(
-            onClick = { onNavigateToMetricDetail("video_power_01_workload_duration_ms") }
-        )
+        // Hero Measured Change Highlight: Derived dynamically from repository analysis
+        val highlightMetric = analysis.metricResults.find { it.workloadId == "video_power_01" }
+            ?: analysis.metricResults.firstOrNull()
+
+        if (highlightMetric != null) {
+            HeroMeasuredChangeCard(
+                metric = highlightMetric,
+                onClick = { onNavigateToMetricDetail(highlightMetric.key) }
+            )
+        }
 
         // CTA: View Full Results
         HexnilPrimaryButton(
@@ -124,9 +131,9 @@ fun OverviewScreen(
 
         QuickNavigationTile(
             title = "Measured Evidence vs AI Interpretation",
-            subtitle = "Deterministic statistical analysis paired with future LLM explanation layer.",
+            subtitle = "Deterministic statistical analysis paired with evidence-grounded AI analyst.",
             icon = "✨",
-            badge = "PHASE 8 SHELL",
+            badge = "AI ANALYST",
             onClick = onNavigateToAiExplanation
         )
 
@@ -244,8 +251,13 @@ private fun HeroUpdateIdentityCard(
 
 @Composable
 private fun HeroMeasuredChangeCard(
+    metric: StatisticalMetricResult,
     onClick: () -> Unit
 ) {
+    val v0Text = if (metric.v0Mean != null) "${"%.1f".format(metric.v0Mean / 1000.0)} s" else "Unavailable"
+    val v1Text = if (metric.v1Mean != null) "${"%.1f".format(metric.v1Mean / 1000.0)} s" else "Unavailable"
+    val deltaText = if (metric.percentDelta != null) "${if (metric.percentDelta >= 0) "+" else ""}${"%.1f".format(metric.percentDelta)}%" else "Unavailable"
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -267,13 +279,13 @@ private fun HeroMeasuredChangeCard(
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
                 )
-                ResultBadge(verdict = VerdictType.UNCHANGED, isCompact = true)
+                ResultBadge(verdict = metric.verdict, isCompact = true)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Video Workload Duration (video_power_01)",
+                text = "${metric.displayName} (${metric.workloadId})",
                 color = HexnilPrimaryText,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold
@@ -298,7 +310,7 @@ private fun HeroMeasuredChangeCard(
                     Column {
                         Text(text = "V0 BASELINE", color = HexnilSecondaryText, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                         Text(
-                            text = "12.4 s",
+                            text = v0Text,
                             color = HexnilPrimaryText,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
@@ -311,7 +323,7 @@ private fun HeroMeasuredChangeCard(
                     Column {
                         Text(text = "V1 CANDIDATE", color = HexnilSecondaryText, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                         Text(
-                            text = "12.8 s",
+                            text = v1Text,
                             color = HexnilPrimaryText,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
@@ -322,7 +334,7 @@ private fun HeroMeasuredChangeCard(
                     Column(horizontalAlignment = Alignment.End) {
                         Text(text = "DELTA", color = HexnilSecondaryText, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                         Text(
-                            text = "+3.0%",
+                            text = deltaText,
                             color = HexnilMainAccent,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
@@ -343,7 +355,7 @@ private fun HeroMeasuredChangeCard(
                 Row(modifier = Modifier.padding(10.dp)) {
                     Text(text = "Why? ", color = HexnilMainAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     Text(
-                        text = "Observed change (+3.0%) is below the 5.0% meaningful engineering threshold. Verdict: UNCHANGED.",
+                        text = metric.reason,
                         color = HexnilSecondaryText,
                         fontSize = 11.sp,
                         lineHeight = 15.sp

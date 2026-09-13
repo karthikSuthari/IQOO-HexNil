@@ -26,7 +26,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.iqoo_hexnil.data.DeviceHardwareInfo
+import com.example.iqoo_hexnil.data.HardwareEvidenceState
 import com.example.iqoo_hexnil.ui.theme.HexnilAccentGlow
+import com.example.iqoo_hexnil.ui.theme.HexnilBackground
 import com.example.iqoo_hexnil.ui.theme.HexnilBorder
 import com.example.iqoo_hexnil.ui.theme.HexnilCard
 import com.example.iqoo_hexnil.ui.theme.HexnilError
@@ -63,18 +65,21 @@ fun DeviceCard(
                     letterSpacing = 1.sp
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    val (dotColor, statusLabel) = when (device.evidenceState) {
+                        HardwareEvidenceState.LIVE -> Pair(HexnilSuccess, "LIVE EVIDENCE")
+                        HardwareEvidenceState.UNAVAILABLE -> Pair(HexnilWarning, "NO LIVE EVIDENCE")
+                        HardwareEvidenceState.UNSUPPORTED -> Pair(HexnilError, "UNSUPPORTED")
+                        HardwareEvidenceState.STALE_CACHED -> Pair(HexnilSecondaryText, "CACHED SNAPSHOT")
+                    }
                     Box(
                         modifier = Modifier
                             .size(8.dp)
-                            .background(
-                                if (device.adbConnected) HexnilSuccess else HexnilWarning,
-                                CircleShape
-                            )
+                            .background(dotColor, CircleShape)
                     )
                     Spacer(modifier = Modifier.width(5.dp))
                     Text(
-                        text = if (device.adbConnected) "ADB ONLINE" else "STANDALONE",
-                        color = if (device.adbConnected) HexnilSuccess else HexnilWarning,
+                        text = statusLabel,
+                        color = dotColor,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -110,14 +115,14 @@ fun DeviceCard(
             ) {
                 DeviceStatusTile(
                     label = "Battery Proxy",
-                    value = "${device.batteryPercent ?: 98}%",
-                    sub = device.chargingState,
+                    value = if (device.batteryPercent != null) "${device.batteryPercent}%" else "Unavailable",
+                    sub = if (device.chargingState == "NO_LIVE_EVIDENCE") "No live evidence" else device.chargingState,
                     modifier = Modifier.weight(1f)
                 )
                 DeviceStatusTile(
                     label = "Thermals",
-                    value = device.thermalStatus,
-                    sub = "Hardware Throttling",
+                    value = if (device.thermalStatus == "NO_LIVE_EVIDENCE") "Unavailable" else device.thermalStatus,
+                    sub = if (device.thermalStatus == "UNSUPPORTED") "API Not Supported" else "Hardware State",
                     modifier = Modifier.weight(1f)
                 )
             }

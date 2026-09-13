@@ -141,31 +141,41 @@ def predict_claim_risk(
     # --------------------------------------------------------------------------
     # PATH A: CODE-CHANGE-AWARE MODEL
     # --------------------------------------------------------------------------
-    if selected_path == PredictionPath.PATH_A_CODE_CHANGE and code_changes and MODEL_PATH.exists():
-        try:
-            model = joblib.load(MODEL_PATH)
-            X = pd.DataFrame(
-                [[code_changes.get(feat, 0.0) for feat in CODE_CHANGE_FEATURE_NAMES]],
-                columns=CODE_CHANGE_FEATURE_NAMES,
-            )
-            probs = model.predict_proba(X)
-            raw_score = float(probs[0][1])
-            model_name = "RandomForestCodeRiskClassifier"
-            model_version = "1.0.0"
-            explanation = [
-                f"Prediction Path: {selected_path.value}",
-                f"Evaluated Model A (RandomForest) on code-change complexity metrics: {code_changes}",
-                f"Predicted code degradation probability: {raw_score:.3f}",
-            ]
-            confidence = 0.85
-        except Exception as exc:
-            # Fallback to Path B if model fails
+    if selected_path == PredictionPath.PATH_A_CODE_CHANGE and code_changes:
+        if not MODEL_PATH.exists():
             selected_path = PredictionPath.PATH_B_CLAIM_HISTORY
-            explanation = [f"Path A model execution failed ({exc}); fallen back to {selected_path.value}."]
+            explanation = [
+                f"Path A model artifact not found at {MODEL_PATH}; fallen back to {selected_path.value}."
+            ]
             model_name = "SubsystemRiskPriorFallback"
             model_version = PREDICTOR_VERSION
             raw_score = SUBSYSTEM_RISK_PRIORS.get(claim.subsystem, 0.20)
             confidence = claim.confidence
+        else:
+            try:
+                model = joblib.load(MODEL_PATH)
+                X = pd.DataFrame(
+                    [[code_changes.get(feat, 0.0) for feat in CODE_CHANGE_FEATURE_NAMES]],
+                    columns=CODE_CHANGE_FEATURE_NAMES,
+                )
+                probs = model.predict_proba(X)
+                raw_score = float(probs[0][1])
+                model_name = "RandomForestCodeRiskClassifier"
+                model_version = "1.0.0"
+                explanation = [
+                    f"Prediction Path: {selected_path.value}",
+                    f"Evaluated Model A (RandomForest) on code-change complexity metrics: {code_changes}",
+                    f"Predicted code degradation probability: {raw_score:.3f}",
+                ]
+                confidence = 0.85
+            except Exception as exc:
+                # Fallback to Path B if model fails
+                selected_path = PredictionPath.PATH_B_CLAIM_HISTORY
+                explanation = [f"Path A model execution failed ({exc}); fallen back to {selected_path.value}."]
+                model_name = "SubsystemRiskPriorFallback"
+                model_version = PREDICTOR_VERSION
+                raw_score = SUBSYSTEM_RISK_PRIORS.get(claim.subsystem, 0.20)
+                confidence = claim.confidence
 
     # --------------------------------------------------------------------------
     # PATH B: CLAIM / HISTORY MODEL

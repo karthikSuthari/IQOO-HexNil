@@ -176,3 +176,26 @@ class ExperimentPersistenceError(HexnilError):
             f"Check disk write permissions and ensure directory '{path}' is accessible."
         )
         super().__init__(msg, suggestion or default_suggestion)
+
+
+class GroqConfigurationError(HexnilError):
+    """Raised when Groq API key is missing, empty, or improperly configured."""
+
+    def __init__(self, suggestion: Optional[str] = None):
+        msg = "Groq API key is not configured or available in environment."
+        default_suggestion = (
+            "Set the GROQ_API_KEY environment variable (e.g. export GROQ_API_KEY='gsk_...'), "
+            "or run with --offline to use deterministic evidence-grounded analysis."
+        )
+        super().__init__(msg, suggestion or default_suggestion)
+
+
+class GroqApiError(HexnilError):
+    """Raised when a Groq API request fails, times out, or returns a network/HTTP error."""
+
+    def __init__(self, reason: str, suggestion: Optional[str] = None):
+        msg = f"Groq API call failed: {reason}"
+        default_suggestion = (
+            "Check network connectivity, rate limits, and API status, or run with --offline."
+        )
+        super().__init__(msg, suggestion or default_suggestion)

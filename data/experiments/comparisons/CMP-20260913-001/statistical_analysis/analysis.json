@@ -1,0 +1,906 @@
+{
+  "analysis_id": "STATS-CMP-20260913-001",
+  "phase": "06_statistical_comparison",
+  "comparison_id": "CMP-20260913-001",
+  "created_at": "2026-09-13T09:24:47.057092+00:00",
+  "analysis_version": "1.0.0",
+  "threshold_version": "1.0.0",
+  "multiple_comparison_policy": "NONE",
+  "random_seed": 42,
+  "metric_results": [
+    {
+      "comparison_id": "CMP-20260913-001",
+      "workload_id": "startup_01",
+      "metric_name": "workload_duration_ms",
+      "metric_unit": "ms",
+      "direction": "LOWER_IS_BETTER",
+      "eligibility": "SUPPORTED_AND_ELIGIBLE",
+      "sample_count": 3,
+      "v0_run_ids": [
+        "RUN-20260913-083057-001-932A",
+        "RUN-20260913-083105-002-BB07",
+        "RUN-20260913-083113-003-05FF"
+      ],
+      "v1_run_ids": [
+        "RUN-20260913-085732-001-2D50",
+        "RUN-20260913-085740-002-E407",
+        "RUN-20260913-085748-003-FB2C"
+      ],
+      "v0_values": [
+        8643.084,
+        7980.506,
+        7331.095
+      ],
+      "v1_values": [
+        7711.358,
+        7650.274,
+        8030.625
+      ],
+      "paired_differences": [
+        -931.726,
+        -330.232,
+        699.53
+      ],
+      "v0_mean": 7984.895,
+      "v1_mean": 7797.419,
+      "v0_median": 7980.506,
+      "v1_median": 7711.358,
+      "absolute_delta": -187.476,
+      "percent_delta": -2.35,
+      "effect_size": -0.2273,
+      "effect_size_method": "cohens_d_z",
+      "confidence_interval": {
+        "lower": -2236.9172,
+        "upper": 1861.9652,
+        "confidence_level": 0.95,
+        "method": "student_t",
+        "status": "ESTIMATED"
+      },
+      "statistical_test": {
+        "test_name": "paired_t_test",
+        "statistic": -0.3936,
+        "p_value": 0.73186,
+        "adjusted_p_value": null,
+        "alpha": 0.05,
+        "is_significant": false,
+        "assumptions_met": true,
+        "status": "EXECUTED",
+        "notes": null
+      },
+      "threshold": {
+        "threshold_type": "percent",
+        "meaningful_change_percent": 5.0,
+        "meaningful_change_absolute": null,
+        "severity_bands": {
+          "LOW": 5.0,
+          "MEDIUM": 10.0,
+          "HIGH": 20.0,
+          "CRITICAL": 40.0
+        },
+        "version": "1.0.0"
+      },
+      "verdict": "UNCHANGED",
+      "severity": "NONE",
+      "verdict_reason": "Observed change 2.4% (threshold: 5.0%) is within the acceptable engineering threshold.",
+      "status": "VALID"
+    },
+    {
+      "comparison_id": "CMP-20260913-001",
+      "workload_id": "startup_01",
+      "metric_name": "startup_duration_ms",
+      "metric_unit": "ms",
+      "direction": "LOWER_IS_BETTER",
+      "eligibility": "SUPPORTED_AND_ELIGIBLE",
+      "sample_count": 3,
+      "v0_run_ids": [
+        "RUN-20260913-083057-001-932A",
+        "RUN-20260913-083105-002-BB07",
+        "RUN-20260913-083113-003-05FF"
+      ],
+      "v1_run_ids": [
+        "RUN-20260913-085732-001-2D50",
+        "RUN-20260913-085740-002-E407",
+        "RUN-20260913-085748-003-FB2C"
+      ],
+      "v0_values": [
+        560.0,
+        1202.919,
+        1201.414
+      ],
+      "v1_values": [
+        908.0,
+        1172.915,
+        1561.095
+      ],
+      "paired_differences": [
+        348.0,
+        -30.004,
+        359.681
+      ],
+      "v0_mean": 988.111,
+      "v1_mean": 1214.003,
+      "v0_median": 1201.414,
+      "v1_median": 1172.915,
+      "absolute_delta": 225.8923,
+      "percent_delta": 22.86,
+      "effect_size": 1.019,
+      "effect_size_method": "cohens_d_z",
+      "confidence_interval": {
+        "lower": -324.8598,
+        "upper": 776.6445,
+        "confidence_level": 0.95,
+        "method": "student_t",
+        "status": "ESTIMATED"
+      },
+      "statistical_test": {
+        "test_name": "paired_t_test",
+        "statistic": 1.7649,
+        "p_value": 0.21963,
+        "adjusted_p_value": null,
+        "alpha": 0.05,
+        "is_significant": false,
+        "assumptions_met": true,
+        "status": "EXECUTED",
+        "notes": null
+      },
+      "threshold": {
+        "threshold_type": "percent",
+        "meaningful_change_percent": 5.0,
+        "meaningful_change_absolute": null,
+        "severity_bands": {
+          "LOW": 5.0,
+          "MEDIUM": 10.0,
+          "HIGH": 20.0,
+          "CRITICAL": 40.0
+        },
+        "version": "1.0.0"
+      },
+      "verdict": "INCONCLUSIVE",
+      "severity": "NONE",
+      "verdict_reason": "Observed shift 22.9% (threshold: 5.0%) is not statistically significant (p=0.2196 >= 0.05).",
+      "status": "VALID"
+    },
+    {
+      "comparison_id": "CMP-20260913-001",
+      "workload_id": "cpu_01",
+      "metric_name": "workload_duration_ms",
+      "metric_unit": "ms",
+      "direction": "LOWER_IS_BETTER",
+      "eligibility": "SUPPORTED_AND_ELIGIBLE",
+      "sample_count": 3,
+      "v0_run_ids": [
+        "RUN-20260913-083121-001-7DED",
+        "RUN-20260913-083130-002-E78C",
+        "RUN-20260913-083139-003-CB72"
+      ],
+      "v1_run_ids": [
+        "RUN-20260913-085756-001-014F",
+        "RUN-20260913-085805-002-7843",
+        "RUN-20260913-085815-003-5D8A"
+      ],
+      "v0_values": [
+        9351.218,
+        9289.326,
+        9706.575
+      ],
+      "v1_values": [
+        9515.906,
+        9920.562,
+        9829.877
+      ],
+      "paired_differences": [
+        164.688,
+        631.236,
+        123.302
+      ],
+      "v0_mean": 9449.04,
+      "v1_mean": 9755.448,
+      "v0_median": 9351.218,
+      "v1_median": 9829.877,
+      "absolute_delta": 306.4087,
+      "percent_delta": 3.24,
+      "effect_size": 1.0863,
+      "effect_size_method": "cohens_d_z",
+      "confidence_interval": {
+        "lower": -394.3456,
+        "upper": 1007.1629,
+        "confidence_level": 0.95,
+        "method": "student_t",
+        "status": "ESTIMATED"
+      },
+      "statistical_test": {
+        "test_name": "paired_t_test",
+        "statistic": 1.8815,
+        "p_value": 0.20063,
+        "adjusted_p_value": null,
+        "alpha": 0.05,
+        "is_significant": false,
+        "assumptions_met": true,
+        "status": "EXECUTED",
+        "notes": null
+      },
+      "threshold": {
+        "threshold_type": "percent",
+        "meaningful_change_percent": 5.0,
+        "meaningful_change_absolute": null,
+        "severity_bands": {
+          "LOW": 5.0,
+          "MEDIUM": 10.0,
+          "HIGH": 20.0,
+          "CRITICAL": 40.0
+        },
+        "version": "1.0.0"
+      },
+      "verdict": "UNCHANGED",
+      "severity": "NONE",
+      "verdict_reason": "Observed change 3.2% (threshold: 5.0%) is within the acceptable engineering threshold.",
+      "status": "VALID"
+    },
+    {
+      "comparison_id": "CMP-20260913-001",
+      "workload_id": "cpu_01",
+      "metric_name": "compute_duration_ms",
+      "metric_unit": "ms",
+      "direction": "LOWER_IS_BETTER",
+      "eligibility": "SUPPORTED_AND_ELIGIBLE",
+      "sample_count": 3,
+      "v0_run_ids": [
+        "RUN-20260913-083121-001-7DED",
+        "RUN-20260913-083130-002-E78C",
+        "RUN-20260913-083139-003-CB72"
+      ],
+      "v1_run_ids": [
+        "RUN-20260913-085756-001-014F",
+        "RUN-20260913-085805-002-7843",
+        "RUN-20260913-085815-003-5D8A"
+      ],
+      "v0_values": [
+        3136.698,
+        3137.917,
+        3398.783
+      ],
+      "v1_values": [
+        3170.579,
+        3190.113,
+        3245.186
+      ],
+      "paired_differences": [
+        33.881,
+        52.196,
+        -153.597
+      ],
+      "v0_mean": 3224.466,
+      "v1_mean": 3201.959,
+      "v0_median": 3137.917,
+      "v1_median": 3190.113,
+      "absolute_delta": -22.5067,
+      "percent_delta": -0.7,
+      "effect_size": -0.1976,
+      "effect_size_method": "cohens_d_z",
+      "confidence_interval": {
+        "lower": -305.4636,
+        "upper": 260.4503,
+        "confidence_level": 0.95,
+        "method": "student_t",
+        "status": "ESTIMATED"
+      },
+      "statistical_test": {
+        "test_name": "paired_t_test",
+        "statistic": -0.3423,
+        "p_value": 0.76477,
+        "adjusted_p_value": null,
+        "alpha": 0.05,
+        "is_significant": false,
+        "assumptions_met": true,
+        "status": "EXECUTED",
+        "notes": null
+      },
+      "threshold": {
+        "threshold_type": "percent",
+        "meaningful_change_percent": 5.0,
+        "meaningful_change_absolute": null,
+        "severity_bands": {
+          "LOW": 5.0,
+          "MEDIUM": 10.0,
+          "HIGH": 20.0,
+          "CRITICAL": 40.0
+        },
+        "version": "1.0.0"
+      },
+      "verdict": "UNCHANGED",
+      "severity": "NONE",
+      "verdict_reason": "Observed change 0.7% (threshold: 5.0%) is within the acceptable engineering threshold.",
+      "status": "VALID"
+    },
+    {
+      "comparison_id": "CMP-20260913-001",
+      "workload_id": "memory_01",
+      "metric_name": "workload_duration_ms",
+      "metric_unit": "ms",
+      "direction": "LOWER_IS_BETTER",
+      "eligibility": "SUPPORTED_AND_ELIGIBLE",
+      "sample_count": 3,
+      "v0_run_ids": [
+        "RUN-20260913-083149-001-0BD4",
+        "RUN-20260913-083158-002-4E6D",
+        "RUN-20260913-083208-003-1B7A"
+      ],
+      "v1_run_ids": [
+        "RUN-20260913-085825-001-FB83",
+        "RUN-20260913-085834-002-71C3",
+        "RUN-20260913-085843-003-F13B"
+      ],
+      "v0_values": [
+        9172.541,
+        9496.314,
+        9174.954
+      ],
+      "v1_values": [
+        9281.917,
+        9268.682,
+        9492.399
+      ],
+      "paired_differences": [
+        109.376,
+        -227.632,
+        317.445
+      ],
+      "v0_mean": 9281.27,
+      "v1_mean": 9347.666,
+      "v0_median": 9174.954,
+      "v1_median": 9281.917,
+      "absolute_delta": 66.3963,
+      "percent_delta": 0.72,
+      "effect_size": 0.2414,
+      "effect_size_method": "cohens_d_z",
+      "confidence_interval": {
+        "lower": -616.9668,
+        "upper": 749.7595,
+        "confidence_level": 0.95,
+        "method": "student_t",
+        "status": "ESTIMATED"
+      },
+      "statistical_test": {
+        "test_name": "paired_t_test",
+        "statistic": 0.4181,
+        "p_value": 0.7165,
+        "adjusted_p_value": null,
+        "alpha": 0.05,
+        "is_significant": false,
+        "assumptions_met": true,
+        "status": "EXECUTED",
+        "notes": null
+      },
+      "threshold": {
+        "threshold_type": "percent",
+        "meaningful_change_percent": 5.0,
+        "meaningful_change_absolute": null,
+        "severity_bands": {
+          "LOW": 5.0,
+          "MEDIUM": 10.0,
+          "HIGH": 20.0,
+          "CRITICAL": 40.0
+        },
+        "version": "1.0.0"
+      },
+      "verdict": "UNCHANGED",
+      "severity": "NONE",
+      "verdict_reason": "Observed change 0.7% (threshold: 5.0%) is within the acceptable engineering threshold.",
+      "status": "VALID"
+    },
+    {
+      "comparison_id": "CMP-20260913-001",
+      "workload_id": "memory_01",
+      "metric_name": "app_heap_allocated_mb",
+      "metric_unit": "MB",
+      "direction": "LOWER_IS_BETTER",
+      "eligibility": "INSUFFICIENT_DATA",
+      "sample_count": 1,
+      "v0_run_ids": [
+        "RUN-20260913-083149-001-0BD4"
+      ],
+      "v1_run_ids": [
+        "RUN-20260913-085825-001-FB83"
+      ],
+      "v0_values": [
+        15.781
+      ],
+      "v1_values": [
+        16.858
+      ],
+      "paired_differences": [],
+      "v0_mean": null,
+      "v1_mean": null,
+      "v0_median": null,
+      "v1_median": null,
+      "absolute_delta": null,
+      "percent_delta": null,
+      "effect_size": null,
+      "effect_size_method": "cohens_d_z",
+      "confidence_interval": null,
+      "statistical_test": null,
+      "threshold": {
+        "threshold_type": "percent",
+        "meaningful_change_percent": 5.0,
+        "meaningful_change_absolute": null,
+        "severity_bands": {
+          "LOW": 5.0,
+          "MEDIUM": 10.0,
+          "HIGH": 20.0,
+          "CRITICAL": 35.0
+        },
+        "version": "1.0.0"
+      },
+      "verdict": "INCONCLUSIVE",
+      "severity": "NONE",
+      "verdict_reason": "Sample count (n=1) is below minimum requirement (n=3).",
+      "status": "INCONCLUSIVE"
+    },
+    {
+      "comparison_id": "CMP-20260913-001",
+      "workload_id": "memory_01",
+      "metric_name": "device_memory_available_mb",
+      "metric_unit": "MB",
+      "direction": "HIGHER_IS_BETTER",
+      "eligibility": "INSUFFICIENT_DATA",
+      "sample_count": 1,
+      "v0_run_ids": [
+        "RUN-20260913-083149-001-0BD4"
+      ],
+      "v1_run_ids": [
+        "RUN-20260913-085825-001-FB83"
+      ],
+      "v0_values": [
+        1646.016
+      ],
+      "v1_values": [
+        1553.237
+      ],
+      "paired_differences": [],
+      "v0_mean": null,
+      "v1_mean": null,
+      "v0_median": null,
+      "v1_median": null,
+      "absolute_delta": null,
+      "percent_delta": null,
+      "effect_size": null,
+      "effect_size_method": "cohens_d_z",
+      "confidence_interval": null,
+      "statistical_test": null,
+      "threshold": {
+        "threshold_type": "percent",
+        "meaningful_change_percent": 5.0,
+        "meaningful_change_absolute": null,
+        "severity_bands": {
+          "LOW": 5.0,
+          "MEDIUM": 10.0,
+          "HIGH": 20.0,
+          "CRITICAL": 35.0
+        },
+        "version": "1.0.0"
+      },
+      "verdict": "INCONCLUSIVE",
+      "severity": "NONE",
+      "verdict_reason": "Sample count (n=1) is below minimum requirement (n=3).",
+      "status": "INCONCLUSIVE"
+    },
+    {
+      "comparison_id": "CMP-20260913-001",
+      "workload_id": "scroll_01",
+      "metric_name": "workload_duration_ms",
+      "metric_unit": "ms",
+      "direction": "LOWER_IS_BETTER",
+      "eligibility": "SUPPORTED_AND_ELIGIBLE",
+      "sample_count": 3,
+      "v0_run_ids": [
+        "RUN-20260913-083217-001-B181",
+        "RUN-20260913-083228-002-62C6",
+        "RUN-20260913-083239-003-E4EA"
+      ],
+      "v1_run_ids": [
+        "RUN-20260913-085853-001-91B6",
+        "RUN-20260913-085903-002-6FA1",
+        "RUN-20260913-085914-003-E98D"
+      ],
+      "v0_values": [
+        10649.996,
+        10891.041,
+        10313.34
+      ],
+      "v1_values": [
+        10309.266,
+        10636.061,
+        10701.84
+      ],
+      "paired_differences": [
+        -340.73,
+        -254.98,
+        388.5
+      ],
+      "v0_mean": 10618.126,
+      "v1_mean": 10549.056,
+      "v0_median": 10649.996,
+      "v1_median": 10636.061,
+      "absolute_delta": -69.07,
+      "percent_delta": -0.65,
+      "effect_size": -0.1733,
+      "effect_size_method": "cohens_d_z",
+      "confidence_interval": {
+        "lower": -1059.2775,
+        "upper": 921.1375,
+        "confidence_level": 0.95,
+        "method": "student_t",
+        "status": "ESTIMATED"
+      },
+      "statistical_test": {
+        "test_name": "paired_t_test",
+        "statistic": -0.3001,
+        "p_value": 0.79239,
+        "adjusted_p_value": null,
+        "alpha": 0.05,
+        "is_significant": false,
+        "assumptions_met": true,
+        "status": "EXECUTED",
+        "notes": null
+      },
+      "threshold": {
+        "threshold_type": "percent",
+        "meaningful_change_percent": 5.0,
+        "meaningful_change_absolute": null,
+        "severity_bands": {
+          "LOW": 5.0,
+          "MEDIUM": 10.0,
+          "HIGH": 20.0,
+          "CRITICAL": 40.0
+        },
+        "version": "1.0.0"
+      },
+      "verdict": "UNCHANGED",
+      "severity": "NONE",
+      "verdict_reason": "Observed change 0.7% (threshold: 5.0%) is within the acceptable engineering threshold.",
+      "status": "VALID"
+    },
+    {
+      "comparison_id": "CMP-20260913-001",
+      "workload_id": "scroll_01",
+      "metric_name": "scroll_duration_ms",
+      "metric_unit": "ms",
+      "direction": "LOWER_IS_BETTER",
+      "eligibility": "SUPPORTED_AND_ELIGIBLE",
+      "sample_count": 3,
+      "v0_run_ids": [
+        "RUN-20260913-083217-001-B181",
+        "RUN-20260913-083228-002-62C6",
+        "RUN-20260913-083239-003-E4EA"
+      ],
+      "v1_run_ids": [
+        "RUN-20260913-085853-001-91B6",
+        "RUN-20260913-085903-002-6FA1",
+        "RUN-20260913-085914-003-E98D"
+      ],
+      "v0_values": [
+        4428.034,
+        4563.398,
+        4305.991
+      ],
+      "v1_values": [
+        4338.294,
+        4344.156,
+        4398.932
+      ],
+      "paired_differences": [
+        -89.74,
+        -219.242,
+        92.941
+      ],
+      "v0_mean": 4432.474,
+      "v1_mean": 4360.461,
+      "v0_median": 4428.034,
+      "v1_median": 4344.156,
+      "absolute_delta": -72.0137,
+      "percent_delta": -1.62,
+      "effect_size": -0.4591,
+      "effect_size_method": "cohens_d_z",
+      "confidence_interval": {
+        "lower": -461.6687,
+        "upper": 317.6413,
+        "confidence_level": 0.95,
+        "method": "student_t",
+        "status": "ESTIMATED"
+      },
+      "statistical_test": {
+        "test_name": "paired_t_test",
+        "statistic": -0.7953,
+        "p_value": 0.50985,
+        "adjusted_p_value": null,
+        "alpha": 0.05,
+        "is_significant": false,
+        "assumptions_met": true,
+        "status": "EXECUTED",
+        "notes": null
+      },
+      "threshold": {
+        "threshold_type": "percent",
+        "meaningful_change_percent": 5.0,
+        "meaningful_change_absolute": null,
+        "severity_bands": {
+          "LOW": 5.0,
+          "MEDIUM": 10.0,
+          "HIGH": 20.0,
+          "CRITICAL": 40.0
+        },
+        "version": "1.0.0"
+      },
+      "verdict": "UNCHANGED",
+      "severity": "NONE",
+      "verdict_reason": "Observed change 1.6% (threshold: 5.0%) is within the acceptable engineering threshold.",
+      "status": "VALID"
+    },
+    {
+      "comparison_id": "CMP-20260913-001",
+      "workload_id": "scroll_01",
+      "metric_name": "ui_frame_jank_percent",
+      "metric_unit": "%",
+      "direction": "LOWER_IS_BETTER",
+      "eligibility": "UNSUPPORTED",
+      "sample_count": 0,
+      "v0_run_ids": [],
+      "v1_run_ids": [],
+      "v0_values": [],
+      "v1_values": [],
+      "paired_differences": [],
+      "v0_mean": null,
+      "v1_mean": null,
+      "v0_median": null,
+      "v1_median": null,
+      "absolute_delta": null,
+      "percent_delta": null,
+      "effect_size": null,
+      "effect_size_method": "cohens_d_z",
+      "confidence_interval": null,
+      "statistical_test": null,
+      "threshold": {
+        "threshold_type": "absolute",
+        "meaningful_change_percent": null,
+        "meaningful_change_absolute": 2.0,
+        "severity_bands": {
+          "LOW": 2.0,
+          "MEDIUM": 5.0,
+          "HIGH": 10.0,
+          "CRITICAL": 20.0
+        },
+        "version": "1.0.0"
+      },
+      "verdict": "INCONCLUSIVE",
+      "severity": "NONE",
+      "verdict_reason": "No valid observations found for metric 'ui_frame_jank_percent'.",
+      "status": "UNSUPPORTED"
+    },
+    {
+      "comparison_id": "CMP-20260913-001",
+      "workload_id": "video_power_01",
+      "metric_name": "workload_duration_ms",
+      "metric_unit": "ms",
+      "direction": "LOWER_IS_BETTER",
+      "eligibility": "SUPPORTED_AND_ELIGIBLE",
+      "sample_count": 3,
+      "v0_run_ids": [
+        "RUN-20260913-083249-001-BB61",
+        "RUN-20260913-083302-002-7A5E",
+        "RUN-20260913-083314-003-1E33"
+      ],
+      "v1_run_ids": [
+        "RUN-20260913-085925-001-BEC3",
+        "RUN-20260913-085937-002-F98C",
+        "RUN-20260913-085950-003-4979"
+      ],
+      "v0_values": [
+        12211.289,
+        12430.739,
+        12426.866
+      ],
+      "v1_values": [
+        12533.529,
+        12782.931,
+        12884.175
+      ],
+      "paired_differences": [
+        322.24,
+        352.192,
+        457.309
+      ],
+      "v0_mean": 12356.298,
+      "v1_mean": 12733.545,
+      "v0_median": 12426.866,
+      "v1_median": 12782.931,
+      "absolute_delta": 377.247,
+      "percent_delta": 3.05,
+      "effect_size": 5.3182,
+      "effect_size_method": "cohens_d_z",
+      "confidence_interval": {
+        "lower": 201.0214,
+        "upper": 553.4726,
+        "confidence_level": 0.95,
+        "method": "student_t",
+        "status": "ESTIMATED"
+      },
+      "statistical_test": {
+        "test_name": "paired_t_test",
+        "statistic": 9.2115,
+        "p_value": 0.01158,
+        "adjusted_p_value": null,
+        "alpha": 0.05,
+        "is_significant": true,
+        "assumptions_met": true,
+        "status": "EXECUTED",
+        "notes": null
+      },
+      "threshold": {
+        "threshold_type": "percent",
+        "meaningful_change_percent": 5.0,
+        "meaningful_change_absolute": null,
+        "severity_bands": {
+          "LOW": 5.0,
+          "MEDIUM": 10.0,
+          "HIGH": 20.0,
+          "CRITICAL": 40.0
+        },
+        "version": "1.0.0"
+      },
+      "verdict": "UNCHANGED",
+      "severity": "NONE",
+      "verdict_reason": "Observed change 3.0% (threshold: 5.0%) is within the acceptable engineering threshold.",
+      "status": "VALID"
+    },
+    {
+      "comparison_id": "CMP-20260913-001",
+      "workload_id": "video_power_01",
+      "metric_name": "playback_duration_ms",
+      "metric_unit": "ms",
+      "direction": "LOWER_IS_BETTER",
+      "eligibility": "SUPPORTED_AND_ELIGIBLE",
+      "sample_count": 3,
+      "v0_run_ids": [
+        "RUN-20260913-083249-001-BB61",
+        "RUN-20260913-083302-002-7A5E",
+        "RUN-20260913-083314-003-1E33"
+      ],
+      "v1_run_ids": [
+        "RUN-20260913-085925-001-BEC3",
+        "RUN-20260913-085937-002-F98C",
+        "RUN-20260913-085950-003-4979"
+      ],
+      "v0_values": [
+        6163.4,
+        6222.784,
+        6183.303
+      ],
+      "v1_values": [
+        6257.147,
+        6144.552,
+        6151.615
+      ],
+      "paired_differences": [
+        93.747,
+        -78.232,
+        -31.688
+      ],
+      "v0_mean": 6189.829,
+      "v1_mean": 6184.438,
+      "v0_median": 6183.303,
+      "v1_median": 6151.615,
+      "absolute_delta": -5.391,
+      "percent_delta": -0.09,
+      "effect_size": -0.0606,
+      "effect_size_method": "cohens_d_z",
+      "confidence_interval": {
+        "lower": -226.3832,
+        "upper": 215.6012,
+        "confidence_level": 0.95,
+        "method": "student_t",
+        "status": "ESTIMATED"
+      },
+      "statistical_test": {
+        "test_name": "paired_t_test",
+        "statistic": -0.105,
+        "p_value": 0.92598,
+        "adjusted_p_value": null,
+        "alpha": 0.05,
+        "is_significant": false,
+        "assumptions_met": true,
+        "status": "EXECUTED",
+        "notes": null
+      },
+      "threshold": {
+        "threshold_type": "percent",
+        "meaningful_change_percent": 5.0,
+        "meaningful_change_absolute": null,
+        "severity_bands": {
+          "LOW": 5.0,
+          "MEDIUM": 10.0,
+          "HIGH": 20.0,
+          "CRITICAL": 40.0
+        },
+        "version": "1.0.0"
+      },
+      "verdict": "UNCHANGED",
+      "severity": "NONE",
+      "verdict_reason": "Observed change 0.1% (threshold: 5.0%) is within the acceptable engineering threshold.",
+      "status": "VALID"
+    },
+    {
+      "comparison_id": "CMP-20260913-001",
+      "workload_id": "video_power_01",
+      "metric_name": "battery_discharge_proxy",
+      "metric_unit": "delta_percent_proxy",
+      "direction": "LOWER_IS_BETTER",
+      "eligibility": "INSUFFICIENT_DATA",
+      "sample_count": 1,
+      "v0_run_ids": [
+        "RUN-20260913-083249-001-BB61"
+      ],
+      "v1_run_ids": [
+        "RUN-20260913-085925-001-BEC3"
+      ],
+      "v0_values": [
+        0.0
+      ],
+      "v1_values": [
+        0.0
+      ],
+      "paired_differences": [],
+      "v0_mean": null,
+      "v1_mean": null,
+      "v0_median": null,
+      "v1_median": null,
+      "absolute_delta": null,
+      "percent_delta": null,
+      "effect_size": null,
+      "effect_size_method": "cohens_d_z",
+      "confidence_interval": null,
+      "statistical_test": null,
+      "threshold": {
+        "threshold_type": "absolute",
+        "meaningful_change_percent": null,
+        "meaningful_change_absolute": 1.0,
+        "severity_bands": {
+          "LOW": 1.0,
+          "MEDIUM": 2.0,
+          "HIGH": 4.0,
+          "CRITICAL": 8.0
+        },
+        "version": "1.0.0"
+      },
+      "verdict": "INCONCLUSIVE",
+      "severity": "NONE",
+      "verdict_reason": "Sample count (n=1) is below minimum requirement (n=3).",
+      "status": "INCONCLUSIVE"
+    }
+  ],
+  "quality": {
+    "analysis_id": "STATS-CMP-20260913-001",
+    "comparison_id": "CMP-20260913-001",
+    "metrics_analyzed": 13,
+    "metrics_eligible": 9,
+    "metrics_inconclusive": 5,
+    "metrics_invalid": 0,
+    "metrics_unsupported": 1,
+    "evidence_coverage": "9/13 claims/metrics with sufficient measured evidence",
+    "environment_confounders": [],
+    "verdicts_summary": {
+      "UNCHANGED": 8,
+      "INCONCLUSIVE": 5
+    },
+    "severity_summary": {},
+    "summary_verdict": "COMPLETED"
+  },
+  "exclusions": [],
+  "provenance": {
+    "v0_experiment_id": "EXP-20260913-010",
+    "v1_experiment_id": "EXP-20260913-012",
+    "device_serial": "adb-10BE38254U0003T-PJiTJm._adb-tls-connect._tcp",
+    "build_fingerprint": "iQOO/I2302T/I2302:16/BP2A.250605.031.A3/compiler260714114720:user/release-keys",
+    "v0_apk_sha256": "c02a0430aa40552bf313cb04ffa1d33bacd063a96b98aee7ff5f773922f27fc8",
+    "v1_apk_sha256": "585523f10197d413c7938412769e0951bb631ea3483b78d54d8ce6067e19905c"
+  }
+}

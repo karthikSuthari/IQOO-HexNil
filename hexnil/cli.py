@@ -4,6 +4,7 @@ import argparse
 import datetime
 import json
 import logging
+import statistics
 import sys
 from pathlib import Path
 from typing import List, Optional
@@ -26,6 +27,16 @@ from hexnil.baseline.orchestrator import BaselineExperimentOrchestrator, DEFAULT
 from hexnil.diff.models import ComparisonQualityReport, ComparisonRecord, ComparisonRunPair, PairStatus
 from hexnil.diff.orchestrator import DifferentialExperimentOrchestrator
 from hexnil.diff.store import ComparisonStore
+from hexnil.stats.models import (
+    MetricComparison,
+    MetricEligibility,
+    Severity,
+    StatisticalAnalysisRecord,
+    StatisticalQualityReport,
+    Verdict,
+)
+from hexnil.stats.orchestrator import StatisticalAnalysisOrchestrator
+from hexnil.stats.store import StatisticalAnalysisStore
 
 logger = logging.getLogger("hexnil.cli")
 
@@ -872,6 +883,275 @@ def handle_diff_quality(args: argparse.Namespace, config: HexnilConfig) -> int:
     return 0 if quality.is_clean_comparison else 1
 
 
+def format_human_stats_analysis(record: StatisticalAnalysisRecord, analysis_dir: Optional[Path] = None) -> str:
+    """Format StatisticalAnalysisRecord into human-readable engineering verdict report."""
+    lines = [
+        "Hexnil Statistical Analysis & Regression Detection",
+        "--------------------------------------------------",
+        f"Analysis ID:         {record.analysis_id}",
+        f"Comparison ID:       {record.comparison_id}",
+        f"Created At:          {record.created_at}",
+        f"Analysis Version:    {record.analysis_version}",
+        f"Threshold Version:   {record.threshold_version}",
+        f"Multi-Comparison:    {record.multiple_comparison_policy}",
+        f"Random Seed:         {record.random_seed}",
+        f"Evidence Coverage:   {record.quality.evidence_coverage}",
+        f"Summary Verdict:     [{record.quality.summary_verdict}]",
+        "",
+        "Verdicts Breakdown:",
+    ]
+    for v_key, v_count in record.quality.verdicts_summary.items():
+        lines.append(f"  - {v_key:<16}: {v_count}")
+
+    lines.append("")
+    lines.append("Metric Evaluations:")
+    lines.append(
+        f"  {'Verdict':<14} {'Workload':<16} {'Metric':<26} {'Delta':<20} {'95% CI':<24} {'p-value':<9} {'Effect':<8} {'Severity'}"
+    )
+    lines.append("  " + "-" * 122)
+
+    for m in record.metric_results:
+        v_str = f"[{m.verdict.value}]"
+        w_str = m.workload_id
+        m_str = m.metric_name
+
+        if m.absolute_delta is not None:
+            sign = "+" if m.absolute_delta > 0 else ""
+            pct_str = f" ({m.percent_delta:+.1f}%)" if m.percent_delta is not None else ""
+            d_str = f"{sign}{m.absolute_delta:.1f} {m.metric_unit}{pct_str}"
+        else:
+            d_str = "N/A"
+
+        if m.confidence_interval and m.confidence_interval.ci_lower is not None:
+            ci_str = f"[{m.confidence_interval.ci_lower:+.1f}, {m.confidence_interval.ci_upper:+.1f}]"
+        else:
+            ci_str = "(inconclusive)"
+
+        if m.statistical_test and m.statistical_test.p_value is not None:
+            p_str = f"{m.statistical_test.p_value:.4f}"
+        else:
+            p_str = "N/A"
+
+        if m.effect_size is not None:
+            eff_str = f"d={m.effect_size:.2f}"
+        else:
+            eff_str = "N/A"
+
+        sev_str = m.severity.value
+
+        lines.append(
+            f"  {v_str:<14} {w_str:<16} {m_str:<26} {d_str:<20} {ci_str:<24} {p_str:<9} {eff_str:<8} {sev_str}"
+        )
+
+    if record.quality.environment_confounders:
+        lines.append("")
+        lines.append("Environmental Confounders:")
+        for c in record.quality.environment_confounders:
+            lines.append(f"  [!] {c}")
+
+    if record.exclusions:
+        lines.append("")
+        lines.append(f"Excluded Pairs: {len(record.exclusions)} pair(s) excluded due to mismatches/contamination")
+
+    if analysis_dir:
+        lines.append("")
+        lines.append(f"Persisted Statistical Evidence: {analysis_dir}")
+
+    return "\n".join(lines)
+
+
+def format_human_stats_metrics(record: StatisticalAnalysisRecord, workload_filter: Optional[str] = None) -> str:
+    """Format detailed individual metric comparisons and inferential testing results."""
+    lines = [
+        f"Hexnil Metric Detailed Comparisons ({record.comparison_id})",
+        "-----------------------------------------------------------------------------------------",
+    ]
+    results = record.metric_results
+    if workload_filter:
+        results = [m for m in results if m.workload_id == workload_filter]
+
+    if not results:
+        lines.append("No metric comparisons matching criteria.")
+        return "\n".join(lines)
+
+    for m in results:
+        lines.append("")
+        lines.append(f"Workload: {m.workload_id} | Metric: {m.metric_name} ({m.direction.value})")
+        lines.append(f"  Verdict:               [{m.verdict.value}] (Severity: {m.severity.value})")
+        lines.append(f"  Eligibility:           {m.eligibility.value}")
+        lines.append(f"  Sample Count:          n={m.sample_count} valid matched pairs")
+
+        if m.sample_count > 0 and m.v0_values and m.v1_values:
+            v0_mean = statistics.mean(m.v0_values)
+            v1_mean = statistics.mean(m.v1_values)
+            lines.append(f"  V0 Baseline Mean:      {v0_mean:.2f} {m.metric_unit}")
+            lines.append(f"  V1 Update Mean:        {v1_mean:.2f} {m.metric_unit}")
+
+        if m.absolute_delta is not None:
+            pct_str = f" ({m.percent_delta:+.2f}%)" if m.percent_delta is not None else ""
+            lines.append(f"  Reported Delta:        {m.absolute_delta:+.2f} {m.metric_unit}{pct_str}")
+
+        if m.confidence_interval and m.confidence_interval.ci_lower is not None:
+            ci = m.confidence_interval
+            lines.append(f"  Confidence Interval:   [{ci.ci_lower:+.2f}, {ci.ci_upper:+.2f}] (method: {ci.method}, level: {ci.confidence_level})")
+
+        if m.statistical_test:
+            st = m.statistical_test
+            p_val = f"{st.p_value:.4f}" if st.p_value is not None else "N/A"
+            adj_p = f"{st.adjusted_p_value:.4f}" if st.adjusted_p_value is not None else "N/A"
+            lines.append(f"  Statistical Test:      {st.test_name} (status: {st.status}, p={p_val}, p_adj={adj_p})")
+
+        if m.effect_size is not None:
+            lines.append(f"  Effect Size:           {m.effect_size:.3f} ({m.effect_size_method})")
+
+        if m.threshold:
+            lines.append(f"  Engineering Threshold: min_abs={m.threshold.meaningful_change_absolute}, min_pct={m.threshold.meaningful_change_percent}%")
+
+        lines.append(f"  Verdict Justification: {m.verdict_reason}")
+
+    return "\n".join(lines)
+
+
+def format_human_stats_quality(quality: StatisticalQualityReport, analysis_dir: Optional[Path] = None) -> str:
+    """Format Phase 6 statistical quality audit report."""
+    lines = [
+        "Hexnil Statistical Analysis Quality Audit",
+        "----------------------------------------",
+        f"Analysis ID:         {quality.analysis_id}",
+        f"Comparison ID:       {quality.comparison_id}",
+        f"Summary Verdict:     [{quality.summary_verdict}]",
+        f"Evidence Coverage:   {quality.evidence_coverage}",
+        "",
+        "Metric Classification Summary:",
+        f"  Total Analyzed:    {quality.metrics_analyzed}",
+        f"  Eligible:          {quality.metrics_eligible}",
+        f"  Inconclusive:      {quality.metrics_inconclusive}",
+        f"  Unsupported:       {quality.metrics_unsupported}",
+        f"  Invalid:           {quality.metrics_invalid}",
+        "",
+        "Verdicts Breakdown:",
+    ]
+    for k, v in quality.verdicts_summary.items():
+        lines.append(f"  - {k:<16}: {v}")
+
+    lines.append("")
+    lines.append("Severity Breakdown:")
+    for k, v in quality.severity_summary.items():
+        lines.append(f"  - {k:<16}: {v}")
+
+    if quality.environment_confounders:
+        lines.append("")
+        lines.append("Environmental Confounders:")
+        for c in quality.environment_confounders:
+            lines.append(f"  [!] {c}")
+
+    if analysis_dir:
+        lines.append("")
+        lines.append(f"Persisted Evidence:  {analysis_dir}")
+
+    return "\n".join(lines)
+
+
+def handle_stats_inspect(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Inspect a comparison package for statistical readiness."""
+    exp_store = ExperimentStore(config.data_dir)
+    comp_store = ComparisonStore(config.data_dir / "comparisons")
+    stats_store = StatisticalAnalysisStore(config.data_dir / "comparisons")
+    orchestrator = StatisticalAnalysisOrchestrator(exp_store, comp_store, stats_store)
+
+    inspection = orchestrator.inspect_comparison(args.comparison_id)
+    if getattr(args, "json", False):
+        print(json.dumps(inspection, indent=2))
+        return 0 if inspection["is_ready_for_stats"] else 1
+
+    print("Hexnil Comparison Statistical Readiness Inspection")
+    print("--------------------------------------------------")
+    print(f"Comparison ID:       {inspection['comparison_id']}")
+    print(f"V0 Baseline ID:      {inspection['v0_experiment_id']}")
+    print(f"V1 Update ID:        {inspection['v1_experiment_id']}")
+    print(f"Device:              {inspection['device_model']} ({inspection['device_serial']})")
+    print(f"V0 Version:          {inspection['v0_version']}")
+    print(f"V1 Version:          {inspection['v1_version']}")
+    print(f"Total Run Pairs:     {inspection['total_pairs']}")
+    print(f"Matched Run Pairs:   {inspection['matched_pairs']}")
+    print(f"Unmatched Pairs:     {inspection['unmatched_pairs']}")
+    print(f"Clean Comparison:    {'YES' if inspection['is_clean_comparison'] else 'NO'}")
+    print(f"Ready for Stats:     {'YES' if inspection['is_ready_for_stats'] else 'NO'}")
+    return 0 if inspection["is_ready_for_stats"] else 1
+
+
+def handle_stats_analyze(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Execute deterministic statistical analysis and persist regression evidence."""
+    exp_store = ExperimentStore(config.data_dir)
+    comp_store = ComparisonStore(config.data_dir / "comparisons")
+    stats_store = StatisticalAnalysisStore(config.data_dir / "comparisons")
+    orchestrator = StatisticalAnalysisOrchestrator(exp_store, comp_store, stats_store)
+
+    alpha = getattr(args, "alpha", 0.05) or 0.05
+    policy = getattr(args, "correction", "none") or "none"
+    seed = getattr(args, "seed", 42) or 42
+
+    record = orchestrator.analyze_comparison(
+        comparison_id=args.comparison_id,
+        alpha=alpha,
+        multiple_comparison_policy=policy,
+        random_seed=seed,
+    )
+
+    if getattr(args, "json", False):
+        print(record.model_dump_json(indent=2))
+        return 0
+
+    analysis_dir = stats_store.get_analysis_dir(record.comparison_id)
+    print(format_human_stats_analysis(record, analysis_dir))
+    return 0
+
+
+def handle_stats_show(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Display persisted statistical analysis summary."""
+    stats_store = StatisticalAnalysisStore(config.data_dir / "comparisons")
+    record = stats_store.load_analysis(args.comparison_id)
+
+    if getattr(args, "json", False):
+        print(record.model_dump_json(indent=2))
+        return 0
+
+    analysis_dir = stats_store.get_analysis_dir(record.comparison_id)
+    print(format_human_stats_analysis(record, analysis_dir))
+    return 0
+
+
+def handle_stats_metrics(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Display individual metric comparison cards and hypothesis test details."""
+    stats_store = StatisticalAnalysisStore(config.data_dir / "comparisons")
+    record = stats_store.load_analysis(args.comparison_id)
+    wl_filter = getattr(args, "workload", None)
+
+    if getattr(args, "json", False):
+        results = record.metric_results
+        if wl_filter:
+            results = [m for m in results if m.workload_id == wl_filter]
+        print(json.dumps([m.model_dump() for m in results], indent=2))
+        return 0
+
+    print(format_human_stats_metrics(record, workload_filter=wl_filter))
+    return 0
+
+
+def handle_stats_quality(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Display statistical analysis quality audit and evidence coverage."""
+    stats_store = StatisticalAnalysisStore(config.data_dir / "comparisons")
+    record = stats_store.load_analysis(args.comparison_id)
+
+    if getattr(args, "json", False):
+        print(record.quality.model_dump_json(indent=2))
+        return 0
+
+    analysis_dir = stats_store.get_analysis_dir(record.comparison_id)
+    print(format_human_stats_quality(record.quality, analysis_dir))
+    return 0
+
+
 def create_parser() -> argparse.ArgumentParser:
 
 
@@ -1234,6 +1514,93 @@ def create_parser() -> argparse.ArgumentParser:
         help="Output quality audit as JSON.",
     )
 
+    # 7. 'stats' command group (Phase 6)
+    stats_parser = subparsers.add_parser(
+        "stats", help="Phase 6 statistical comparison and regression detection"
+    )
+    stats_subparsers = stats_parser.add_subparsers(
+        dest="subcommand", help="Statistical analysis subcommands"
+    )
+
+    # stats inspect <comparison_id>
+    stats_insp_parser = stats_subparsers.add_parser(
+        "inspect", help="Inspect a comparison package to verify readiness for statistical comparison"
+    )
+    stats_insp_parser.add_argument("comparison_id", help="Comparison ID to inspect")
+    stats_insp_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output inspection results as JSON.",
+    )
+
+    # stats analyze <comparison_id>
+    stats_analyze_parser = stats_subparsers.add_parser(
+        "analyze", help="Run deterministic statistical analysis on a matched comparison package"
+    )
+    stats_analyze_parser.add_argument("comparison_id", help="Comparison ID to analyze")
+    stats_analyze_parser.add_argument(
+        "--alpha",
+        type=float,
+        default=0.05,
+        help="Significance level alpha for hypothesis testing (default: 0.05).",
+    )
+    stats_analyze_parser.add_argument(
+        "--correction",
+        choices=["none", "holm", "fdr"],
+        default="none",
+        help="Multiple comparison correction policy (default: none).",
+    )
+    stats_analyze_parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="Deterministic random seed for bootstrap resamples (default: 42).",
+    )
+    stats_analyze_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output statistical analysis record as JSON.",
+    )
+
+    # stats show <comparison_id>
+    stats_show_parser = stats_subparsers.add_parser(
+        "show", help="Show persisted statistical analysis summary and verdicts"
+    )
+    stats_show_parser.add_argument("comparison_id", help="Comparison ID to display")
+    stats_show_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output analysis record as JSON.",
+    )
+
+    # stats metrics <comparison_id>
+    stats_metrics_parser = stats_subparsers.add_parser(
+        "metrics", help="Show detailed metric comparisons and statistical evidence"
+    )
+    stats_metrics_parser.add_argument("comparison_id", help="Comparison ID to display")
+    stats_metrics_parser.add_argument(
+        "--workload",
+        "-w",
+        default=None,
+        help="Filter metrics by workload ID.",
+    )
+    stats_metrics_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output metric comparisons as JSON.",
+    )
+
+    # stats quality <comparison_id>
+    stats_qual_parser = stats_subparsers.add_parser(
+        "quality", help="Show statistical analysis quality audit and evidence coverage"
+    )
+    stats_qual_parser.add_argument("comparison_id", help="Comparison ID to display")
+    stats_qual_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output quality audit as JSON.",
+    )
+
     return parser
 
 
@@ -1321,6 +1688,21 @@ def main(argv=None) -> int:
                 return handle_diff_pairs(args, config)
             elif args.subcommand == "quality":
                 return handle_diff_quality(args, config)
+            else:
+                parser.print_help()
+                return 1
+
+        elif args.command == "stats":
+            if args.subcommand == "inspect":
+                return handle_stats_inspect(args, config)
+            elif args.subcommand == "analyze":
+                return handle_stats_analyze(args, config)
+            elif args.subcommand == "show":
+                return handle_stats_show(args, config)
+            elif args.subcommand == "metrics":
+                return handle_stats_metrics(args, config)
+            elif args.subcommand == "quality":
+                return handle_stats_quality(args, config)
             else:
                 parser.print_help()
                 return 1

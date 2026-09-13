@@ -1,0 +1,6 @@
+{
+  "analysis_version": "1.0.0",
+  "threshold_version": "1.0.0",
+  "multiple_comparison_policy": "NONE",
+  "random_seed": 42
+}

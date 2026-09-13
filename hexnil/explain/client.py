@@ -26,7 +26,15 @@ class GroqClient:
         endpoint: str = DEFAULT_GROQ_ENDPOINT,
         timeout_seconds: float = 15.0,
     ):
-        self.api_key = api_key or os.environ.get("GROQ_API_KEY")
+        if not api_key:
+            try:
+                from dotenv import load_dotenv
+                load_dotenv()
+            except ImportError:
+                pass
+            self.api_key = os.environ.get("GROQ_API_KEY")
+        else:
+            self.api_key = api_key
         self.model = model
         self.endpoint = endpoint
         self.timeout_seconds = timeout_seconds

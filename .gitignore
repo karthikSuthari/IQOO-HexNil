@@ -10,6 +10,8 @@ venv/
 .pytest_cache/
 .coverage
 htmlcov/
+.env
+.env.*
 
 # Hexnil experiment data
 data/experiments/*.tmp

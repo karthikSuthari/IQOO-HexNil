@@ -1,0 +1,72 @@
+[
+  {
+    "claim_id": "CLM-001",
+    "raw_text": "- Improved battery efficiency during continuous background video playback and streaming",
+    "normalized_text": "Improved battery efficiency during continuous background video playback and streaming",
+    "subsystem": "battery",
+    "condition": "continuous background video playback",
+    "metric": "battery_discharge_proxy",
+    "metric_status": "SUPPORTED",
+    "expected_direction": "LOWER_IS_BETTER",
+    "confidence": 0.85,
+    "source": "release_notes",
+    "extraction_method": "RULE_BASED",
+    "mapping_notes": "Mapped to measured Phase 6 battery_discharge_proxy (lower discharge is better)."
+  },
+  {
+    "claim_id": "CLM-002",
+    "raw_text": "- Faster cold app startup latency and eliminated splash screen launch delay",
+    "normalized_text": "Faster cold app startup latency and eliminated splash screen launch delay",
+    "subsystem": "startup/performance",
+    "condition": "general application execution",
+    "metric": "startup_duration_ms",
+    "metric_status": "SUPPORTED",
+    "expected_direction": "LOWER_IS_BETTER",
+    "confidence": 0.95,
+    "source": "release_notes",
+    "extraction_method": "RULE_BASED",
+    "mapping_notes": "Mapped to measured Phase 6 startup_duration_ms (lower latency is better)."
+  },
+  {
+    "claim_id": "CLM-003",
+    "raw_text": "- Optimized ART heap memory allocations to reduce memory pressure",
+    "normalized_text": "Optimized ART heap memory allocations to reduce memory pressure",
+    "subsystem": "memory",
+    "condition": "general application execution",
+    "metric": "app_heap_allocated_mb",
+    "metric_status": "SUPPORTED",
+    "expected_direction": "LOWER_IS_BETTER",
+    "confidence": 0.95,
+    "source": "release_notes",
+    "extraction_method": "RULE_BASED",
+    "mapping_notes": "Mapped to measured app_heap_allocated_mb (lower heap allocation is better)."
+  },
+  {
+    "claim_id": "CLM-004",
+    "raw_text": "- Smooth 120fps UI scrolling performance and eliminated jank frames",
+    "normalized_text": "Smooth 120fps UI scrolling performance and eliminated jank frames",
+    "subsystem": "ui/frame performance",
+    "condition": "general application execution",
+    "metric": "ui_frame_jank_percent",
+    "metric_status": "SUPPORTED",
+    "expected_direction": "LOWER_IS_BETTER",
+    "confidence": 0.95,
+    "source": "release_notes",
+    "extraction_method": "RULE_BASED",
+    "mapping_notes": "Mapped to measured ui_frame_jank_percent (lower jank percentage is better)."
+  },
+  {
+    "claim_id": "CLM-005",
+    "raw_text": "- Ultra-dynamic revolutionary AI camera enhancements and cinematic magic filters",
+    "normalized_text": "Ultra-dynamic revolutionary AI camera enhancements and cinematic magic filters",
+    "subsystem": "unknown",
+    "condition": "general application execution",
+    "metric": "UNSUPPORTED",
+    "metric_status": "UNSUPPORTED",
+    "expected_direction": "UNKNOWN",
+    "confidence": 0.2,
+    "source": "release_notes",
+    "extraction_method": "RULE_BASED",
+    "mapping_notes": "Claim wording lacks specific measurable telemetry indicator in Hexnil test suite."
+  }
+]

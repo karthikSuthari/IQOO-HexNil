@@ -1,0 +1,30 @@
+{
+  "model_name": "RandomForestCodeRiskClassifier",
+  "version": "1.0.0",
+  "algorithm": "RandomForestClassifier",
+  "n_estimators": 100,
+  "max_depth": 5,
+  "random_state": 42,
+  "features": [
+    "delta_loc",
+    "delta_nom",
+    "delta_noc",
+    "delta_wmc",
+    "delta_cbo",
+    "delta_bad_smells"
+  ],
+  "evaluation": {
+    "split_strategy": "App-Disjoint (30% test)",
+    "accuracy": 0.7142857142857143,
+    "f1_score": 0.8076923076923077,
+    "roc_auc": 0.8083670715249662
+  },
+  "feature_importances": {
+    "delta_loc": 0.23421161919064445,
+    "delta_nom": 0.13224785512279913,
+    "delta_noc": 0.11086023556025672,
+    "delta_wmc": 0.38136362136371543,
+    "delta_cbo": 0.050499401639150975,
+    "delta_bad_smells": 0.0908172671234333
+  }
+}

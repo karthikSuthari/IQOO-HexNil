@@ -101,6 +101,13 @@ class HexnilConfig:
     data_dir: Path = field(default_factory=lambda: Path("data/experiments"))
     adb_timeout_seconds: float = 10.0
 
+    @property
+    def predictions_dir(self) -> Path:
+        """Directory for Phase 7 prediction artifacts (default: data/predictions)."""
+        if self.data_dir.name == "experiments":
+            return self.data_dir.parent / "predictions"
+        return self.data_dir / "predictions"
+
     @classmethod
     def load(
         cls,

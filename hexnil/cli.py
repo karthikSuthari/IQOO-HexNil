@@ -7,7 +7,7 @@ import logging
 import statistics
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from hexnil.config import HexnilConfig
 from hexnil.device.adb import AdbClient
@@ -37,6 +37,25 @@ from hexnil.stats.models import (
 )
 from hexnil.stats.orchestrator import StatisticalAnalysisOrchestrator
 from hexnil.stats.store import StatisticalAnalysisStore
+from hexnil.predict import (
+    ClaimPrediction,
+    ClaimSubsystem,
+    ExtractionMethod,
+    FeatureAvailability,
+    MetricStatus,
+    PredictionPath,
+    PredictionQuality,
+    PredictionStore,
+    PrioritizedWorkload,
+    RiskBand,
+    StructuredClaim,
+    ValidationPlan,
+    audit_prediction_quality,
+    create_validation_plan,
+    ingest_raw_text,
+    normalize_claim_text,
+    structure_claim,
+)
 
 logger = logging.getLogger("hexnil.cli")
 
@@ -1152,6 +1171,260 @@ def handle_stats_quality(args: argparse.Namespace, config: HexnilConfig) -> int:
     return 0
 
 
+def resolve_input_text(input_arg: str) -> str:
+    """Resolve input text from direct string or file path."""
+    p = Path(input_arg)
+    if p.exists() and p.is_file():
+        return p.read_text(encoding="utf-8")
+    return input_arg
+
+
+def resolve_code_churn(churn_arg: Optional[str]) -> Optional[Dict[str, Any]]:
+    """Resolve code churn features from JSON string or file path."""
+    if not churn_arg:
+        return None
+    p = Path(churn_arg)
+    if p.exists() and p.is_file():
+        try:
+            return json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            return None
+    try:
+        return json.loads(churn_arg)
+    except Exception:
+        return None
+
+
+def format_human_prediction_plan(
+    plan: ValidationPlan,
+    quality: Optional[PredictionQuality] = None,
+    plan_dir: Optional[Path] = None,
+) -> str:
+    """Format master validation plan for human CLI presentation."""
+    lines = [
+        "Hexnil Claim Intelligence & Pre-Update Validation Plan",
+        "======================================================",
+        f"Plan ID:                 {plan.plan_id}",
+        f"Created At:              {plan.created_at}",
+        f"Prediction Path:         {plan.overall_path.value}",
+        f"Overall Validation Risk: {plan.overall_risk_score:.2f} ({plan.overall_risk_band.value})",
+        f"Release Notes Hash:      {plan.source_release_notes_hash[:16]}...",
+        "",
+        "Available Features:",
+        f"  Features:              {', '.join(plan.feature_availability.available_features) or 'None'}",
+        f"  Missing:               {', '.join(plan.feature_availability.missing_features) or 'None'}",
+        "",
+        f"Extracted Claims ({len(plan.claims)}):",
+        "----------------------------------------",
+    ]
+
+    for c in plan.claims:
+        lines.append(f"  [{c.claim_id}] \"{c.normalized_text}\"")
+        lines.append(f"    Subsystem:           {c.subsystem}")
+        lines.append(f"    Condition:           {c.condition}")
+        lines.append(f"    Metric:              {c.metric} ({c.metric_status.value})")
+        lines.append(f"    Expected Direction:  {c.expected_direction.value}")
+        lines.append(f"    Confidence:          {c.confidence:.2f}")
+
+    lines.append("")
+    lines.append(f"Prioritized Validation Workloads ({len(plan.prioritized_workloads)}):")
+    lines.append("--------------------------------------------------")
+    for pw in plan.prioritized_workloads:
+        lines.append(f"  Rank #{pw.priority_rank}: {pw.workload_id} (Priority Score: {pw.priority_score:.4f})")
+        lines.append(f"    Target Metrics:      {', '.join(pw.target_metrics)}")
+        lines.append(f"    Associated Claims:   {', '.join(pw.associated_claim_ids)}")
+        lines.append(f"    Execution Type:      {pw.execution_type}")
+        lines.append(f"    Rationale:           {pw.rationale}")
+
+    if quality:
+        lines.append("")
+        lines.append("Prediction Quality Audit:")
+        lines.append("-------------------------")
+        lines.append(f"  Verdict:               {quality.quality_verdict}")
+        lines.append(f"  Claims Mapped:         {quality.claims_mapped}/{quality.claims_extracted}")
+        lines.append(f"  Metrics Supported:     {quality.metrics_supported}/{quality.claims_extracted}")
+        lines.append(f"  Workloads Recommended: {quality.workloads_recommended}")
+
+    if plan_dir:
+        lines.append("")
+        lines.append(f"Persisted Artifacts:     {plan_dir}")
+
+    lines.append("")
+    lines.append("CORE PRINCIPLE: PREDICTION GUIDES TESTING — MEASUREMENT PROVES CHANGE")
+    return "\n".join(lines)
+
+
+def format_human_prediction_claims(claims: List[StructuredClaim]) -> str:
+    """Format structured claims for human CLI presentation."""
+    lines = [
+        "Hexnil Structured Update Claims",
+        "===============================",
+        f"Total Claims: {len(claims)}",
+        "",
+    ]
+    for c in claims:
+        lines.append(f"[{c.claim_id}] {c.normalized_text}")
+        lines.append(f"  Raw Source:          \"{c.raw_text}\"")
+        lines.append(f"  Subsystem:           {c.subsystem}")
+        lines.append(f"  Condition:           {c.condition}")
+        lines.append(f"  Target Metric:       {c.metric} [{c.metric_status.value}]")
+        lines.append(f"  Expected Direction:  {c.expected_direction.value}")
+        lines.append(f"  Extraction Method:   {c.extraction_method.value} (Confidence: {c.confidence:.2f})")
+        if c.mapping_notes:
+            lines.append(f"  Notes:               {c.mapping_notes}")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def format_human_prediction_workloads(workloads: List[PrioritizedWorkload]) -> str:
+    """Format prioritized workloads for human CLI presentation."""
+    lines = [
+        "Hexnil Deterministic Prioritized Workloads",
+        "==========================================",
+        f"Total Workloads: {len(workloads)}",
+        "",
+    ]
+    for pw in workloads:
+        lines.append(f"Rank #{pw.priority_rank} — {pw.workload_id}")
+        lines.append(f"  Priority Score:      {pw.priority_score:.4f}")
+        lines.append(f"  Target Metrics:      {', '.join(pw.target_metrics)}")
+        lines.append(f"  Associated Claims:   {', '.join(pw.associated_claim_ids)}")
+        lines.append(f"  Execution Type:      {pw.execution_type}")
+        if pw.estimated_duration_ms:
+            lines.append(f"  Est. Duration:       {pw.estimated_duration_ms} ms")
+        lines.append(f"  Rationale:           {pw.rationale}")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def format_human_prediction_quality(
+    quality: PredictionQuality,
+    plan_dir: Optional[Path] = None,
+) -> str:
+    """Format quality audit for human CLI presentation."""
+    lines = [
+        "Hexnil Pre-Update Prediction Quality Audit",
+        "==========================================",
+        f"Plan ID:                  {quality.plan_id}",
+        f"Quality Verdict:          {quality.quality_verdict}",
+        f"Claims Extracted:         {quality.claims_extracted}",
+        f"Claims Mapped:            {quality.claims_mapped}",
+        f"Claims Unmapped:          {quality.claims_unmapped}",
+        f"Metrics Supported:        {quality.metrics_supported}",
+        f"Metrics Unsupported:      {quality.metrics_unsupported}",
+        f"Predictions Generated:    {quality.predictions_generated}",
+        f"Predictions Inconclusive: {quality.predictions_inconclusive}",
+        f"Workloads Recommended:    {quality.workloads_recommended}",
+        f"Feature Availability:     {quality.feature_availability_summary}",
+    ]
+    if plan_dir:
+        lines.append(f"Persisted Artifacts:      {plan_dir}")
+    return "\n".join(lines)
+
+
+def handle_predict_inspect(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Inspect release notes and extract candidate claims."""
+    raw_text = resolve_input_text(args.input)
+    raw_chunks = ingest_raw_text(raw_text)
+    claims: List[StructuredClaim] = []
+    for idx, item in enumerate(raw_chunks, start=1):
+        norm = normalize_claim_text(item.raw_text)
+        if norm:
+            claims.append(structure_claim(item.raw_text, norm, idx))
+
+    if getattr(args, "json", False):
+        print(json.dumps([c.model_dump() for c in claims], indent=2))
+        return 0
+
+    print(format_human_prediction_claims(claims))
+    return 0
+
+
+def handle_predict_analyze(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Run full claim extraction, risk prediction, workload prioritization, and plan persistence."""
+    raw_text = resolve_input_text(args.input)
+    code_churn = resolve_code_churn(getattr(args, "code_churn", None))
+    plan_id = getattr(args, "plan_id", None)
+
+    plan = create_validation_plan(
+        raw_release_notes=raw_text,
+        plan_id=plan_id,
+        code_changes=code_churn,
+        history_available=False,
+    )
+    quality = audit_prediction_quality(plan)
+
+    store = PredictionStore(config.predictions_dir)
+    store.save_plan(plan, quality=quality)
+    plan_dir = store.get_plan_dir(plan.plan_id)
+
+    if getattr(args, "json", False):
+        print(plan.model_dump_json(indent=2))
+        return 0
+
+    print(format_human_prediction_plan(plan, quality, plan_dir))
+    return 0
+
+
+def handle_predict_show(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Display persisted pre-update validation plan."""
+    store = PredictionStore(config.predictions_dir)
+    plan = store.load_plan(args.plan_id)
+    quality = store.load_quality(args.plan_id)
+    plan_dir = store.get_plan_dir(plan.plan_id)
+
+    if getattr(args, "json", False):
+        print(plan.model_dump_json(indent=2))
+        return 0
+
+    print(format_human_prediction_plan(plan, quality, plan_dir))
+    return 0
+
+
+def handle_predict_claims(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Display extracted structured claims for a plan."""
+    store = PredictionStore(config.predictions_dir)
+    plan = store.load_plan(args.plan_id)
+
+    if getattr(args, "json", False):
+        print(json.dumps([c.model_dump() for c in plan.claims], indent=2))
+        return 0
+
+    print(format_human_prediction_claims(plan.claims))
+    return 0
+
+
+def handle_predict_workloads(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Display prioritized validation workloads for a plan."""
+    store = PredictionStore(config.predictions_dir)
+    plan = store.load_plan(args.plan_id)
+
+    if getattr(args, "json", False):
+        print(json.dumps([pw.model_dump() for pw in plan.prioritized_workloads], indent=2))
+        return 0
+
+    print(format_human_prediction_workloads(plan.prioritized_workloads))
+    return 0
+
+
+def handle_predict_quality(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Display prediction quality audit report for a plan."""
+    store = PredictionStore(config.predictions_dir)
+    quality = store.load_quality(args.plan_id)
+    if not quality:
+        plan = store.load_plan(args.plan_id)
+        quality = audit_prediction_quality(plan)
+
+    plan_dir = store.get_plan_dir(args.plan_id)
+
+    if getattr(args, "json", False):
+        print(quality.model_dump_json(indent=2))
+        return 0
+
+    print(format_human_prediction_quality(quality, plan_dir))
+    return 0
+
+
 def create_parser() -> argparse.ArgumentParser:
 
 
@@ -1601,6 +1874,90 @@ def create_parser() -> argparse.ArgumentParser:
         help="Output quality audit as JSON.",
     )
 
+    # 8. 'predict' command group (Phase 7)
+    predict_parser = subparsers.add_parser(
+        "predict", help="Phase 7 claim intelligence and pre-update prediction"
+    )
+    predict_subparsers = predict_parser.add_subparsers(
+        dest="subcommand", help="Prediction subcommands"
+    )
+
+    # predict inspect <input>
+    pred_insp_parser = predict_subparsers.add_parser(
+        "inspect", help="Inspect release notes and extract candidate claims"
+    )
+    pred_insp_parser.add_argument("input", help="Release notes text string or file path")
+    pred_insp_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output extracted claims as JSON.",
+    )
+
+    # predict analyze <input>
+    pred_analyze_parser = predict_subparsers.add_parser(
+        "analyze", help="Extract claims, predict validation risk, prioritize workloads, and persist plan"
+    )
+    pred_analyze_parser.add_argument("input", help="Release notes text string or file path")
+    pred_analyze_parser.add_argument(
+        "--plan-id",
+        default=None,
+        help="Custom plan ID override (e.g. PLAN-20260913-001).",
+    )
+    pred_analyze_parser.add_argument(
+        "--code-churn",
+        default=None,
+        help="JSON string or file path containing code change AST complexity metrics.",
+    )
+    pred_analyze_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output validation plan as JSON.",
+    )
+
+    # predict show <plan_id>
+    pred_show_parser = predict_subparsers.add_parser(
+        "show", help="Show persisted pre-update validation plan"
+    )
+    pred_show_parser.add_argument("plan_id", help="Plan ID to display")
+    pred_show_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output plan as JSON.",
+    )
+
+    # predict claims <plan_id>
+    pred_claims_parser = predict_subparsers.add_parser(
+        "claims", help="Show structured claims extracted in a validation plan"
+    )
+    pred_claims_parser.add_argument("plan_id", help="Plan ID to display")
+    pred_claims_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output claims as JSON.",
+    )
+
+    # predict workloads <plan_id>
+    pred_wl_parser = predict_subparsers.add_parser(
+        "workloads", help="Show prioritized validation workloads for a plan"
+    )
+    pred_wl_parser.add_argument("plan_id", help="Plan ID to display")
+    pred_wl_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output workloads as JSON.",
+    )
+
+    # predict quality <plan_id>
+    pred_qual_parser = predict_subparsers.add_parser(
+        "quality", help="Show pre-update prediction quality audit"
+    )
+    pred_qual_parser.add_argument("plan_id", help="Plan ID to display")
+    pred_qual_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output quality audit as JSON.",
+    )
+
     return parser
 
 
@@ -1703,6 +2060,23 @@ def main(argv=None) -> int:
                 return handle_stats_metrics(args, config)
             elif args.subcommand == "quality":
                 return handle_stats_quality(args, config)
+            else:
+                parser.print_help()
+                return 1
+
+        elif args.command == "predict":
+            if args.subcommand in (None, "inspect"):
+                return handle_predict_inspect(args, config)
+            elif args.subcommand == "analyze":
+                return handle_predict_analyze(args, config)
+            elif args.subcommand == "show":
+                return handle_predict_show(args, config)
+            elif args.subcommand == "claims":
+                return handle_predict_claims(args, config)
+            elif args.subcommand == "workloads":
+                return handle_predict_workloads(args, config)
+            elif args.subcommand == "quality":
+                return handle_predict_quality(args, config)
             else:
                 parser.print_help()
                 return 1

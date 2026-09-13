@@ -16,6 +16,7 @@ private val HexnilColorScheme = darkColorScheme(
     onSurface = HexnilPrimaryText,
     onSurfaceVariant = HexnilSecondaryText,
     outline = HexnilBorder,
+    outlineVariant = HexnilBorderSubtle
 )
 
 @Composable
@@ -24,7 +25,7 @@ fun IQOOHEXNILTheme(
 ) {
     MaterialTheme(
         colorScheme = HexnilColorScheme,
-        typography = Typography,
+        typography = HexnilTypography,
         content = content
     )
 }

@@ -1,0 +1,3 @@
+--------- beginning of main
+09-13 14:30:00.653 30901 30901 E cmd     : BBinder_init Processname  cmd  
+09-13 14:30:00.653 30901 30901 E cmd     : BBinder_init hasGetProcessName  cmd

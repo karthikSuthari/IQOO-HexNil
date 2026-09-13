@@ -1,0 +1,35 @@
+{
+  "comparison_id": "CMP-20260913-001",
+  "v0_experiment_id": "EXP-20260913-010",
+  "v1_experiment_id": "EXP-20260913-012",
+  "device_serial": "adb-10BE38254U0003T-PJiTJm._adb-tls-connect._tcp",
+  "device_model": "vivo I2302",
+  "v0_version": "1.0",
+  "v1_version": "1.1",
+  "v0_apk_sha256": "c02a0430aa40552bf313cb04ffa1d33bacd063a96b98aee7ff5f773922f27fc8",
+  "v1_apk_sha256": "585523f10197d413c7938412769e0951bb631ea3483b78d54d8ce6067e19905c",
+  "workloads_requested": [
+    "startup_01",
+    "cpu_01",
+    "memory_01",
+    "scroll_01",
+    "video_power_01"
+  ],
+  "workloads_matched": [
+    "startup_01",
+    "cpu_01",
+    "memory_01",
+    "scroll_01",
+    "video_power_01"
+  ],
+  "workloads_mismatched": [],
+  "iterations_requested": 3,
+  "v0_valid_runs_count": 15,
+  "v1_valid_runs_count": 15,
+  "matched_pairs_count": 15,
+  "unmatched_pairs_count": 0,
+  "evidence_coverage": "5/5 workloads have matched V0/V1 evidence",
+  "contamination_flags": [],
+  "is_clean_comparison": true,
+  "summary_verdict": "TRUSTED_DIFFERENTIAL_EVIDENCE"
+}

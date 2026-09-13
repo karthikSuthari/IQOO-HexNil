@@ -182,7 +182,7 @@ fun HexnilCompanionScreen(
                         border = BorderStroke(1.dp, HexnilBorder)
                     ) {
                         Text(
-                            text = "PHASE 2",
+                            text = "v1.1",
                             color = HexnilAccentGlow,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,

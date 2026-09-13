@@ -1,0 +1,55 @@
+[
+  {
+    "workload_id": "startup_01",
+    "version": "1.0.0",
+    "configuration_hash": "085d1a2b54a0c08d",
+    "description": "Cold application launch and initial rendering readiness",
+    "preconditions": {
+      "screen_on": true,
+      "battery_min_percent": 15,
+      "thermal_state_max": "moderate",
+      "app_clean_state": true
+    }
+  },
+  {
+    "workload_id": "cpu_01",
+    "version": "1.0.0",
+    "configuration_hash": "6e7f4490bb4eef72",
+    "description": "Deterministic SHA-256 CPU compute workload with fixed seed and iteration count",
+    "preconditions": {
+      "screen_on": true,
+      "battery_min_percent": 15,
+      "thermal_state_max": "moderate"
+    }
+  },
+  {
+    "workload_id": "memory_01",
+    "version": "1.0.0",
+    "configuration_hash": "d57a0caea43ad47f",
+    "description": "Deterministic memory allocation, touch pattern, and garbage collection cycle",
+    "preconditions": {
+      "screen_on": true,
+      "battery_min_percent": 15
+    }
+  },
+  {
+    "workload_id": "scroll_01",
+    "version": "1.0.0",
+    "configuration_hash": "be7217ff86a2ef88",
+    "description": "Deterministic fixed-distance vertical scrolling over local view items",
+    "preconditions": {
+      "screen_on": true,
+      "battery_min_percent": 15
+    }
+  },
+  {
+    "workload_id": "video_power_01",
+    "version": "1.0.0",
+    "configuration_hash": "b794a8f175d4aa46",
+    "description": "Deterministic local media playback and display battery discharge proxy",
+    "preconditions": {
+      "screen_on": true,
+      "battery_min_percent": 15
+    }
+  }
+]

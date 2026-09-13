@@ -23,8 +23,12 @@ from hexnil.workloads.models import RunStatus, WorkloadDefinition, WorkloadRun
 from hexnil.workloads.registry import WorkloadNotFoundError, WorkloadRegistry
 from hexnil.baseline.models import QualityReport, StabilizationPolicy
 from hexnil.baseline.orchestrator import BaselineExperimentOrchestrator, DEFAULT_BASELINE_WORKLOAD_SUITE
+from hexnil.diff.models import ComparisonQualityReport, ComparisonRecord, ComparisonRunPair, PairStatus
+from hexnil.diff.orchestrator import DifferentialExperimentOrchestrator
+from hexnil.diff.store import ComparisonStore
 
 logger = logging.getLogger("hexnil.cli")
+
 
 
 def format_human_status(record: ExperimentRecord, file_path: Optional[Path] = None) -> str:
@@ -663,7 +667,213 @@ def handle_baseline_summary(args: argparse.Namespace, config: HexnilConfig) -> i
     return 0
 
 
+def format_human_comparison_quality(quality: ComparisonQualityReport, cmp_dir: Optional[Path] = None) -> str:
+    """Format Phase 5 ComparisonQualityReport into human-readable output."""
+    lines = [
+        "Hexnil V0 -> V1 Differential Experiment Quality Audit",
+        "-----------------------------------------------------",
+        f"Comparison ID:       {quality.comparison_id}",
+        f"V0 Baseline ID:      {quality.v0_experiment_id}",
+        f"V1 Update ID:        {quality.v1_experiment_id}",
+        f"Device:              {quality.device_model} ({quality.device_serial})",
+        f"Summary Verdict:     [{quality.summary_verdict}]",
+        f"Clean Comparison:    {'YES' if quality.is_clean_comparison else 'NO'}",
+        "",
+        "Software Comparison:",
+        f"  V0 Baseline:       Version {quality.v0_version or 'unknown'} (SHA-256: {quality.v0_apk_sha256 or 'N/A'})",
+        f"  V1 Update:         Version {quality.v1_version or 'unknown'} (SHA-256: {quality.v1_apk_sha256 or 'N/A'})",
+        "",
+        "Workload Suite Matching:",
+        f"  Requested:         {', '.join(quality.workloads_requested)}",
+        f"  Matched Hashes:    {', '.join(quality.workloads_matched) if quality.workloads_matched else 'None'}",
+        f"  Mismatched Hashes: {', '.join(quality.workloads_mismatched) if quality.workloads_mismatched else 'None'}",
+        "",
+        "Run Pairing Accounting:",
+        f"  Iterations/Workload: {quality.iterations_requested}",
+        f"  V0 Valid Runs:     {quality.v0_valid_runs_count}",
+        f"  V1 Valid Runs:     {quality.v1_valid_runs_count}",
+        f"  Matched Run Pairs: {quality.matched_pairs_count}",
+        f"  Unmatched Runs:    {quality.unmatched_pairs_count}",
+        f"  Evidence Coverage: {quality.evidence_coverage}",
+    ]
+    if quality.contamination_flags:
+        lines.append("")
+        lines.append("Contamination Flags:")
+        for flag in quality.contamination_flags:
+            lines.append(f"  [!] {flag}")
+
+    if cmp_dir:
+        lines.append("")
+        lines.append(f"Persisted Comparison Evidence: {cmp_dir}")
+
+    return "\n".join(lines)
+
+
+def format_human_comparison_show(record: ComparisonRecord) -> str:
+    """Format ComparisonRecord into human-readable summary output."""
+    lines = [
+        "Hexnil V0 -> V1 Differential Comparison Record",
+        "----------------------------------------------",
+        f"Comparison ID:       {record.comparison_id}",
+        f"Created At:          {record.created_at}",
+        f"Status:              {record.status}",
+        f"V0 Baseline ID:      {record.v0_experiment_id}",
+        f"V1 Update ID:        {record.v1_experiment_id}",
+        f"Device:              {record.device.manufacturer} {record.device.model} ({record.device.serial})",
+        "",
+        "V0 Software (Baseline):",
+        f"  Package:           {record.v0_software.package}",
+        f"  Version:           {record.v0_software.version_name} (code: {record.v0_software.version_code})",
+        f"  APK SHA-256:       {record.v0_software.apk_sha256 or 'N/A'}",
+        "",
+        "V1 Software (Update):",
+        f"  Package:           {record.v1_software.package}",
+        f"  Version:           {record.v1_software.version_name} (code: {record.v1_software.version_code})",
+        f"  APK SHA-256:       {record.v1_software.apk_sha256 or 'N/A'}",
+        f"  Install Duration:  {record.install_result.duration_ms:.1f} ms -> {record.install_result.outcome.value}",
+        "",
+        "Environment Drift:",
+        f"  Battery Delta:     {record.environment_comparison.battery_level_delta_percent or 0.0:+.1f}%",
+        f"  Thermal Transition:{record.environment_comparison.thermal_status_transition}",
+    ]
+    if record.environment_comparison.drift_summary:
+        for d in record.environment_comparison.drift_summary:
+            lines.append(f"    - {d}")
+
+    lines.append("")
+    lines.append("Matched Run Pairs Summary:")
+    for p in record.run_pairs:
+        status_sym = "[OK]" if p.pair_status == PairStatus.MATCHED else "[WARN]"
+        v0_str = f"V0: {p.v0_duration_ms:.1f} ms" if p.v0_duration_ms is not None else "V0: N/A"
+        v1_str = f"V1: {p.v1_duration_ms:.1f} ms" if p.v1_duration_ms is not None else "V1: N/A"
+        lines.append(
+            f"  {status_sym} [{p.workload_id:<14}] Iteration {p.iteration}: {v0_str:<15} | {v1_str:<15} -> {p.pair_status.value}"
+        )
+        if p.mismatch_reason:
+            lines.append(f"      Reason: {p.mismatch_reason}")
+
+    return "\n".join(lines)
+
+
+def handle_diff_inspect(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Inspect a V0 baseline experiment to verify readiness for comparison."""
+    adb_client = AdbClient(adb_path=config.adb_path)
+    exp_store = ExperimentStore(config.data_dir)
+    comp_store = ComparisonStore(config.data_dir / "comparisons")
+    orchestrator = DifferentialExperimentOrchestrator(adb_client, exp_store, comp_store)
+
+    inspection = orchestrator.inspect_v0_baseline(args.v0_experiment_id)
+    if getattr(args, "json", False):
+        print(json.dumps(inspection, indent=2))
+        return 0 if inspection["is_clean_v0_baseline"] else 1
+
+    print("Hexnil V0 Baseline Readiness Inspection")
+    print("---------------------------------------")
+    print(f"Experiment ID:       {inspection['experiment_id']}")
+    print(f"Device:              {inspection['device_model']} ({inspection['device_serial']})")
+    print(f"Package:             {inspection['package']}")
+    print(f"Version:             {inspection['version']}")
+    print(f"APK SHA-256:         {inspection['apk_sha256'] or 'N/A'}")
+    print(f"Workloads Count:     {inspection['workloads_count']}")
+    print(f"Valid Runs Count:    {inspection['valid_runs_count']}")
+    print(f"Baseline Verdict:    [{inspection['verdict']}]")
+    print(f"Ready for Diff:      {'YES' if inspection['is_clean_v0_baseline'] else 'NO'}")
+    return 0 if inspection["is_clean_v0_baseline"] else 1
+
+
+def handle_diff_run(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Execute a V0 -> V1 differential experiment with APK update and matched runs."""
+    adb_client = AdbClient(adb_path=config.adb_path)
+    discovery = DeviceDiscovery(adb_client)
+    target_device = discovery.select_device(target_serial=args.serial)
+
+    exp_store = ExperimentStore(config.data_dir)
+    comp_store = ComparisonStore(config.data_dir / "comparisons")
+    orchestrator = DifferentialExperimentOrchestrator(adb_client, exp_store, comp_store)
+
+    v1_apk_path = Path(args.apk)
+    iterations = getattr(args, "iterations", 3) or 3
+    cooldown = getattr(args, "cooldown", 2.0) or 2.0
+    policy = StabilizationPolicy(stabilization_cooldown_seconds=cooldown)
+
+    quality_report = orchestrator.run_differential_experiment(
+        v0_experiment_id=args.v0_experiment_id,
+        v1_apk_path=v1_apk_path,
+        serial=target_device.serial,
+        iterations=iterations,
+        stabilization_policy=policy,
+    )
+
+    if getattr(args, "json", False):
+        comp_record = comp_store.load_comparison(quality_report.comparison_id)
+        out = {
+            "quality": quality_report.model_dump(),
+            "comparison": comp_record.model_dump(),
+        }
+        print(json.dumps(out, indent=2))
+    else:
+        cmp_dir = comp_store.get_comparison_dir(quality_report.comparison_id)
+        print(format_human_comparison_quality(quality_report, cmp_dir))
+
+    return 0 if quality_report.is_clean_comparison else 1
+
+
+def handle_diff_show(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Display a saved differential comparison record."""
+    comp_store = ComparisonStore(config.data_dir / "comparisons")
+    comp_record = comp_store.load_comparison(args.comparison_id)
+
+    if getattr(args, "json", False):
+        print(comp_record.model_dump_json(indent=2))
+        return 0
+
+    print(format_human_comparison_show(comp_record))
+    return 0
+
+
+def handle_diff_pairs(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Display matched V0/V1 run pairs for a comparison."""
+    comp_store = ComparisonStore(config.data_dir / "comparisons")
+    pairs = comp_store.load_comparison_pairs(args.comparison_id)
+
+    if getattr(args, "json", False):
+        print(json.dumps([p.model_dump() for p in pairs], indent=2))
+        return 0
+
+    print(f"Hexnil Matched Run Pairs ({args.comparison_id})")
+    print("-----------------------------------------------------------------------------------------")
+    for p in pairs:
+        status_sym = "[OK]" if p.pair_status == PairStatus.MATCHED else "[MISMATCH]"
+        v0_str = f"V0: {p.v0_duration_ms:.1f} ms" if p.v0_duration_ms is not None else "V0: N/A"
+        v1_str = f"V1: {p.v1_duration_ms:.1f} ms" if p.v1_duration_ms is not None else "V1: N/A"
+        print(
+            f"  {status_sym} [{p.workload_id:<14}] Iteration {p.iteration}: {v0_str:<15} | {v1_str:<15} -> {p.pair_status.value}"
+        )
+        if p.mismatch_reason:
+            print(f"      Reason: {p.mismatch_reason}")
+
+    return 0
+
+
+def handle_diff_quality(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Display quality audit report of a differential comparison."""
+    comp_store = ComparisonStore(config.data_dir / "comparisons")
+    quality = comp_store.load_comparison_quality(args.comparison_id)
+    if not quality:
+        print(f"No comparison quality report found for {args.comparison_id}", file=sys.stderr)
+        return 1
+
+    if getattr(args, "json", False):
+        print(quality.model_dump_json(indent=2))
+        return 0
+
+    cmp_dir = comp_store.get_comparison_dir(args.comparison_id)
+    print(format_human_comparison_quality(quality, cmp_dir))
+    return 0 if quality.is_clean_comparison else 1
+
+
 def create_parser() -> argparse.ArgumentParser:
+
 
     """Construct CLI argument parser."""
     parser = argparse.ArgumentParser(
@@ -931,6 +1141,99 @@ def create_parser() -> argparse.ArgumentParser:
         help="Output summary as JSON.",
     )
 
+    # 6. 'diff' command group (Phase 5)
+    diff_parser = subparsers.add_parser(
+        "diff", help="Phase 5 V0 -> V1 differential experiment and run matching"
+    )
+    diff_parser.add_argument(
+        "--serial",
+        "-s",
+        help="Target specific device by ADB serial.",
+        default=None,
+    )
+    diff_subparsers = diff_parser.add_subparsers(
+        dest="subcommand", help="Differential subcommands"
+    )
+
+    # diff inspect <v0_experiment_id>
+    diff_insp_parser = diff_subparsers.add_parser(
+        "inspect", help="Inspect a V0 baseline experiment to verify comparison readiness"
+    )
+    diff_insp_parser.add_argument("v0_experiment_id", help="V0 Experiment ID to inspect")
+    diff_insp_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output inspection results as JSON.",
+    )
+
+    # diff run <v0_experiment_id> --apk <v1_apk_path>
+    diff_run_parser = diff_subparsers.add_parser(
+        "run", help="Run V0 -> V1 differential experiment with APK install and matched runs"
+    )
+    diff_run_parser.add_argument("v0_experiment_id", help="V0 Experiment ID baseline reference")
+    diff_run_parser.add_argument(
+        "--apk",
+        required=True,
+        help="Path to target V1 APK file to install and evaluate",
+    )
+    diff_run_parser.add_argument(
+        "--serial",
+        "-s",
+        help="Target specific device by ADB serial.",
+        default=None,
+    )
+    diff_run_parser.add_argument(
+        "--iterations",
+        "-i",
+        type=int,
+        default=3,
+        help="Number of repeated iterations per workload (default: 3).",
+    )
+    diff_run_parser.add_argument(
+        "--cooldown",
+        type=float,
+        default=2.0,
+        help="Stabilization cooldown seconds between pre-run actions (default: 2.0).",
+    )
+    diff_run_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output comparison results and quality report as JSON.",
+    )
+
+    # diff show <comparison_id>
+    diff_show_parser = diff_subparsers.add_parser(
+        "show", help="Show complete differential comparison record"
+    )
+    diff_show_parser.add_argument("comparison_id", help="Comparison ID to display")
+    diff_show_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output record as JSON.",
+    )
+
+    # diff pairs <comparison_id>
+    diff_pairs_parser = diff_subparsers.add_parser(
+        "pairs", help="Show matched V0/V1 run pairs for a comparison"
+    )
+    diff_pairs_parser.add_argument("comparison_id", help="Comparison ID to display")
+    diff_pairs_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output matched pairs as JSON.",
+    )
+
+    # diff quality <comparison_id>
+    diff_qual_parser = diff_subparsers.add_parser(
+        "quality", help="Show differential comparison quality audit and contamination flags"
+    )
+    diff_qual_parser.add_argument("comparison_id", help="Comparison ID to display")
+    diff_qual_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output quality audit as JSON.",
+    )
+
     return parser
 
 
@@ -1007,10 +1310,20 @@ def main(argv=None) -> int:
                 parser.print_help()
                 return 1
 
-
-        else:
-            parser.print_help()
-            return 1
+        elif args.command == "diff":
+            if args.subcommand == "inspect":
+                return handle_diff_inspect(args, config)
+            elif args.subcommand == "run":
+                return handle_diff_run(args, config)
+            elif args.subcommand == "show":
+                return handle_diff_show(args, config)
+            elif args.subcommand == "pairs":
+                return handle_diff_pairs(args, config)
+            elif args.subcommand == "quality":
+                return handle_diff_quality(args, config)
+            else:
+                parser.print_help()
+                return 1
 
     except HexnilError as exc:
         if is_json:

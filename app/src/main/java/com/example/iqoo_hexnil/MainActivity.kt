@@ -1,8 +1,10 @@
 package com.example.iqoo_hexnil
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -39,6 +41,8 @@ import com.example.iqoo_hexnil.ui.components.HexnilTopBar
 import com.example.iqoo_hexnil.ui.theme.HexnilBackground
 import com.example.iqoo_hexnil.ui.theme.IQOOHEXNILTheme
 
+private const val TAG = "HEXNIL"
+
 class MainActivity : ComponentActivity() {
 
     private val activityCreateTime = SystemClock.elapsedRealtime()
@@ -48,6 +52,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        Log.i(TAG, "==================================================")
+        Log.i(TAG, "[INIT] Hexnil Companion App Engine Started")
+        Log.i(TAG, "[INIT] Target Device: ${Build.MANUFACTURER} ${Build.MODEL} (Android ${Build.VERSION.RELEASE}, SDK ${Build.VERSION.SDK_INT})")
+        Log.i(TAG, "==================================================")
+
         handleIncomingIntent(intent)
 
         setContent {
@@ -56,13 +65,16 @@ class MainActivity : ComponentActivity() {
                     activityCreateTime = activityCreateTime,
                     initialExperimentId = pendingExperimentId,
                     onExecuteSession = { expId, wid, action, ops ->
-                        TelemetryEngine.executeSession(
+                        Log.i(TAG, "[WORKLOAD] Executing session: $wid ($action, ops=$ops, exp=$expId)")
+                        val records = TelemetryEngine.executeSession(
                             context = this@MainActivity,
                             experimentId = expId,
                             workloadId = wid,
                             action = action,
                             operations = ops
                         )
+                        Log.i(TAG, "[WORKLOAD] Completed session $wid. Generated ${records.size} telemetry records.")
+                        records
                     }
                 )
             }
@@ -151,6 +163,29 @@ fun HexnilCompanionApp(
         navigateBack()
     }
 
+    LaunchedEffect(Unit) {
+        Log.i(TAG, "[HEXNIL_DATA] Loading baseline and update comparison...")
+        Log.i(TAG, "[HEXNIL_DATA] Analysis ID: ${analysis.analysisId}")
+        Log.i(TAG, "[HEXNIL_DATA] Comparison: ${analysis.v0ExperimentId} -> ${analysis.v1ExperimentId}")
+        Log.i(TAG, "[HEXNIL_DATA] Metrics: ${analysis.metricsAnalyzed} analyzed | 0 Regressions | ${analysis.metricsUnchanged} Unchanged | ${analysis.metricsInconclusive} Inconclusive")
+        Log.i(TAG, "[HEXNIL_DATA] Loaded ${workloads.size} declarative benchmark workloads")
+        workloads.forEach { wl ->
+            Log.i(TAG, "  -> Workload: ${wl.id} (${wl.name}) | Priority: ${wl.priority.label} | Status: ${wl.status.name}")
+        }
+        Log.i(TAG, "[HEXNIL_DATA] Loaded ${claims.size} OEM release claims")
+        claims.forEach { clm ->
+            Log.i(TAG, "  -> Claim: ${clm.id} (${clm.title}) | Risk: ${clm.riskLevel.label} | Status: ${clm.validationStatus}")
+        }
+    }
+
+    LaunchedEffect(selectedBottomTab) {
+        Log.i(TAG, "[NAV] Active Bottom Navigation Tab: ${selectedBottomTab.name}")
+    }
+
+    LaunchedEffect(currentDestination) {
+        Log.i(TAG, "[NAV] Destination changed to: ${currentDestination::class.simpleName}")
+    }
+
     // Capture bootstrap telemetry on cold start
     LaunchedEffect(Unit) {
         val startupDuration = SystemClock.elapsedRealtime() - activityCreateTime
@@ -208,6 +243,7 @@ fun HexnilCompanionApp(
                 is AppDestination.Validation -> ValidationScreen(
                     workloads = workloads,
                     onRunWorkloadAction = { wid, action ->
+                        Log.i(TAG, "[WORKLOAD] User triggered execution for: $wid ($action)")
                         isRunningWorkload = true
                         telemetryRecords = onExecuteSession(analysis.v1ExperimentId, wid, action, 5000)
                         isRunningWorkload = false
@@ -217,6 +253,7 @@ fun HexnilCompanionApp(
                 is AppDestination.Results -> ResultsScreen(
                     analysis = analysis,
                     onNavigateToMetricDetail = { metricKey ->
+                        Log.i(TAG, "[DRILLDOWN] Viewing metric detail for: $metricKey")
                         navigateTo(AppDestination.MetricDetail(metricKey))
                     }
                 )
@@ -226,6 +263,7 @@ fun HexnilCompanionApp(
                     records = telemetryRecords,
                     isRunning = isRunningWorkload,
                     onCollectSnapshot = {
+                        Log.i(TAG, "[TELEMETRY] User requested live sensor capture snapshot")
                         isRunningWorkload = true
                         telemetryRecords = onExecuteSession(analysis.v1ExperimentId, "snapshot", "collect_snapshot", 1)
                         isRunningWorkload = false

@@ -1,4 +1,4 @@
-# HEXNIL — Phase 1: Android Device Foundation
+# HEXNIL — Mobile Release-Validation Intelligence System
 
 Hexnil is a mobile release-validation intelligence system. Its core question is:
 > *“Did the update do what it promised, and what did it accidentally break?”*
@@ -8,239 +8,226 @@ The overall product loop is:
 Predict → Prioritize → Validate → Explain → Learn
 ```
 
-Phase 1 establishes the **host-side Android Device Foundation**, providing reliable device discovery, serial-targeted health checks, hardware/OS metadata extraction, deterministic experiment ID generation, and local JSON persistence.
+- **Phase 1**: Android Device Foundation (ADB discovery, serial selection, health checks, metadata capture, experiment IDs, JSON persistence).
+- **Phase 2**: Universal Telemetry Collection (On-device Kotlin/Compose engine, host-side ADB bridge, deterministic workload runner, capability taxonomy, JSONL persistence, artifact capture).
 
 ---
 
-## Architecture Boundary
+## Phase 2 Architecture
 
 ```
-+-------------------------------------------------------------+
-| HOST CONTROLLER (Python 3.11+)                              |
-|                                                             |
-|  hexnil.cli                                                 |
-|    ├── hexnil.device.discovery (adb devices -l parser)      |
-|    ├── hexnil.device.adb       (Safe subprocess runner)     |
-|    ├── hexnil.device.metadata  (Health check & getprop)     |
-|    └── hexnil.experiments      (ID generator & JSON store)  |
-+------------------------------+------------------------------+
-                               |
-                   ADB Subprocess (-s <SERIAL>)
-                               |
-                               v
-+-------------------------------------------------------------+
-| TARGET ANDROID HARDWARE (USB / TCP)                         |
-|  • Android OS (API / Build properties)                      |
-|  • Device companion app (Target for later phases)           |
-+-------------------------------------------------------------+
++-------------------------------------------------------------------------+
+| ANDROID TARGET DEVICE (Hardware: vivo I2302 / Android 16 / SDK 36)      |
+|                                                                         |
+|  Hexnil Companion App (com.example.iqoo_hexnil)                         |
+|    ├── TelemetryEngine       (Snapshot coordinator & on-device JSONL)   |
+|    ├── BatteryTelemetry      (Level, charging state, temp, voltage)    |
+|    ├── MemoryTelemetry       (App PSS heap vs Device RAM/pressure)     |
+|    ├── ThermalTelemetry      (ThermalStatus & headroom via public API)  |
+|    ├── WorkloadRunner        (Deterministic workload execution & timing)|
+|    └── Compose Dashboard     (Minimal dark UI with live capability map) |
++------------------------------------+------------------------------------+
+                                     |
+                          am start / run-as / JSONL pull
+                                     |
+                                     v
++-------------------------------------------------------------------------+
+| HOST CONTROLLER (Python 3.11+)                                          |
+|                                                                         |
+|  hexnil.cli                                                             |
+|    ├── hexnil.telemetry.bridge       (Host-device coordinator)          |
+|    ├── hexnil.telemetry.adb_collectors:                                 |
+|    │     ├── AdbLogcatCollector      (Bounded logcat capture)           |
+|    │     ├── AdbMeminfoCollector     (dumpsys meminfo parser)           |
+|    │     ├── AdbGfxinfoCollector     (dumpsys gfxinfo framestats parser)|
+|    │     ├── AdbThermalCollector     (dumpsys thermalservice HAL parser)|
+|    │     ├── AdbBatterystatsCollector(dumpsys batterystats collector)   |
+|    │     └── AdbPerfettoCollector    (Bounded Perfetto trace capture)   |
+|    └── hexnil.experiments.store      (JSONL telemetry & artifacts)      |
++-------------------------------------------------------------------------+
 ```
 
 > [!IMPORTANT]
-> **Host vs App Separation**: ADB execution strictly belongs to the host machine controller, never embedded inside the mobile APK.
+> **Host vs App Separation**: The Android application is the primary device-side collector using Android public APIs. Host ADB signals (logcat, dumpsys, Perfetto) strictly execute from Python on the host machine. ADB is never embedded inside the APK.
 
 ---
 
-## Project Structure
+## Telemetry Principles
 
-```
-IQOOHEXNIL/
-├── hexnil/
-│   ├── __init__.py           # Package version and export
-│   ├── __main__.py           # Entry point for `python -m hexnil`
-│   ├── cli.py                # Command-line interface
-│   ├── config.py             # ADB binary resolver & configuration
-│   ├── exceptions.py         # Domain errors with actionable guidance
-│   ├── device/
-│   │   ├── __init__.py
-│   │   ├── adb.py            # Safe argument array subprocess wrapper
-│   │   ├── discovery.py      # Device listing and selection policy
-│   │   ├── metadata.py       # Health check and property extraction
-│   │   └── models.py         # Pydantic data schemas
-│   └── experiments/
-│       ├── __init__.py
-│       ├── ids.py            # EXP-YYYYMMDD-001 generator
-│       └── store.py          # Atomic JSON persistence and loader
-├── tests/
-│   ├── __init__.py
-│   ├── test_adb_client.py    # Subprocess execution and validation tests
-│   ├── test_adb_parser.py    # adb devices -l parser tests
-│   ├── test_cli.py           # CLI invocation and error formatting tests
-│   ├── test_config.py        # ADB path discovery tests
-│   ├── test_device_selection.py # Single/multiple device policy tests
-│   ├── test_experiment_store.py # Store persistence and roundtrip tests
-│   └── test_metadata.py      # getprop mapping and health check tests
-├── data/
-│   └── experiments/          # Local JSON experiment records
-├── app/                      # Android companion app (reserved for later phases)
-├── requirements.txt
-├── README.md
-└── .gitignore
-```
+1. **Real Data > Complete Data**: Never fabricate a metric. If Android or the device does not legitimately expose a metric, mark it `UNSUPPORTED` with a descriptive `reason`. Missing metrics have `value: null, unit: null` (never 0, -1, or 999 fake placeholders).
+2. **Capability Taxonomy**:
+   - `UNIVERSAL`: Reliably available across standard Android devices via public APIs or standard ADB.
+   - `CONDITIONAL`: Dependent on specific API levels, vendor HAL implementations, or hardware sensors.
+   - `UNSUPPORTED`: Not exposed by public APIs without root or restricted by sandbox security.
+3. **App vs Device Separation**: Never conflate application memory (heap PSS) with total device RAM.
+4. **Honest Terminology**: Battery percentage is a proxy/estimate, never labeled as direct "power consumption".
 
 ---
 
-## Prerequisites
+## Telemetry Data Schema
 
-1. **Python 3.11+** installed and accessible on host machine.
-2. **Android SDK Platform-Tools (ADB)** installed.
-   - If installed via Android Studio, Hexnil automatically detects ADB from `local.properties` (`sdk.dir`), `ANDROID_HOME`, `ANDROID_SDK_ROOT`, or default SDK paths.
-   - Alternatively, ensure `adb` is on system `PATH` or set `HEXNIL_ADB_PATH`.
-3. **Android Device Setup**:
-   - Enable **Developer Options** on device (Settings > About Phone > Tap "Build number" 7 times).
-   - In Developer Options, enable **USB Debugging**.
-   - Connect device to host via USB data cable.
-   - When the device prompts **"Allow USB debugging?"**, check **"Always allow from this computer"** and tap **Allow**.
+Every telemetry metric record adheres to the following unified schema:
 
----
-
-## Installation & Setup
-
-Install Python dependencies:
-```bash
-python -m pip install -r requirements.txt
-```
-
----
-
-## Device Connection & CLI Commands
-
-### 1. List All Connected Devices
-```bash
-python -m hexnil device list
-```
-Machine-readable format:
-```bash
-python -m hexnil device list --json
-```
-
-### 2. Connect & Capture Device Foundation (Device Status)
-If exactly one usable device is connected:
-```bash
-python -m hexnil device status
-```
-
-To explicitly target a specific device by serial:
-```bash
-python -m hexnil device status --serial <SERIAL>
-```
-
-Machine-readable JSON output:
-```bash
-python -m hexnil device status --json
-```
-
-### 3. List Persisted Experiments
-```bash
-python -m hexnil experiment list
-```
-
-### 4. Inspect a Persisted Experiment
-```bash
-python -m hexnil experiment show EXP-20260913-001
-```
-
----
-
-## Example Outputs
-
-### Successful Output (Human-Readable)
-```
-Hexnil Device Foundation
-------------------------
-Status: CONNECTED
-Device: Google Pixel 8 Pro
-Android: 15
-SDK: 35
-Build ID: AP2A.240805.005
-Build fingerprint: google/husky/husky:15/AP2A.240805.005/12034873:user/release-keys
-ADB serial: 39121FDJG0002Y
-Experiment ID: EXP-20260913-001
-
-Persisted record: C:\Users\sutha\Desktop\IQOOHEXNIL\data\experiments\EXP-20260913-001.json
-```
-
-### Successful Output (JSON)
 ```json
 {
-  "experiment_id": "EXP-20260913-001",
-  "created_at": "2026-09-13T12:00:00+00:00",
+  "experiment_id": "EXP-20260913-004",
+  "timestamp": "2026-09-13T07:13:02.549449Z",
   "device": {
-    "serial": "39121FDJG0002Y",
-    "manufacturer": "Google",
-    "model": "Pixel 8 Pro",
-    "codename": "husky",
-    "android_version": "15",
-    "sdk": 35,
-    "build_id": "AP2A.240805.005",
-    "build_fingerprint": "google/husky/husky:15/AP2A.240805.005/12034873:user/release-keys",
+    "serial": "adb-10BE38254U0003T-PJiTJm._adb-tls-connect._tcp",
+    "manufacturer": "vivo",
+    "model": "I2302",
+    "codename": "I2302T",
+    "android_version": "16",
+    "sdk": 36,
+    "build_id": "BP2A.250605.031.A3",
+    "build_fingerprint": "iQOO/I2302T/I2302:16/BP2A.250605.031.A3/...:user/release-keys",
     "abi": "arm64-v8a"
   },
-  "adb": {
-    "state": "device",
-    "connected": true
+  "software": {
+    "package": "com.example.iqoo_hexnil",
+    "version_name": "1.0",
+    "version_code": 1
   },
-  "phase": "01_android_device_foundation",
-  "status": "ready",
-  "warnings": []
+  "workload": {
+    "id": "startup_basic",
+    "iteration": 1
+  },
+  "metric": {
+    "name": "device_memory_available_mb",
+    "value": 1709.27,
+    "unit": "megabytes"
+  },
+  "source": "android_app",
+  "capability": "UNIVERSAL",
+  "reason": null
+}
+```
+
+If a metric is unsupported:
+```json
+{
+  "metric": {
+    "name": "soc_silicon_temperature_celsius",
+    "value": null,
+    "unit": "celsius"
+  },
+  "source": "android_app",
+  "capability": "UNSUPPORTED",
+  "reason": "Exact SoC / CPU silicon temperature is not exposed by public Android SDK without root (use host ADB thermalservice)"
 }
 ```
 
 ---
 
-## Example Error Outputs & Recovery Actions
+## Telemetry Storage Structure
 
-### 1. No Devices Connected
+Experiments are stored under `data/experiments/EXP-YYYYMMDD-XXX/`:
+
 ```
-[ERROR] No Android devices connected or detected via ADB.
-
-Action required:
-Connect an Android device via USB, ensure USB cable supports data transfer, enable Developer Options on the device, and turn on 'USB Debugging'. Run 'adb devices' to confirm detection.
-```
-
-### 2. Device Unauthorized
-```
-[ERROR] Device '39121FDJG0002Y' is unauthorized.
-
-Action required:
-Check the screen of device '39121FDJG0002Y'. Unlock the device and tap 'Allow USB debugging' (select 'Always allow from this computer'). If the prompt does not appear, try: adb reconnect or revoking USB authorizations in Developer Options.
-```
-
-### 3. Device Offline
-```
-[ERROR] Device '39121FDJG0002Y' is offline.
-
-Action required:
-Device '39121FDJG0002Y' is not communicating. Try unplugging and replugging the USB cable, or run: adb reconnect offline, or toggle USB Debugging off and on in Developer Options.
-```
-
-### 4. Multiple Devices Connected (Ambiguity Guard)
-```
-[ERROR] Multiple devices connected (2 found: 39121FDJG0002Y, emulator-5554). Hexnil requires an explicit target serial to avoid accidental operations.
-
-Action required:
-Select a device explicitly by running:
-  python -m hexnil device status --serial <SERIAL>
-Available serials: 39121FDJG0002Y, emulator-5554
-```
-
-### 5. Target Serial Not Found
-```
-[ERROR] Target device with serial 'INVALID_SERIAL' was not found.
-
-Action required:
-Verify the serial number. Currently detected devices: [39121FDJG0002Y]. Run 'python -m hexnil device list' to see all active devices.
+data/
+  experiments/
+    EXP-20260913-004/
+      metadata.json          # Phase 1 & 2 experiment metadata
+      telemetry/
+        android.jsonl        # On-device timestamped telemetry records
+        adb.jsonl            # Host-side ADB timestamped telemetry records
+      artifacts/
+        dumpsys_meminfo.txt
+        dumpsys_gfxinfo.txt
+        dumpsys_thermalservice.txt
+        dumpsys_batterystats.txt
+        logcat.txt
+        trace.perfetto-trace (if supported)
 ```
 
 ---
 
-## Running Automated Tests
+## Telemetry Categories Collected
 
-Run the complete test suite:
+| Category | Source | Metric Name | Capability | Description |
+|---|---|---|---|---|
+| **Battery** | `android_app` | `battery_level_percent` | `UNIVERSAL` | Battery charge percentage |
+| | `android_app` | `battery_charging_state` | `UNIVERSAL` | Charging / Discharging / Full |
+| | `android_app` | `battery_temperature_celsius` | `CONDITIONAL` | Battery thermal reading |
+| | `android_app` | `battery_voltage_volts` | `CONDITIONAL` | Battery voltage |
+| | `android_app` | `battery_current_microamps` | `CONDITIONAL` | Real-time current flow |
+| **Memory** | `android_app` | `app_heap_allocated_mb` | `UNIVERSAL` | Allocated JVM heap |
+| | `android_app` | `app_heap_max_mb` | `UNIVERSAL` | Max available JVM heap |
+| | `android_app` | `device_memory_available_mb`| `UNIVERSAL` | System-wide available RAM |
+| | `android_app` | `device_memory_total_mb` | `UNIVERSAL` | Total device physical RAM |
+| | `android_app` | `device_memory_low_pressure`| `UNIVERSAL` | Low memory pressure flag |
+| | `adb` | `adb_mem_total_pss_kb` | `UNIVERSAL` | dumpsys meminfo Total PSS |
+| | `adb` | `adb_mem_native_heap_pss_kb`| `UNIVERSAL` | Native heap PSS |
+| | `adb` | `adb_mem_dalvik_heap_pss_kb`| `UNIVERSAL` | Dalvik heap PSS |
+| **Thermal** | `android_app` | `thermal_status_name` | `UNIVERSAL` | PowerManager thermal status |
+| | `android_app` | `thermal_headroom_ratio` | `CONDITIONAL` | API 30+ thermal headroom |
+| | `android_app` | `soc_silicon_temperature_celsius`| `UNSUPPORTED`| Unexposed to non-root apps |
+| | `adb` | `adb_thermal_cpu_celsius` | `UNIVERSAL` | dumpsys thermalservice CPU HAL |
+| | `adb` | `adb_thermal_gpu_celsius` | `UNIVERSAL` | dumpsys thermalservice GPU HAL |
+| | `adb` | `adb_thermal_battery_celsius` | `UNIVERSAL` | dumpsys thermalservice Battery HAL |
+| | `adb` | `adb_thermal_skin_celsius` | `UNIVERSAL` | dumpsys thermalservice Skin HAL |
+| **Workload**| `android_app` | `workload_duration_ms` | `UNIVERSAL` | Deterministic execution time |
+| | `android_app` | `workload_success` | `UNIVERSAL` | Boolean workload status |
+| | `android_app` | `workload_operations_count`| `UNIVERSAL` | Completed workload cycles |
+| **Startup** | `android_app` | `app_startup_duration_ms` | `CONDITIONAL` | Measured application launch |
+| **UI Jank** | `android_app` | `ui_frame_jank_percent` | `CONDITIONAL` | In-app FrameMetrics |
+| | `adb` | `adb_gfx_total_frames` | `UNIVERSAL` | dumpsys gfxinfo total frames |
+| | `adb` | `adb_gfx_janky_frames` | `UNIVERSAL` | dumpsys gfxinfo janky frames |
+| | `adb` | `adb_gfx_p50_ms` - `p99_ms`| `UNIVERSAL` | Frame duration percentiles |
+| **Logcat** | `adb` | `adb_logcat_lines` | `UNIVERSAL` | Bounded experiment log snippet |
+| **Perfetto**| `adb` | `adb_perfetto_trace_bytes` | `CONDITIONAL` | System trace file capture |
+
+---
+
+## CLI Usage
+
+### 1. Collect Telemetry
+Execute deterministic workload and collect on-device + host ADB telemetry:
+```bash
+python -m hexnil telemetry collect --serial <SERIAL>
+```
+Output as JSON:
+```bash
+python -m hexnil telemetry collect --serial <SERIAL> --json
+```
+
+### 2. Inspect Experiment Telemetry
+Display all telemetry records for an experiment:
+```bash
+python -m hexnil telemetry show EXP-20260913-004
+```
+Output as JSON:
+```bash
+python -m hexnil telemetry show EXP-20260913-004 --json
+```
+
+### 3. Device Discovery & Health (Phase 1)
+```bash
+python -m hexnil device list
+python -m hexnil device status --serial <SERIAL>
+python -m hexnil experiment list
+```
+
+---
+
+## Verification & Testing
+
+### Unit Test Suite (60 passed in 1.12s)
 ```bash
 python -m pytest tests/ -v
 ```
+- Schema validation, required fields, and null handling
+- Capability enum enforcement (`UNIVERSAL`, `CONDITIONAL`, `UNSUPPORTED`)
+- Dumpsys parsers (`meminfo`, `gfxinfo`, `thermalservice`, `batterystats`)
+- Bounded logcat collector
+- Telemetry JSONL append/load roundtrip
+- Artifact persistence
+- CLI argument parsing and error formatting
 
-Run tests with code coverage report:
-```bash
-python -m pytest --cov=hexnil tests/
-```
+### Real Hardware Verification (vivo I2302)
+- **Device**: vivo I2302 (`adb-10BE38254U0003T-PJiTJm._adb-tls-connect._tcp`)
+- **OS**: Android 16 (SDK 36, arm64-v8a)
+- **Experiment ID**: `EXP-20260913-004`
+- **Workload**: `startup_basic` (5000 iterations, 9 ms duration)
+- **Telemetry Records**: 56 records (42 Universal, 9 Conditional, 5 Unsupported)
+- **Artifacts Saved**: 5 files (`dumpsys_meminfo.txt`, `dumpsys_gfxinfo.txt`, `dumpsys_thermalservice.txt`, `dumpsys_batterystats.txt`, `logcat.txt`)

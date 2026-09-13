@@ -29,3 +29,9 @@ local.properties
 # OS files
 .DS_Store
 Thumbs.db
+
+# Datasets
+Data-Set/
+Data-Set
+data-set/
+data-set

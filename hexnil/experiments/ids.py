@@ -13,10 +13,15 @@ def get_existing_ids(store_dir: Path) -> Set[str]:
     if not store_dir.exists():
         return set()
     ids = set()
+    # Check flat JSON files
     for item in store_dir.glob("EXP-*.json"):
         exp_id = item.stem
         if ID_PATTERN.match(exp_id):
             ids.add(exp_id)
+    # Check directory-based experiments
+    for item in store_dir.glob("EXP-*"):
+        if item.is_dir() and ID_PATTERN.match(item.name):
+            ids.add(item.name)
     return ids
 
 

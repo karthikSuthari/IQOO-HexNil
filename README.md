@@ -159,9 +159,45 @@ python -m hexnil workload run cpu_01 --serial <SERIAL> --iterations 3 --json
 
 ---
 
+## Phase 4: V0 Baseline Experiment
+
+Phase 4 builds the trusted, reproducible V0 baseline experiment before the target software update:
+
+```bash
+# Execute full V0 baseline suite across all 5 workloads (3 iterations each)
+python -m hexnil baseline run --serial <SERIAL> --iterations 3
+
+# Show complete baseline experiment record and audit
+python -m hexnil baseline show <EXPERIMENT_ID>
+
+# Show derived baseline metrics and 95% confidence intervals
+python -m hexnil baseline summary <EXPERIMENT_ID>
+
+# Show quality audit report and contamination flags
+python -m hexnil baseline quality <EXPERIMENT_ID>
+```
+
+### Persisted Baseline Directory Layout
+```
+data/experiments/EXP-YYYYMMDD-XXX/
+  metadata.json        # ExperimentRecord (phase: "04_v0_baseline")
+  software.json        # V0SoftwareIdentity (APK SHA-256, package, build ID)
+  environment.json     # EnvironmentSnapshot (battery, thermal, idle state)
+  workloads.json       # Workload configuration hashes and descriptions
+  workload_runs/       # Individual WorkloadRun JSON files per workload iteration
+  telemetry/           # android.jsonl and adb.jsonl raw unified telemetry
+  artifacts/           # Raw dumpsys (meminfo, gfxinfo, batterystats) and logcat
+  baseline/
+    metrics.json       # Extracted metrics, descriptive stats, and 95% CI
+    quality.json       # QualityReport with evidence coverage & contamination audit
+    provenance.json    # ProvenanceRecord with SHA-256 integrity hashes
+```
+
+---
+
 ## Verification & Testing
 
-### Unit Test Suite (78 passed in 1.18s)
+### Unit Test Suite (100 passed in 1.46s)
 ```bash
 python -m pytest tests/ -v
 ```
@@ -170,15 +206,22 @@ python -m pytest tests/ -v
 - Precondition evaluation logic (screen, battery, charging, thermals)
 - Monotonic execution engine, step ordering, timeouts, and multi-iteration runs
 - WorkloadRun persistence, loading, and filtering
-- CLI argument parsing and execution formatting
+- Baseline models, V0 software identity, and environment condition snapshots
+- Baseline statistics: percentiles, descriptive stats, 1.5*IQR outlier tagging, 95% Student's t CI
+- Baseline metric extractor, small-sample handling, and invalid-run exclusion
+- Baseline orchestrator, device stabilizer, and quality auditing
+- CLI argument parsing, subcommands dispatch, and JSON output formatting
 
 ### Real Hardware Verification (vivo I2302)
+- **Experiment ID**: `EXP-20260913-010`
 - **Device**: vivo I2302 (`adb-10BE38254U0003T-PJiTJm._adb-tls-connect._tcp`, Android 16 / SDK 36)
-- **Workload**: `cpu_01` (3 repeated iterations)
-- **Configuration Hash**: `6e7f4490bb4eef72` (identical across all iterations)
-- **Results**:
-  - Iteration 1: `11037.5 ms` (`RUN-20260913-080912-001-A231`) -> `SUCCESS`
-  - Iteration 2: `10651.2 ms` (`RUN-20260913-080923-002-AF2F`) -> `SUCCESS`
-  - Iteration 3: `10655.0 ms` (`RUN-20260913-080934-003-BC55`) -> `SUCCESS`
-- **Telemetry Linked**: 56 metrics per iteration (37 Android, 19 host ADB)
-- **Artifacts Saved**: 5 raw diagnostic files per iteration under `artifacts/`
+- **Build Fingerprint**: `iQOO/I2302T/I2302:16/BP2A.250605.031.A3/compiler260714114720:user/release-keys`
+- **V0 Software Package**: `com.example.iqoo_hexnil` (Version 1.0, Code 1)
+- **APK SHA-256**: `c02a0430aa40552bf313cb04ffa1d33bacd063a96b98aee7ff5f773922f27fc8`
+- **Workload Suite**: `startup_01`, `cpu_01`, `memory_01`, `scroll_01`, `video_power_01` (3 iterations each)
+- **Results**: 15 runs requested, 15 completed, 15 VALID (`SUCCESS`), 0 invalid, 0 failed, 0 precondition failures
+- **Evidence Coverage**: `5/5 workloads validated with evidence`
+- **Summary Verdict**: `[TRUSTED_V0_BASELINE]` (Clean Baseline: `YES`)
+- **Telemetry & Artifacts**: 840 telemetry records, 75 raw diagnostic artifact files
+- **Baseline Outputs**: `data/experiments/EXP-20260913-010/baseline/`
+

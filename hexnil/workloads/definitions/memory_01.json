@@ -40,6 +40,7 @@
   ],
   "duration_limits": {
     "min_ms": 5.0,
-    "max_ms": 10000.0
+    "max_ms": 15000.0
   }
 }
+

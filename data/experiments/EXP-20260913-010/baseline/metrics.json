@@ -1,0 +1,548 @@
+{
+  "experiment_id": "EXP-20260913-010",
+  "analysis_version": "1.0.0",
+  "computed_at": "2026-09-13T08:33:27.323031+00:00",
+  "workloads": {
+    "startup_01": {
+      "workload_duration_ms": {
+        "summary": {
+          "workload_id": "startup_01",
+          "metric_name": "workload_duration_ms",
+          "unit": "ms",
+          "n_valid_runs": 3,
+          "n_excluded_runs": 0,
+          "mean": 7984.895,
+          "median": 7980.506,
+          "min": 7331.095,
+          "max": 8643.084,
+          "std_dev": 656.006,
+          "variance": 430343.232,
+          "p25": 7655.801,
+          "p75": 8311.795,
+          "iqr": 655.994,
+          "coefficient_of_variation": 0.0822,
+          "run_values": [
+            8643.084,
+            7980.506,
+            7331.095
+          ],
+          "outliers_detected": 0
+        },
+        "uncertainty": {
+          "workload_id": "startup_01",
+          "metric_name": "workload_duration_ms",
+          "sample_size": 3,
+          "standard_error": 378.745,
+          "ci_lower": 6355.155,
+          "ci_upper": 9614.635,
+          "confidence_level": 0.95,
+          "method": "student_t",
+          "uncertainty_status": "ESTIMATED",
+          "explanation": null
+        }
+      },
+      "startup_duration_ms": {
+        "summary": {
+          "workload_id": "startup_01",
+          "metric_name": "startup_duration_ms",
+          "unit": "ms",
+          "n_valid_runs": 3,
+          "n_excluded_runs": 0,
+          "mean": 988.111,
+          "median": 1201.414,
+          "min": 560.0,
+          "max": 1202.919,
+          "std_dev": 370.756,
+          "variance": 137459.837,
+          "p25": 880.707,
+          "p75": 1202.167,
+          "iqr": 321.46,
+          "coefficient_of_variation": 0.3752,
+          "run_values": [
+            560.0,
+            1202.919,
+            1201.414
+          ],
+          "outliers_detected": 0
+        },
+        "uncertainty": {
+          "workload_id": "startup_01",
+          "metric_name": "startup_duration_ms",
+          "sample_size": 3,
+          "standard_error": 214.0559,
+          "ci_lower": 67.028,
+          "ci_upper": 1909.194,
+          "confidence_level": 0.95,
+          "method": "student_t",
+          "uncertainty_status": "ESTIMATED",
+          "explanation": null
+        }
+      }
+    },
+    "cpu_01": {
+      "workload_duration_ms": {
+        "summary": {
+          "workload_id": "cpu_01",
+          "metric_name": "workload_duration_ms",
+          "unit": "ms",
+          "n_valid_runs": 3,
+          "n_excluded_runs": 0,
+          "mean": 9449.04,
+          "median": 9351.218,
+          "min": 9289.326,
+          "max": 9706.575,
+          "std_dev": 225.169,
+          "variance": 50700.991,
+          "p25": 9320.272,
+          "p75": 9528.897,
+          "iqr": 208.625,
+          "coefficient_of_variation": 0.0238,
+          "run_values": [
+            9351.218,
+            9289.326,
+            9706.575
+          ],
+          "outliers_detected": 0
+        },
+        "uncertainty": {
+          "workload_id": "cpu_01",
+          "metric_name": "workload_duration_ms",
+          "sample_size": 3,
+          "standard_error": 130.0013,
+          "ci_lower": 8889.644,
+          "ci_upper": 10008.435,
+          "confidence_level": 0.95,
+          "method": "student_t",
+          "uncertainty_status": "ESTIMATED",
+          "explanation": null
+        }
+      },
+      "compute_duration_ms": {
+        "summary": {
+          "workload_id": "cpu_01",
+          "metric_name": "compute_duration_ms",
+          "unit": "ms",
+          "n_valid_runs": 3,
+          "n_excluded_runs": 0,
+          "mean": 3224.466,
+          "median": 3137.917,
+          "min": 3136.698,
+          "max": 3398.783,
+          "std_dev": 150.964,
+          "variance": 22790.184,
+          "p25": 3137.307,
+          "p75": 3268.35,
+          "iqr": 131.043,
+          "coefficient_of_variation": 0.0468,
+          "run_values": [
+            3136.698,
+            3137.917,
+            3398.783
+          ],
+          "outliers_detected": 0
+        },
+        "uncertainty": {
+          "workload_id": "cpu_01",
+          "metric_name": "compute_duration_ms",
+          "sample_size": 3,
+          "standard_error": 87.1592,
+          "ci_lower": 2849.42,
+          "ci_upper": 3599.512,
+          "confidence_level": 0.95,
+          "method": "student_t",
+          "uncertainty_status": "ESTIMATED",
+          "explanation": null
+        }
+      }
+    },
+    "memory_01": {
+      "workload_duration_ms": {
+        "summary": {
+          "workload_id": "memory_01",
+          "metric_name": "workload_duration_ms",
+          "unit": "ms",
+          "n_valid_runs": 3,
+          "n_excluded_runs": 0,
+          "mean": 9281.27,
+          "median": 9174.954,
+          "min": 9172.541,
+          "max": 9496.314,
+          "std_dev": 186.238,
+          "variance": 34684.505,
+          "p25": 9173.747,
+          "p75": 9335.634,
+          "iqr": 161.887,
+          "coefficient_of_variation": 0.0201,
+          "run_values": [
+            9172.541,
+            9496.314,
+            9174.954
+          ],
+          "outliers_detected": 0
+        },
+        "uncertainty": {
+          "workload_id": "memory_01",
+          "metric_name": "workload_duration_ms",
+          "sample_size": 3,
+          "standard_error": 107.5244,
+          "ci_lower": 8818.592,
+          "ci_upper": 9743.947,
+          "confidence_level": 0.95,
+          "method": "student_t",
+          "uncertainty_status": "ESTIMATED",
+          "explanation": null
+        }
+      },
+      "app_heap_allocated_mb": {
+        "summary": {
+          "workload_id": "memory_01",
+          "metric_name": "app_heap_allocated_mb",
+          "unit": "MB",
+          "n_valid_runs": 30,
+          "n_excluded_runs": 0,
+          "mean": 15.781,
+          "median": 15.781,
+          "min": 15.664,
+          "max": 15.899,
+          "std_dev": 0.119,
+          "variance": 0.014,
+          "p25": 15.664,
+          "p75": 15.899,
+          "iqr": 0.235,
+          "coefficient_of_variation": 0.0075,
+          "run_values": [
+            15.664,
+            15.899,
+            15.664,
+            15.898,
+            15.664,
+            15.899,
+            15.664,
+            15.899,
+            15.664,
+            15.899,
+            15.664,
+            15.899,
+            15.664,
+            15.899,
+            15.664,
+            15.899,
+            15.664,
+            15.899,
+            15.664,
+            15.899,
+            15.664,
+            15.899,
+            15.664,
+            15.899,
+            15.664,
+            15.899,
+            15.664,
+            15.899,
+            15.664,
+            15.899
+          ],
+          "outliers_detected": 0
+        },
+        "uncertainty": {
+          "workload_id": "memory_01",
+          "metric_name": "app_heap_allocated_mb",
+          "sample_size": 30,
+          "standard_error": 0.0218,
+          "ci_lower": 15.737,
+          "ci_upper": 15.826,
+          "confidence_level": 0.95,
+          "method": "student_t",
+          "uncertainty_status": "ESTIMATED",
+          "explanation": null
+        }
+      },
+      "device_memory_available_mb": {
+        "summary": {
+          "workload_id": "memory_01",
+          "metric_name": "device_memory_available_mb",
+          "unit": "MB",
+          "n_valid_runs": 30,
+          "n_excluded_runs": 0,
+          "mean": 1646.016,
+          "median": 1668.883,
+          "min": 1608.73,
+          "max": 1725.902,
+          "std_dev": 35.703,
+          "variance": 1274.686,
+          "p25": 1608.73,
+          "p75": 1668.883,
+          "iqr": 60.153,
+          "coefficient_of_variation": 0.0217,
+          "run_values": [
+            1674.613,
+            1725.902,
+            1655.68,
+            1715.316,
+            1608.73,
+            1668.883,
+            1608.73,
+            1668.883,
+            1608.73,
+            1668.883,
+            1608.73,
+            1668.883,
+            1608.73,
+            1668.883,
+            1608.73,
+            1668.883,
+            1608.73,
+            1668.883,
+            1608.73,
+            1668.883,
+            1608.73,
+            1668.883,
+            1608.73,
+            1668.883,
+            1608.73,
+            1668.883,
+            1608.73,
+            1668.883,
+            1608.73,
+            1668.883
+          ],
+          "outliers_detected": 0
+        },
+        "uncertainty": {
+          "workload_id": "memory_01",
+          "metric_name": "device_memory_available_mb",
+          "sample_size": 30,
+          "standard_error": 6.5184,
+          "ci_lower": 1632.68,
+          "ci_upper": 1659.353,
+          "confidence_level": 0.95,
+          "method": "student_t",
+          "uncertainty_status": "ESTIMATED",
+          "explanation": null
+        }
+      }
+    },
+    "scroll_01": {
+      "workload_duration_ms": {
+        "summary": {
+          "workload_id": "scroll_01",
+          "metric_name": "workload_duration_ms",
+          "unit": "ms",
+          "n_valid_runs": 3,
+          "n_excluded_runs": 0,
+          "mean": 10618.126,
+          "median": 10649.996,
+          "min": 10313.34,
+          "max": 10891.041,
+          "std_dev": 290.166,
+          "variance": 84196.4,
+          "p25": 10481.668,
+          "p75": 10770.518,
+          "iqr": 288.85,
+          "coefficient_of_variation": 0.0273,
+          "run_values": [
+            10649.996,
+            10891.041,
+            10313.34
+          ],
+          "outliers_detected": 0
+        },
+        "uncertainty": {
+          "workload_id": "scroll_01",
+          "metric_name": "workload_duration_ms",
+          "sample_size": 3,
+          "standard_error": 167.5275,
+          "ci_lower": 9897.255,
+          "ci_upper": 11338.997,
+          "confidence_level": 0.95,
+          "method": "student_t",
+          "uncertainty_status": "ESTIMATED",
+          "explanation": null
+        }
+      },
+      "scroll_duration_ms": {
+        "summary": {
+          "workload_id": "scroll_01",
+          "metric_name": "scroll_duration_ms",
+          "unit": "ms",
+          "n_valid_runs": 3,
+          "n_excluded_runs": 0,
+          "mean": 4432.474,
+          "median": 4428.034,
+          "min": 4305.991,
+          "max": 4563.398,
+          "std_dev": 128.761,
+          "variance": 16579.378,
+          "p25": 4367.012,
+          "p75": 4495.716,
+          "iqr": 128.704,
+          "coefficient_of_variation": 0.029,
+          "run_values": [
+            4428.034,
+            4563.398,
+            4305.991
+          ],
+          "outliers_detected": 0
+        },
+        "uncertainty": {
+          "workload_id": "scroll_01",
+          "metric_name": "scroll_duration_ms",
+          "sample_size": 3,
+          "standard_error": 74.3402,
+          "ci_lower": 4112.589,
+          "ci_upper": 4752.36,
+          "confidence_level": 0.95,
+          "method": "student_t",
+          "uncertainty_status": "ESTIMATED",
+          "explanation": null
+        }
+      }
+    },
+    "video_power_01": {
+      "workload_duration_ms": {
+        "summary": {
+          "workload_id": "video_power_01",
+          "metric_name": "workload_duration_ms",
+          "unit": "ms",
+          "n_valid_runs": 3,
+          "n_excluded_runs": 0,
+          "mean": 12356.298,
+          "median": 12426.866,
+          "min": 12211.289,
+          "max": 12430.739,
+          "std_dev": 125.596,
+          "variance": 15774.458,
+          "p25": 12319.077,
+          "p75": 12428.802,
+          "iqr": 109.725,
+          "coefficient_of_variation": 0.0102,
+          "run_values": [
+            12211.289,
+            12430.739,
+            12426.866
+          ],
+          "outliers_detected": 0
+        },
+        "uncertainty": {
+          "workload_id": "video_power_01",
+          "metric_name": "workload_duration_ms",
+          "sample_size": 3,
+          "standard_error": 72.5131,
+          "ci_lower": 12044.274,
+          "ci_upper": 12668.322,
+          "confidence_level": 0.95,
+          "method": "student_t",
+          "uncertainty_status": "ESTIMATED",
+          "explanation": null
+        }
+      },
+      "playback_duration_ms": {
+        "summary": {
+          "workload_id": "video_power_01",
+          "metric_name": "playback_duration_ms",
+          "unit": "ms",
+          "n_valid_runs": 3,
+          "n_excluded_runs": 0,
+          "mean": 6189.829,
+          "median": 6183.303,
+          "min": 6163.4,
+          "max": 6222.784,
+          "std_dev": 30.225,
+          "variance": 913.556,
+          "p25": 6173.351,
+          "p75": 6203.043,
+          "iqr": 29.692,
+          "coefficient_of_variation": 0.0049,
+          "run_values": [
+            6163.4,
+            6222.784,
+            6183.303
+          ],
+          "outliers_detected": 0
+        },
+        "uncertainty": {
+          "workload_id": "video_power_01",
+          "metric_name": "playback_duration_ms",
+          "sample_size": 3,
+          "standard_error": 17.4505,
+          "ci_lower": 6114.74,
+          "ci_upper": 6264.918,
+          "confidence_level": 0.95,
+          "method": "student_t",
+          "uncertainty_status": "ESTIMATED",
+          "explanation": null
+        }
+      },
+      "battery_level_delta_percent": {
+        "summary": {
+          "workload_id": "video_power_01",
+          "metric_name": "battery_level_delta_percent",
+          "unit": "%",
+          "n_valid_runs": 1,
+          "n_excluded_runs": 0,
+          "mean": 0.0,
+          "median": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "std_dev": 0.0,
+          "variance": 0.0,
+          "p25": 0.0,
+          "p75": 0.0,
+          "iqr": 0.0,
+          "coefficient_of_variation": 0.0,
+          "run_values": [
+            0.0
+          ],
+          "outliers_detected": 0
+        },
+        "uncertainty": {
+          "workload_id": "video_power_01",
+          "metric_name": "battery_level_delta_percent",
+          "sample_size": 1,
+          "standard_error": null,
+          "ci_lower": null,
+          "ci_upper": null,
+          "confidence_level": 0.95,
+          "method": "inconclusive",
+          "uncertainty_status": "INCONCLUSIVE",
+          "explanation": "Sample size (n=1) is insufficient (minimum 3 required) to estimate variability."
+        }
+      },
+      "battery_discharge_proxy": {
+        "summary": {
+          "workload_id": "video_power_01",
+          "metric_name": "battery_discharge_proxy",
+          "unit": "delta_percent_proxy",
+          "n_valid_runs": 1,
+          "n_excluded_runs": 0,
+          "mean": 0.0,
+          "median": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "std_dev": 0.0,
+          "variance": 0.0,
+          "p25": 0.0,
+          "p75": 0.0,
+          "iqr": 0.0,
+          "coefficient_of_variation": 0.0,
+          "run_values": [
+            0.0
+          ],
+          "outliers_detected": 0
+        },
+        "uncertainty": {
+          "workload_id": "video_power_01",
+          "metric_name": "battery_discharge_proxy",
+          "sample_size": 1,
+          "standard_error": null,
+          "ci_lower": null,
+          "ci_upper": null,
+          "confidence_level": 0.95,
+          "method": "inconclusive",
+          "uncertainty_status": "INCONCLUSIVE",
+          "explanation": "Sample size (n=1) is insufficient (minimum 3 required) to estimate variability."
+        }
+      }
+    }
+  }
+}

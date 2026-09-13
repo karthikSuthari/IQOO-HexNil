@@ -21,6 +21,8 @@ from hexnil.telemetry.models import CapabilityStatus, TelemetryRecord
 from hexnil.workloads.engine import WorkloadExecutionEngine
 from hexnil.workloads.models import RunStatus, WorkloadDefinition, WorkloadRun
 from hexnil.workloads.registry import WorkloadNotFoundError, WorkloadRegistry
+from hexnil.baseline.models import QualityReport, StabilizationPolicy
+from hexnil.baseline.orchestrator import BaselineExperimentOrchestrator, DEFAULT_BASELINE_WORKLOAD_SUITE
 
 logger = logging.getLogger("hexnil.cli")
 
@@ -481,7 +483,188 @@ def handle_workload_run(args: argparse.Namespace, config: HexnilConfig) -> int:
     return 0 if all_success else 1
 
 
+def format_human_baseline_quality(quality: QualityReport, exp_dir: Optional[Path] = None) -> str:
+    """Format Phase 4 QualityReport into human-readable output."""
+    lines = [
+        "Hexnil V0 Baseline Experiment Quality Audit",
+        "-------------------------------------------",
+        f"Experiment ID:       {quality.experiment_id}",
+        f"Baseline Type:       {quality.baseline_type}",
+        f"Device:              {quality.device_model} ({quality.device_serial})",
+        f"Summary Verdict:     [{quality.summary_verdict}]",
+        f"Clean Baseline:      {'YES' if quality.is_clean_baseline else 'NO'}",
+        "",
+        "V0 Software Identity:",
+        f"  Package:           {quality.v0_software.get('package')}",
+        f"  Version:           {quality.v0_software.get('version_name')} (code: {quality.v0_software.get('version_code')})",
+        f"  APK SHA-256:       {quality.v0_software.get('apk_sha256') or 'N/A'}",
+        f"  Build Fingerprint: {quality.v0_software.get('build_fingerprint') or 'N/A'}",
+        "",
+        "Execution Accounting:",
+        f"  Workloads:         {', '.join(quality.workloads_requested)}",
+        f"  Iterations/Workload: {quality.iterations_requested_per_workload}",
+        f"  Requested Runs:    {quality.total_iterations_requested}",
+        f"  Completed Runs:    {quality.total_runs_completed}",
+        f"  Valid Runs:        {quality.valid_runs_count}",
+        f"  Invalid Runs:      {quality.invalid_runs_count}",
+        f"  Failed Runs:       {quality.failed_runs_count}",
+        f"  Precondition Fails:{quality.precondition_failures_count}",
+        f"  Evidence Coverage: {quality.evidence_coverage}",
+        "",
+        "Evidence Artifacts:",
+        f"  Telemetry Records: {quality.telemetry_records_count}",
+        f"  Artifact Files:    {quality.artifacts_count}",
+    ]
+    if quality.contamination_flags:
+        lines.append("")
+        lines.append("Contamination Flags:")
+        for flag in quality.contamination_flags:
+            lines.append(f"  [!] {flag}")
+
+    if exp_dir:
+        lines.append("")
+        lines.append(f"Persisted Baseline Evidence: {exp_dir / 'baseline'}")
+
+    return "\n".join(lines)
+
+
+def handle_baseline_run(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Execute a trusted Phase 4 V0 baseline experiment."""
+    adb_client = AdbClient(adb_path=config.adb_path)
+    discovery = DeviceDiscovery(adb_client)
+    target_device = discovery.select_device(target_serial=args.serial)
+
+    store = ExperimentStore(config.data_dir)
+    orchestrator = BaselineExperimentOrchestrator(adb_client, store)
+
+    suite_arg = getattr(args, "suite", "all") or "all"
+    if suite_arg.lower() == "all":
+        target_suite = DEFAULT_BASELINE_WORKLOAD_SUITE
+    else:
+        target_suite = [w.strip() for w in suite_arg.split(",") if w.strip()]
+
+    policy = StabilizationPolicy(
+        wake_screen=getattr(args, "wake_screen", True),
+        enforce_battery_min=getattr(args, "battery_min", 15),
+        stabilization_cooldown_seconds=getattr(args, "cooldown", 2.0),
+    )
+
+    iterations = getattr(args, "iterations", 5) or 5
+    quality_report = orchestrator.run_baseline_experiment(
+        serial=target_device.serial,
+        iterations=iterations,
+        workload_ids=target_suite,
+        stabilization_policy=policy,
+    )
+
+    if getattr(args, "json", False):
+        metrics = store.load_baseline_metrics(quality_report.experiment_id)
+        prov = store.load_baseline_provenance(quality_report.experiment_id)
+        out = {
+            "quality": quality_report.model_dump(),
+            "metrics": metrics,
+            "provenance": prov.model_dump() if prov else None,
+        }
+        print(json.dumps(out, indent=2))
+    else:
+        exp_dir = store.get_experiment_dir(quality_report.experiment_id)
+        print(format_human_baseline_quality(quality_report, exp_dir))
+
+    return 0 if quality_report.is_clean_baseline else 1
+
+
+def handle_baseline_show(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Display comprehensive baseline experiment information."""
+    store = ExperimentStore(config.data_dir)
+    exp_record = store.load(args.experiment_id)
+    quality = store.load_baseline_quality(args.experiment_id)
+    metrics = store.load_baseline_metrics(args.experiment_id)
+    prov = store.load_baseline_provenance(args.experiment_id)
+    software = store.load_v0_software(args.experiment_id)
+    env = store.load_environment(args.experiment_id)
+
+    if getattr(args, "json", False):
+        out = {
+            "experiment": exp_record.model_dump(),
+            "quality": quality.model_dump() if quality else None,
+            "metrics": metrics,
+            "provenance": prov.model_dump() if prov else None,
+            "software": software.model_dump() if software else None,
+            "environment": env.model_dump() if env else None,
+        }
+        print(json.dumps(out, indent=2))
+        return 0
+
+    if quality:
+        exp_dir = store.get_experiment_dir(args.experiment_id)
+        print(format_human_baseline_quality(quality, exp_dir))
+    else:
+        path = store.get_path(args.experiment_id)
+        print(format_human_status(exp_record, path))
+
+    return 0
+
+
+def handle_baseline_quality(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Display the quality audit report of a baseline experiment."""
+    store = ExperimentStore(config.data_dir)
+    quality = store.load_baseline_quality(args.experiment_id)
+    if not quality:
+        print(f"No baseline quality report found for {args.experiment_id}", file=sys.stderr)
+        return 1
+
+    if getattr(args, "json", False):
+        print(quality.model_dump_json(indent=2))
+    else:
+        exp_dir = store.get_experiment_dir(args.experiment_id)
+        print(format_human_baseline_quality(quality, exp_dir))
+
+    return 0 if quality.is_clean_baseline else 1
+
+
+def handle_baseline_summary(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Display extracted baseline metrics and uncertainty statistics."""
+    store = ExperimentStore(config.data_dir)
+    metrics_data = store.load_baseline_metrics(args.experiment_id)
+    if not metrics_data:
+        print(f"No baseline metrics found for {args.experiment_id}", file=sys.stderr)
+        return 1
+
+    if getattr(args, "json", False):
+        print(json.dumps(metrics_data, indent=2))
+        return 0
+
+    print(f"Hexnil V0 Baseline Derived Metrics ({args.experiment_id})")
+    print("--------------------------------------------------------------------------------")
+    workloads = metrics_data.get("workloads", {})
+    if not workloads:
+        print("No workload metrics available.")
+        return 0
+
+    for wid, mdict in workloads.items():
+        print(f"\nWorkload: {wid}")
+        for mname, mval in mdict.items():
+            summary = mval.get("summary") or {}
+            uncertainty = mval.get("uncertainty") or {}
+            unit = summary.get("unit") or ""
+            mean = summary.get("mean")
+            med = summary.get("median")
+            std = summary.get("std_dev")
+            n = summary.get("n_valid_runs", 0)
+            u_status = uncertainty.get("uncertainty_status", "INCONCLUSIVE")
+            ci_str = f"[{uncertainty.get('ci_lower')}, {uncertainty.get('ci_upper')}]" if u_status == "ESTIMATED" else f"({u_status})"
+
+            print(
+                f"  • {mname:<28} n={n:<2} mean={mean!s:<8} {unit:<4} median={med!s:<8} std={std!s:<8} 95% CI: {ci_str}"
+            )
+            if summary.get("outliers_detected", 0) > 0:
+                print(f"    [!] Detected {summary['outliers_detected']} outlier(s) (preserved in raw values)")
+
+    return 0
+
+
 def create_parser() -> argparse.ArgumentParser:
+
     """Construct CLI argument parser."""
     parser = argparse.ArgumentParser(
         prog="hexnil",
@@ -665,6 +848,89 @@ def create_parser() -> argparse.ArgumentParser:
         help="Output execution run records as JSON.",
     )
 
+    # 5. 'baseline' command group (Phase 4)
+    base_parser = subparsers.add_parser(
+        "baseline", help="Phase 4 V0 baseline experiment orchestration and audit"
+    )
+    base_parser.add_argument(
+        "--serial",
+        "-s",
+        help="Target specific device by ADB serial.",
+        default=None,
+    )
+    base_subparsers = base_parser.add_subparsers(
+        dest="subcommand", help="Baseline subcommands"
+    )
+
+    base_run_parser = base_subparsers.add_parser(
+        "run", help="Run reproducible V0 baseline experiment suite"
+    )
+    base_run_parser.add_argument(
+        "--serial",
+        "-s",
+        help="Target specific device by ADB serial.",
+        default=None,
+    )
+    base_run_parser.add_argument(
+        "--iterations",
+        "-i",
+        type=int,
+        default=5,
+        help="Number of repeated iterations per workload (default: 5).",
+    )
+    base_run_parser.add_argument(
+        "--suite",
+        help="Comma-separated workload IDs or 'all' (default: all).",
+        default="all",
+    )
+    base_run_parser.add_argument(
+        "--battery-min",
+        type=int,
+        default=15,
+        help="Minimum battery level percentage required (default: 15).",
+    )
+    base_run_parser.add_argument(
+        "--cooldown",
+        type=float,
+        default=2.0,
+        help="Stabilization cooldown seconds between pre-run actions (default: 2.0).",
+    )
+    base_run_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output quality report and baseline metrics as JSON.",
+    )
+
+    base_show_parser = base_subparsers.add_parser(
+        "show", help="Show complete baseline experiment record and metrics"
+    )
+    base_show_parser.add_argument("experiment_id", help="Experiment ID to display")
+    base_show_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output record as JSON.",
+    )
+
+    base_qual_parser = base_subparsers.add_parser(
+        "quality", help="Show baseline quality audit report and contamination flags"
+    )
+    base_qual_parser.add_argument("experiment_id", help="Experiment ID to display")
+    base_qual_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output quality audit as JSON.",
+    )
+
+    base_sum_parser = base_subparsers.add_parser(
+        "summary", help="Show derived baseline metrics and uncertainty intervals"
+    )
+    base_sum_parser.add_argument("experiment_id", help="Experiment ID to display")
+    base_sum_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output summary as JSON.",
+    )
+
     return parser
 
 
@@ -727,6 +993,20 @@ def main(argv=None) -> int:
             else:
                 parser.print_help()
                 return 1
+
+        elif args.command == "baseline":
+            if args.subcommand in (None, "run"):
+                return handle_baseline_run(args, config)
+            elif args.subcommand == "show":
+                return handle_baseline_show(args, config)
+            elif args.subcommand == "quality":
+                return handle_baseline_quality(args, config)
+            elif args.subcommand == "summary":
+                return handle_baseline_summary(args, config)
+            else:
+                parser.print_help()
+                return 1
+
 
         else:
             parser.print_help()

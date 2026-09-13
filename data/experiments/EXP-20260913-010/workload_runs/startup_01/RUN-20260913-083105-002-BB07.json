@@ -1,0 +1,102 @@
+{
+  "experiment_id": "EXP-20260913-010",
+  "run_id": "RUN-20260913-083105-002-BB07",
+  "workload_id": "startup_01",
+  "workload_version": "1.0.0",
+  "configuration_hash": "085d1a2b54a0c08d",
+  "iteration": 2,
+  "started_at": "2026-09-13T08:31:05.847753+00:00",
+  "ended_at": "2026-09-13T08:31:13.831512+00:00",
+  "duration_ms": 7980.506,
+  "status": "SUCCESS",
+  "preconditions": {
+    "screen_on": {
+      "name": "screen_on",
+      "status": "SATISFIED",
+      "expected_value": true,
+      "actual_value": true,
+      "message": "Screen is awake"
+    },
+    "battery_min_percent": {
+      "name": "battery_min_percent",
+      "status": "SATISFIED",
+      "expected_value": 15,
+      "actual_value": 40,
+      "message": "Current battery level is 40% (min required: 15%)"
+    },
+    "thermal_state_max": {
+      "name": "thermal_state_max",
+      "status": "SATISFIED",
+      "expected_value": "moderate",
+      "actual_value": 0,
+      "message": "Thermal level is 0 (max allowed: 2)"
+    },
+    "app_clean_state": {
+      "name": "app_clean_state",
+      "status": "SATISFIED",
+      "expected_value": true,
+      "actual_value": true,
+      "message": "Enforced clean state: force-stopped com.example.iqoo_hexnil"
+    }
+  },
+  "steps": [
+    {
+      "step_id": "stop_previous_instance",
+      "action": "stop_app",
+      "status": "SUCCESS",
+      "started_at": "2026-09-13T08:31:06.731159+00:00",
+      "ended_at": "2026-09-13T08:31:06.878250+00:00",
+      "duration_ms": 147.65,
+      "error": null,
+      "details": {}
+    },
+    {
+      "step_id": "wait_system_settle",
+      "action": "wait",
+      "status": "SUCCESS",
+      "started_at": "2026-09-13T08:31:06.878250+00:00",
+      "ended_at": "2026-09-13T08:31:07.879734+00:00",
+      "duration_ms": 1000.559,
+      "error": null,
+      "details": {}
+    },
+    {
+      "step_id": "launch_cold_activity",
+      "action": "launch_app",
+      "status": "SUCCESS",
+      "started_at": "2026-09-13T08:31:07.879734+00:00",
+      "ended_at": "2026-09-13T08:31:09.082849+00:00",
+      "duration_ms": 1202.919,
+      "error": null,
+      "details": {}
+    },
+    {
+      "step_id": "capture_startup_telemetry",
+      "action": "collect_snapshot",
+      "status": "SUCCESS",
+      "started_at": "2026-09-13T08:31:09.082849+00:00",
+      "ended_at": "2026-09-13T08:31:13.830906+00:00",
+      "duration_ms": 4748.026,
+      "error": null,
+      "details": {
+        "telemetry_count": 56,
+        "artifacts": [
+          "dumpsys_batterystats.txt",
+          "dumpsys_gfxinfo.txt",
+          "dumpsys_meminfo.txt",
+          "dumpsys_thermalservice.txt",
+          "logcat.txt"
+        ]
+      }
+    }
+  ],
+  "telemetry_count": 56,
+  "artifacts": [
+    "dumpsys_batterystats.txt",
+    "dumpsys_gfxinfo.txt",
+    "dumpsys_meminfo.txt",
+    "dumpsys_thermalservice.txt",
+    "logcat.txt"
+  ],
+  "error_reason": null
+}

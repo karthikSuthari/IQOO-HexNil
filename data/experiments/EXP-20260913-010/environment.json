@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-09-13T08:30:52.044938+00:00",
+  "battery_level_percent": 40.0,
+  "battery_charging_state": "discharging",
+  "battery_temperature_c": 32.1,
+  "screen_on": true,
+  "screen_brightness": 16,
+  "thermal_status": null,
+  "wifi_enabled": true,
+  "wifi_connected": true,
+  "device_idle_state": "mState=ACTIVE mLightState=ACTIVE",
+  "orientation": "init=1080x2400 440dpi mMinSizeOfResizeableTaskDp=220 base=1080x2400 396dpi cur=1080x2400 app=1080x2400 rng=1080x1080-2400x2400",
+  "app_running": true,
+  "condition_status": {
+    "battery_level_percent": "measured",
+    "battery_charging_state": "measured",
+    "battery_temperature_c": "measured",
+    "screen_on": "verified",
+    "screen_brightness": "measured",
+    "thermal_status": "unsupported",
+    "wifi_enabled": "measured",
+    "wifi_connected": "measured",
+    "device_idle_state": "measured",
+    "orientation": "measured",
+    "app_running": "verified"
+  }
+}

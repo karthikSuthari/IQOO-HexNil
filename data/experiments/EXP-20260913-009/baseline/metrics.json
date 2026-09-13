@@ -1,0 +1,327 @@
+{
+  "experiment_id": "EXP-20260913-009",
+  "analysis_version": "1.0.0",
+  "computed_at": "2026-09-13T08:29:01.515121+00:00",
+  "workloads": {
+    "startup_01": {
+      "workload_duration_ms": {
+        "summary": {
+          "workload_id": "startup_01",
+          "metric_name": "workload_duration_ms",
+          "unit": "ms",
+          "n_valid_runs": 3,
+          "n_excluded_runs": 0,
+          "mean": 8004.927,
+          "median": 7925.965,
+          "min": 7769.216,
+          "max": 8319.599,
+          "std_dev": 283.561,
+          "variance": 80406.57,
+          "p25": 7847.591,
+          "p75": 8122.782,
+          "iqr": 275.191,
+          "coefficient_of_variation": 0.0354,
+          "run_values": [
+            8319.599,
+            7769.216,
+            7925.965
+          ],
+          "outliers_detected": 0
+        },
+        "uncertainty": {
+          "workload_id": "startup_01",
+          "metric_name": "workload_duration_ms",
+          "sample_size": 3,
+          "standard_error": 163.7137,
+          "ci_lower": 7300.466,
+          "ci_upper": 8709.387,
+          "confidence_level": 0.95,
+          "method": "student_t",
+          "uncertainty_status": "ESTIMATED",
+          "explanation": null
+        }
+      },
+      "startup_duration_ms": {
+        "summary": {
+          "workload_id": "startup_01",
+          "metric_name": "startup_duration_ms",
+          "unit": "ms",
+          "n_valid_runs": 3,
+          "n_excluded_runs": 0,
+          "mean": 1048.062,
+          "median": 1161.538,
+          "min": 746.0,
+          "max": 1236.648,
+          "std_dev": 264.275,
+          "variance": 69841.467,
+          "p25": 953.769,
+          "p75": 1199.093,
+          "iqr": 245.324,
+          "coefficient_of_variation": 0.2522,
+          "run_values": [
+            746.0,
+            1161.538,
+            1236.648
+          ],
+          "outliers_detected": 0
+        },
+        "uncertainty": {
+          "workload_id": "startup_01",
+          "metric_name": "startup_duration_ms",
+          "sample_size": 3,
+          "standard_error": 152.5795,
+          "ci_lower": 391.513,
+          "ci_upper": 1704.611,
+          "confidence_level": 0.95,
+          "method": "student_t",
+          "uncertainty_status": "ESTIMATED",
+          "explanation": null
+        }
+      }
+    },
+    "cpu_01": {
+      "workload_duration_ms": {
+        "summary": {
+          "workload_id": "cpu_01",
+          "metric_name": "workload_duration_ms",
+          "unit": "ms",
+          "n_valid_runs": 3,
+          "n_excluded_runs": 0,
+          "mean": 9821.024,
+          "median": 9906.545,
+          "min": 9430.767,
+          "max": 10125.76,
+          "std_dev": 355.302,
+          "variance": 126239.199,
+          "p25": 9668.656,
+          "p75": 10016.153,
+          "iqr": 347.497,
+          "coefficient_of_variation": 0.0362,
+          "run_values": [
+            9430.767,
+            9906.545,
+            10125.76
+          ],
+          "outliers_detected": 0
+        },
+        "uncertainty": {
+          "workload_id": "cpu_01",
+          "metric_name": "workload_duration_ms",
+          "sample_size": 3,
+          "standard_error": 205.1335,
+          "ci_lower": 8938.335,
+          "ci_upper": 10703.713,
+          "confidence_level": 0.95,
+          "method": "student_t",
+          "uncertainty_status": "ESTIMATED",
+          "explanation": null
+        }
+      },
+      "compute_duration_ms": {
+        "summary": {
+          "workload_id": "cpu_01",
+          "metric_name": "compute_duration_ms",
+          "unit": "ms",
+          "n_valid_runs": 3,
+          "n_excluded_runs": 0,
+          "mean": 3227.46,
+          "median": 3207.37,
+          "min": 3192.039,
+          "max": 3282.97,
+          "std_dev": 48.681,
+          "variance": 2369.808,
+          "p25": 3199.704,
+          "p75": 3245.17,
+          "iqr": 45.466,
+          "coefficient_of_variation": 0.0151,
+          "run_values": [
+            3207.37,
+            3192.039,
+            3282.97
+          ],
+          "outliers_detected": 0
+        },
+        "uncertainty": {
+          "workload_id": "cpu_01",
+          "metric_name": "compute_duration_ms",
+          "sample_size": 3,
+          "standard_error": 28.1058,
+          "ci_lower": 3106.52,
+          "ci_upper": 3348.399,
+          "confidence_level": 0.95,
+          "method": "student_t",
+          "uncertainty_status": "ESTIMATED",
+          "explanation": null
+        }
+      }
+    },
+    "memory_01": {
+      "workload_duration_ms": {
+        "summary": {
+          "workload_id": "memory_01",
+          "metric_name": "workload_duration_ms",
+          "unit": "ms",
+          "n_valid_runs": 2,
+          "n_excluded_runs": 1,
+          "mean": 9686.565,
+          "median": 9686.565,
+          "min": 9534.073,
+          "max": 9839.057,
+          "std_dev": 215.656,
+          "variance": 46507.62,
+          "p25": 9610.319,
+          "p75": 9762.811,
+          "iqr": 152.492,
+          "coefficient_of_variation": 0.0223,
+          "run_values": [
+            9839.057,
+            9534.073
+          ],
+          "outliers_detected": 0
+        },
+        "uncertainty": {
+          "workload_id": "memory_01",
+          "metric_name": "workload_duration_ms",
+          "sample_size": 2,
+          "standard_error": null,
+          "ci_lower": null,
+          "ci_upper": null,
+          "confidence_level": 0.95,
+          "method": "inconclusive",
+          "uncertainty_status": "INCONCLUSIVE",
+          "explanation": "Sample size (n=2) is insufficient (minimum 3 required) to estimate variability."
+        }
+      },
+      "app_heap_allocated_mb": {
+        "summary": {
+          "workload_id": "memory_01",
+          "metric_name": "app_heap_allocated_mb",
+          "unit": "MB",
+          "n_valid_runs": 30,
+          "n_excluded_runs": 1,
+          "mean": 7.635,
+          "median": 6.111,
+          "min": 4.227,
+          "max": 15.898,
+          "std_dev": 4.219,
+          "variance": 17.803,
+          "p25": 4.874,
+          "p75": 6.345,
+          "iqr": 1.471,
+          "coefficient_of_variation": 0.5526,
+          "run_values": [
+            15.649,
+            15.883,
+            15.661,
+            15.895,
+            15.664,
+            15.898,
+            6.111,
+            6.345,
+            6.111,
+            6.345,
+            6.111,
+            6.345,
+            6.111,
+            6.345,
+            6.111,
+            6.345,
+            6.111,
+            6.345,
+            6.111,
+            6.345,
+            6.111,
+            6.345,
+            4.227,
+            4.462,
+            4.227,
+            4.462,
+            4.227,
+            4.462,
+            4.227,
+            4.462
+          ],
+          "outliers_detected": 6
+        },
+        "uncertainty": {
+          "workload_id": "memory_01",
+          "metric_name": "app_heap_allocated_mb",
+          "sample_size": 30,
+          "standard_error": 0.7703,
+          "ci_lower": 6.059,
+          "ci_upper": 9.211,
+          "confidence_level": 0.95,
+          "method": "student_t",
+          "uncertainty_status": "ESTIMATED",
+          "explanation": null
+        }
+      },
+      "device_memory_available_mb": {
+        "summary": {
+          "workload_id": "memory_01",
+          "metric_name": "device_memory_available_mb",
+          "unit": "MB",
+          "n_valid_runs": 30,
+          "n_excluded_runs": 1,
+          "mean": 1686.49,
+          "median": 1688.805,
+          "min": 1585.688,
+          "max": 1739.387,
+          "std_dev": 31.307,
+          "variance": 980.15,
+          "p25": 1688.805,
+          "p75": 1708.5,
+          "iqr": 19.695,
+          "coefficient_of_variation": 0.0186,
+          "run_values": [
+            1688.105,
+            1739.387,
+            1585.688,
+            1647.32,
+            1592.504,
+            1652.82,
+            1688.805,
+            1688.805,
+            1688.805,
+            1688.805,
+            1688.805,
+            1688.805,
+            1688.805,
+            1688.805,
+            1688.805,
+            1688.805,
+            1688.805,
+            1688.805,
+            1688.805,
+            1688.805,
+            1688.805,
+            1688.805,
+            1708.5,
+            1708.5,
+            1708.5,
+            1708.5,
+            1708.5,
+            1708.5,
+            1708.5,
+            1708.5
+          ],
+          "outliers_detected": 5
+        },
+        "uncertainty": {
+          "workload_id": "memory_01",
+          "metric_name": "device_memory_available_mb",
+          "sample_size": 30,
+          "standard_error": 5.7159,
+          "ci_lower": 1674.795,
+          "ci_upper": 1698.185,
+          "confidence_level": 0.95,
+          "method": "student_t",
+          "uncertainty_status": "ESTIMATED",
+          "explanation": null
+        }
+      }
+    },
+    "scroll_01": {},
+    "video_power_01": {}
+  }
+}

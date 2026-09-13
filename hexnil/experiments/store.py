@@ -270,3 +270,68 @@ class ExperimentStore:
 
         records.sort(key=lambda r: r.experiment_id, reverse=True)
         return records
+
+    def load_baseline_metrics(self, experiment_id: str) -> Optional[dict]:
+        """Load baseline metrics.json for an experiment if present."""
+        exp_dir = self.get_experiment_dir(experiment_id)
+        metrics_file = exp_dir / "baseline" / "metrics.json"
+        if not metrics_file.exists():
+            return None
+        try:
+            return json.loads(metrics_file.read_text(encoding="utf-8"))
+        except Exception as exc:
+            logger.warning("Could not parse baseline metrics in %s: %s", metrics_file, exc)
+            return None
+
+    def load_baseline_quality(self, experiment_id: str) -> Optional["QualityReport"]:
+        """Load baseline quality.json for an experiment if present."""
+        from hexnil.baseline.models import QualityReport
+        exp_dir = self.get_experiment_dir(experiment_id)
+        quality_file = exp_dir / "baseline" / "quality.json"
+        if not quality_file.exists():
+            return None
+        try:
+            return QualityReport.model_validate_json(quality_file.read_text(encoding="utf-8"))
+        except Exception as exc:
+            logger.warning("Could not parse baseline quality in %s: %s", quality_file, exc)
+            return None
+
+    def load_baseline_provenance(self, experiment_id: str) -> Optional["ProvenanceRecord"]:
+        """Load baseline provenance.json for an experiment if present."""
+        from hexnil.baseline.models import ProvenanceRecord
+        exp_dir = self.get_experiment_dir(experiment_id)
+        prov_file = exp_dir / "baseline" / "provenance.json"
+        if not prov_file.exists():
+            return None
+        try:
+            return ProvenanceRecord.model_validate_json(prov_file.read_text(encoding="utf-8"))
+        except Exception as exc:
+            logger.warning("Could not parse baseline provenance in %s: %s", prov_file, exc)
+            return None
+
+    def load_v0_software(self, experiment_id: str) -> Optional["V0SoftwareIdentity"]:
+        """Load software.json for an experiment if present."""
+        from hexnil.baseline.models import V0SoftwareIdentity
+        exp_dir = self.get_experiment_dir(experiment_id)
+        soft_file = exp_dir / "software.json"
+        if not soft_file.exists():
+            return None
+        try:
+            return V0SoftwareIdentity.model_validate_json(soft_file.read_text(encoding="utf-8"))
+        except Exception as exc:
+            logger.warning("Could not parse software identity in %s: %s", soft_file, exc)
+            return None
+
+    def load_environment(self, experiment_id: str) -> Optional["EnvironmentSnapshot"]:
+        """Load environment.json for an experiment if present."""
+        from hexnil.baseline.models import EnvironmentSnapshot
+        exp_dir = self.get_experiment_dir(experiment_id)
+        env_file = exp_dir / "environment.json"
+        if not env_file.exists():
+            return None
+        try:
+            return EnvironmentSnapshot.model_validate_json(env_file.read_text(encoding="utf-8"))
+        except Exception as exc:
+            logger.warning("Could not parse environment snapshot in %s: %s", env_file, exc)
+            return None
+

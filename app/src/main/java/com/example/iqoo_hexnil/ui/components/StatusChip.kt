@@ -128,3 +128,74 @@ fun RiskChip(
         )
     }
 }
+
+@Composable
+fun ValidationStatusChip(
+    status: String,
+    modifier: Modifier = Modifier
+) {
+    val (bgColor, fgColor) = when (status.uppercase()) {
+        "SUPPORTED" -> Pair(HexnilSuccessSubtle, HexnilSuccess)
+        "PARTIAL" -> Pair(HexnilWarningSubtle, HexnilWarning)
+        "UNCHANGED" -> Pair(HexnilSecondaryCard, HexnilSuccess)
+        "INCONCLUSIVE" -> Pair(HexnilWarningSubtle, HexnilWarning)
+        "UNSUPPORTED" -> Pair(HexnilSecondaryCard, HexnilSecondaryText)
+        else -> Pair(HexnilSecondaryCard, HexnilSecondaryText)
+    }
+
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(4.dp),
+        color = bgColor,
+        border = BorderStroke(1.dp, fgColor.copy(alpha = 0.5f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(5.dp)
+                    .background(fgColor, CircleShape)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = status.uppercase(),
+                color = fgColor,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.5.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun EvidenceAvailabilityChip(
+    availability: String,
+    modifier: Modifier = Modifier
+) {
+    val (bgColor, fgColor) = when (availability.uppercase()) {
+        "AVAILABLE" -> Pair(HexnilSuccessSubtle, HexnilSuccess)
+        "NOT_RUN", "NOT RUN" -> Pair(HexnilSecondaryCard, HexnilSecondaryText)
+        "UNSUPPORTED" -> Pair(HexnilSecondaryCard, HexnilSecondaryText)
+        "INCONCLUSIVE" -> Pair(HexnilWarningSubtle, HexnilWarning)
+        else -> Pair(HexnilSecondaryCard, HexnilSecondaryText)
+    }
+
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(4.dp),
+        color = bgColor,
+        border = BorderStroke(1.dp, fgColor.copy(alpha = 0.4f))
+    ) {
+        Text(
+            text = availability.replace("_", " ").uppercase(),
+            color = fgColor,
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+        )
+    }
+}
+

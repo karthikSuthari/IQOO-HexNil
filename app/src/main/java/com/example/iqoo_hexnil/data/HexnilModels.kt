@@ -52,7 +52,9 @@ data class ReleaseClaim(
     val riskLevel: ClaimRiskLevel,
     val recommendedWorkload: String,
     val predictionSource: String,
-    val targetMetric: String
+    val targetMetric: String,
+    val validationStatus: String = "UNCHANGED",
+    val priority: WorkloadPriority = WorkloadPriority.MEDIUM
 )
 
 data class WorkloadDefinition(
@@ -64,7 +66,10 @@ data class WorkloadDefinition(
     val matchedRunsCount: Int,
     val action: String,
     val configHash: String,
-    val lastDurationMs: Double? = null
+    val lastDurationMs: Double? = null,
+    val purpose: String = description,
+    val isSelected: Boolean = true,
+    val evidenceAvailability: String = "AVAILABLE"
 )
 
 data class StatisticalMetricResult(

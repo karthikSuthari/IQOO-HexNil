@@ -41,7 +41,7 @@ fun ClaimCard(
         color = HexnilCard
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
-            // Top row: ID, Subsystem & Risk Chip
+            // Top row: ID, Subsystem & Status Chips
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -62,18 +62,33 @@ fun ClaimCard(
                         fontWeight = FontWeight.Medium
                     )
                 }
-                RiskChip(riskLevel = claim.riskLevel)
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    PriorityChip(priority = claim.priority)
+                    RiskChip(riskLevel = claim.riskLevel)
+                }
             }
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Claim Title
-            Text(
-                text = claim.title,
-                color = HexnilPrimaryText,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold
-            )
+            // Claim Title & Validation Status
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = claim.title,
+                    color = HexnilPrimaryText,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                ValidationStatusChip(status = claim.validationStatus)
+            }
 
             Spacer(modifier = Modifier.height(4.dp))
 
@@ -95,9 +110,12 @@ fun ClaimCard(
                 border = androidx.compose.foundation.BorderStroke(1.dp, HexnilBorder)
             ) {
                 Column(modifier = Modifier.padding(10.dp)) {
+                    ClaimPropertyRow("Affected Subsystem", claim.subsystem)
                     ClaimPropertyRow("Expected Direction", claim.expectedDirection)
-                    ClaimPropertyRow("Recommended Test", claim.recommendedWorkload, isMonospace = true)
-                    ClaimPropertyRow("Prediction Source", claim.predictionSource)
+                    ClaimPropertyRow("Expected Metric", claim.targetMetric, isMonospace = true)
+                    ClaimPropertyRow("Recommended Workload", claim.recommendedWorkload, isMonospace = true)
+                    ClaimPropertyRow("Validation Status", claim.validationStatus)
+                    ClaimPropertyRow("Provenance Source", claim.predictionSource)
                 }
             }
         }

@@ -50,13 +50,16 @@ fun WorkloadCard(
         color = HexnilCard
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
-            // Top row: ID, priority chip, status chip
+            // Top row: ID, priority chip, selection status & execution status chip
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     Text(
                         text = workload.id,
                         color = HexnilMainAccent,
@@ -64,14 +67,32 @@ fun WorkloadCard(
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace
                     )
-                    Spacer(modifier = Modifier.padding(horizontal = 4.dp))
                     PriorityChip(priority = workload.priority)
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = HexnilSecondaryCard,
+                        border = BorderStroke(1.dp, HexnilBorder)
+                    ) {
+                        Text(
+                            text = if (workload.isSelected) "SELECTED" else "NOT SELECTED",
+                            color = if (workload.isSelected) HexnilSuccess else HexnilSecondaryText,
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                        )
+                    }
                 }
 
-                WorkloadStatusChip(status = workload.status)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    EvidenceAvailabilityChip(availability = workload.evidenceAvailability)
+                    WorkloadStatusChip(status = workload.status)
+                }
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Workload Name
             Text(
@@ -90,6 +111,33 @@ fun WorkloadCard(
                 fontSize = 12.sp,
                 lineHeight = 16.sp
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Workload Purpose Card
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(6.dp),
+                color = HexnilSecondaryCard,
+                border = BorderStroke(1.dp, HexnilBorder)
+            ) {
+                Column(modifier = Modifier.padding(8.dp)) {
+                    Text(
+                        text = "PURPOSE & SCOPE",
+                        color = HexnilSecondaryText,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = workload.purpose,
+                        color = HexnilPrimaryText,
+                        fontSize = 11.sp,
+                        lineHeight = 15.sp
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(10.dp))
 
@@ -131,14 +179,14 @@ fun WorkloadCard(
             ) {
                 Column {
                     Text(
-                        text = "LAST MEASURED",
+                        text = "LATEST EXECUTION",
                         color = HexnilSecondaryText,
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = if (workload.lastDurationMs != null) "${"%.1f".format(workload.lastDurationMs)} ms" else "Not Run",
-                        color = HexnilSuccess,
+                        text = if (workload.lastDurationMs != null) "${"%.1f".format(workload.lastDurationMs)} ms" else "NOT RUN",
+                        color = if (workload.lastDurationMs != null) HexnilSuccess else HexnilSecondaryText,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace
@@ -156,7 +204,7 @@ fun WorkloadCard(
                     shape = RoundedCornerShape(6.dp)
                 ) {
                     Text(
-                        text = if (isRunning) "Running..." else "Execute ➔",
+                        text = if (isRunning) "Running..." else "Execute Workload ➔",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
                     )

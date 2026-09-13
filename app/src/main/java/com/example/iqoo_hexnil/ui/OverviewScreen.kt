@@ -22,30 +22,40 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.iqoo_hexnil.data.ComparisonAnalysis
 import com.example.iqoo_hexnil.data.DeviceHardwareInfo
+import com.example.iqoo_hexnil.data.ExplanationSource
+import com.example.iqoo_hexnil.data.HexnilRepository
 import com.example.iqoo_hexnil.data.StatisticalMetricResult
 import com.example.iqoo_hexnil.data.VerdictType
 import com.example.iqoo_hexnil.ui.components.EvidenceCoverageCard
 import com.example.iqoo_hexnil.ui.components.HexnilPrimaryButton
 import com.example.iqoo_hexnil.ui.components.ResultBadge
 import com.example.iqoo_hexnil.ui.components.SectionHeader
+import com.example.iqoo_hexnil.ui.components.ValidationStatusChip
 import com.example.iqoo_hexnil.ui.theme.HexnilAccentGlow
+import com.example.iqoo_hexnil.ui.theme.HexnilAccentSubtle
 import com.example.iqoo_hexnil.ui.theme.HexnilBackground
 import com.example.iqoo_hexnil.ui.theme.HexnilBorder
 import com.example.iqoo_hexnil.ui.theme.HexnilCard
+import com.example.iqoo_hexnil.ui.theme.HexnilError
 import com.example.iqoo_hexnil.ui.theme.HexnilMainAccent
 import com.example.iqoo_hexnil.ui.theme.HexnilPrimaryText
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryCard
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryText
 import com.example.iqoo_hexnil.ui.theme.HexnilSuccess
+import com.example.iqoo_hexnil.ui.theme.HexnilSuccessSubtle
+import com.example.iqoo_hexnil.ui.theme.HexnilWarning
+import com.example.iqoo_hexnil.ui.theme.HexnilWarningSubtle
 
 @Composable
 fun OverviewScreen(
@@ -61,6 +71,10 @@ fun OverviewScreen(
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
+    val claims = remember { HexnilRepository.getReleaseClaims() }
+    val aiExplanation = remember(analysis.comparisonId) {
+        HexnilRepository.getAiExplanation(analysis.comparisonId, ExplanationSource.DETERMINISTIC_ANALYSIS)
+    }
 
     Column(
         modifier = modifier
@@ -70,44 +84,67 @@ fun OverviewScreen(
             .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Hero Context Card: Device + Release Update Identity
+        // 1. Header & Device / Update Context
         HeroUpdateIdentityCard(
             device = device,
+            comparisonId = analysis.comparisonId,
             v0Exp = analysis.v0ExperimentId,
             v1Exp = analysis.v1ExperimentId
         )
 
-        // Primary Result Section: Update Validation & Evidence Coverage
-        EvidenceCoverageCard(analysis = analysis)
-
-        // Hero Measured Change Highlight: Derived dynamically from repository analysis
-        val highlightMetric = analysis.metricResults.find { it.workloadId == "video_power_01" }
+        // 2. Main V0 -> V1 Hero (Status semantics are critical: UNCHANGED for +3.05%)
+        val primaryHighlight = analysis.metricResults.find { it.workloadId == "video_power_01" && it.metricName == "workload_duration_ms" }
             ?: analysis.metricResults.firstOrNull()
 
-        if (highlightMetric != null) {
-            HeroMeasuredChangeCard(
-                metric = highlightMetric,
-                onClick = { onNavigateToMetricDetail(highlightMetric.key) }
+        if (primaryHighlight != null) {
+            MainV0V1HeroCard(
+                metric = primaryHighlight,
+                onClick = { onNavigateToMetricDetail(primaryHighlight.key) }
             )
         }
 
-        // CTA: View Full Results
+        // 3. Evidence Coverage Card
+        EvidenceCoverageCard(analysis = analysis)
+
+        // 4. Regression Summary Card (Exact backend counts)
+        RegressionSummaryCard(
+            regressions = analysis.metricsRegressions,
+            improvements = analysis.metricsImprovements,
+            unchanged = analysis.metricsUnchanged,
+            inconclusive = analysis.metricsInconclusive,
+            onViewResultsClick = onNavigateToResults
+        )
+
+        // 5. Release Claims Preview
+        ClaimsPreviewCard(
+            claims = claims.take(3),
+            totalClaimsCount = claims.size,
+            onViewAllClaims = onNavigateToClaims
+        )
+
+        // 6. AI Analyst Preview (Evidence-grounded explanation snippet)
+        AiAnalystPreviewCard(
+            explanation = aiExplanation,
+            onViewFullAnalysis = onNavigateToAiExplanation
+        )
+
+        // CTA: View Complete Results & Statistical Evidence
         HexnilPrimaryButton(
-            text = "VIEW COMPLETE RESULTS & EVIDENCE ➔",
+            text = "VIEW COMPLETE STATISTICAL RESULTS ➔",
             onClick = onNavigateToResults
         )
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // Navigation Drill-Down Hub
+        // 7. Audit & Exploration Drilldown Hub
         SectionHeader(
             category = "AUDIT & EXPLORATION HUB",
-            subtitle = "Direct access to deterministic workloads, comparison matrices, and provenance."
+            subtitle = "Direct access to deterministic workloads, paired comparisons, and provenance lineage."
         )
 
         QuickNavigationTile(
             title = "Release Claims & Hypotheses",
-            subtitle = "5 Subsystem performance claims prepared for Phase 7 prediction intelligence.",
+            subtitle = "5 Subsystem performance claims mapped to validation workloads and predicted risk.",
             icon = "📋",
             badge = "5 CLAIMS",
             onClick = onNavigateToClaims
@@ -125,13 +162,13 @@ fun OverviewScreen(
             title = "V0 vs V1 Side-by-Side Run Pairing",
             subtitle = "Physical device run matching, config hash verification, and drift checks.",
             icon = "⚖",
-            badge = "CMP-001",
+            badge = analysis.comparisonId,
             onClick = onNavigateToComparison
         )
 
         QuickNavigationTile(
             title = "Measured Evidence vs AI Interpretation",
-            subtitle = "Deterministic statistical analysis paired with evidence-grounded AI analyst.",
+            subtitle = "Evidence-grounded Groq explanation strictly constrained by statistical facts.",
             icon = "✨",
             badge = "AI ANALYST",
             onClick = onNavigateToAiExplanation
@@ -139,7 +176,7 @@ fun OverviewScreen(
 
         QuickNavigationTile(
             title = "Experiment Audit Trail & Provenance",
-            subtitle = "APK SHA-256 signatures, hardware fingerprints, and artifact hashes.",
+            subtitle = "APK SHA-256 signatures, hardware fingerprints, and artifact storage hashes.",
             icon = "🔒",
             badge = "VERIFIED",
             onClick = onNavigateToProvenance
@@ -152,6 +189,7 @@ fun OverviewScreen(
 @Composable
 private fun HeroUpdateIdentityCard(
     device: DeviceHardwareInfo,
+    comparisonId: String,
     v0Exp: String,
     v1Exp: String
 ) {
@@ -168,78 +206,104 @@ private fun HeroUpdateIdentityCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "RELEASE VALIDATION PIPELINE",
-                    color = HexnilMainAccent,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
-                )
+                Column {
+                    Text(
+                        text = "HEXNIL",
+                        color = HexnilMainAccent,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.5.sp
+                    )
+                    Text(
+                        text = "Engineering Validation Intelligence",
+                        color = HexnilSecondaryText,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier.size(6.dp).background(HexnilSuccess, CircleShape))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "HARDWARE PAIRED",
+                        text = "EVIDENCE AUDITED",
                         color = HexnilSuccess,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Row(
+            // Device & Comparison Lineage Grid
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                shape = RoundedCornerShape(8.dp),
+                color = HexnilSecondaryCard,
+                border = BorderStroke(1.dp, HexnilBorder)
             ) {
-                Column {
-                    Text(
-                        text = "TARGET DEVICE",
-                        color = HexnilSecondaryText,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "${device.manufacturer} ${device.model}",
-                        color = HexnilPrimaryText,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Android ${device.androidRelease} · SDK ${device.sdkInt}",
-                        color = HexnilSecondaryText,
-                        fontSize = 11.sp
-                    )
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = HexnilSecondaryCard,
-                    border = BorderStroke(1.dp, HexnilBorder)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        horizontalAlignment = Alignment.End
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
+                        Text(text = "Target Device", color = HexnilSecondaryText, fontSize = 11.sp)
                         Text(
-                            text = "SOFTWARE DELTA",
-                            color = HexnilSecondaryText,
-                            fontSize = 9.sp,
+                            text = "${device.manufacturer} ${device.model}",
+                            color = HexnilPrimaryText,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "Operating System", color = HexnilSecondaryText, fontSize = 11.sp)
                         Text(
-                            text = "V0 ➔ V1",
-                            color = HexnilAccentGlow,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Black,
+                            text = "Android ${device.androidRelease} / SDK ${device.sdkInt}",
+                            color = HexnilPrimaryText,
+                            fontSize = 11.sp,
                             fontFamily = FontFamily.Monospace
                         )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "Comparison ID", color = HexnilSecondaryText, fontSize = 11.sp)
                         Text(
-                            text = "$v0Exp → $v1Exp",
-                            color = HexnilSecondaryText,
-                            fontSize = 9.sp,
+                            text = comparisonId,
+                            color = HexnilAccentGlow,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "Software Delta", color = HexnilSecondaryText, fontSize = 11.sp)
+                        Text(
+                            text = "$v0Exp ➔ $v1Exp",
+                            color = HexnilPrimaryText,
+                            fontSize = 11.sp,
                             fontFamily = FontFamily.Monospace
                         )
                     }
@@ -250,13 +314,14 @@ private fun HeroUpdateIdentityCard(
 }
 
 @Composable
-private fun HeroMeasuredChangeCard(
+private fun MainV0V1HeroCard(
     metric: StatisticalMetricResult,
     onClick: () -> Unit
 ) {
-    val v0Text = if (metric.v0Mean != null) "${"%.1f".format(metric.v0Mean / 1000.0)} s" else "Unavailable"
-    val v1Text = if (metric.v1Mean != null) "${"%.1f".format(metric.v1Mean / 1000.0)} s" else "Unavailable"
-    val deltaText = if (metric.percentDelta != null) "${if (metric.percentDelta >= 0) "+" else ""}${"%.1f".format(metric.percentDelta)}%" else "Unavailable"
+    val v0Text = if (metric.v0Mean != null) "${"%.3f".format(metric.v0Mean)} ms" else "Unavailable"
+    val v1Text = if (metric.v1Mean != null) "${"%.3f".format(metric.v1Mean)} ms" else "Unavailable"
+    val deltaPercentText = if (metric.percentDelta != null) "${if (metric.percentDelta >= 0) "+" else ""}${"%.2f".format(metric.percentDelta)}%" else "N/A"
+    val deltaAbsText = if (metric.absoluteDelta != null) "${if (metric.absoluteDelta >= 0) "+" else ""}${"%.3f".format(metric.absoluteDelta)} ms" else "N/A"
 
     Surface(
         modifier = Modifier
@@ -273,27 +338,34 @@ private fun HeroMeasuredChangeCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "PRIMARY MEASURED HIGHLIGHT",
+                    text = "PRIMARY DIFFERENTIAL VERDICT",
                     color = HexnilMainAccent,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
                 )
-                ResultBadge(verdict = metric.verdict, isCompact = true)
+                ResultBadge(verdict = metric.verdict)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "${metric.displayName} (${metric.workloadId})",
+                text = metric.displayName,
                 color = HexnilPrimaryText,
-                fontSize = 14.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = "Workload: ${metric.workloadId} · Metric: ${metric.metricName}",
+                color = HexnilSecondaryText,
+                fontSize = 11.sp,
+                fontFamily = FontFamily.Monospace
+            )
 
-            // Comparison row
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Main V0 -> V1 Values Box
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp),
@@ -303,7 +375,7 @@ private fun HeroMeasuredChangeCard(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -312,7 +384,7 @@ private fun HeroMeasuredChangeCard(
                         Text(
                             text = v0Text,
                             color = HexnilPrimaryText,
-                            fontSize = 16.sp,
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = FontFamily.Monospace
                         )
@@ -325,19 +397,25 @@ private fun HeroMeasuredChangeCard(
                         Text(
                             text = v1Text,
                             color = HexnilPrimaryText,
-                            fontSize = 16.sp,
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = FontFamily.Monospace
                         )
                     }
 
                     Column(horizontalAlignment = Alignment.End) {
-                        Text(text = "DELTA", color = HexnilSecondaryText, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "DELTA SHIFT", color = HexnilSecondaryText, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                         Text(
-                            text = deltaText,
-                            color = HexnilMainAccent,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
+                            text = deltaPercentText,
+                            color = HexnilSuccess,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Black,
+                            fontFamily = FontFamily.Monospace
+                        )
+                        Text(
+                            text = deltaAbsText,
+                            color = HexnilSecondaryText,
+                            fontSize = 9.sp,
                             fontFamily = FontFamily.Monospace
                         )
                     }
@@ -346,21 +424,294 @@ private fun HeroMeasuredChangeCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Why section
+            // Semantic Status Callout
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(6.dp),
                 color = HexnilSecondaryCard
             ) {
-                Row(modifier = Modifier.padding(10.dp)) {
-                    Text(text = "Why? ", color = HexnilMainAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Row(
+                    modifier = Modifier.padding(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = "ℹ️", fontSize = 12.sp)
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = metric.reason,
+                        text = "Status: UNCHANGED · Observed shift ($deltaPercentText) is within the ${metric.thresholdPercent ?: 5.0}% engineering threshold (p=${metric.pValue?.let { "%.4f".format(it) } ?: "N/A"}). Not classified as regression.",
                         color = HexnilSecondaryText,
                         fontSize = 11.sp,
                         lineHeight = 15.sp
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RegressionSummaryCard(
+    regressions: Int,
+    improvements: Int,
+    unchanged: Int,
+    inconclusive: Int,
+    onViewResultsClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
+        color = HexnilCard
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "REGRESSION & OUTCOME SUMMARY",
+                    color = HexnilMainAccent,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+                Text(
+                    text = "AUTHORITATIVE",
+                    color = HexnilSecondaryText,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // 4 Count Chips Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutcomeChip("REGRESSION", regressions, if (regressions > 0) HexnilError else HexnilSuccess, Modifier.weight(1f))
+                OutcomeChip("IMPROVEMENT", improvements, HexnilSuccess, Modifier.weight(1f))
+                OutcomeChip("UNCHANGED", unchanged, HexnilSuccess, Modifier.weight(1f))
+                OutcomeChip("INCONCLUSIVE", inconclusive, HexnilWarning, Modifier.weight(1f))
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Honest Banner
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(6.dp),
+                color = if (regressions == 0) HexnilSuccessSubtle else HexnilAccentSubtle,
+                border = BorderStroke(1.dp, if (regressions == 0) HexnilSuccess.copy(alpha = 0.5f) else HexnilError.copy(alpha = 0.5f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = if (regressions == 0) "✓" else "⚠", color = if (regressions == 0) HexnilSuccess else HexnilError, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (regressions == 0) "No statistically supported regressions detected across 13 analyzed metrics." else "$regressions regression(s) detected.",
+                        color = if (regressions == 0) HexnilSuccess else HexnilError,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OutcomeChip(
+    label: String,
+    count: Int,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(6.dp),
+        color = HexnilSecondaryCard,
+        border = BorderStroke(1.dp, HexnilBorder)
+    ) {
+        Column(
+            modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = count.toString(),
+                color = color,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Black,
+                fontFamily = FontFamily.Monospace
+            )
+            Text(
+                text = label,
+                color = HexnilSecondaryText,
+                fontSize = 8.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
+            )
+        }
+    }
+}
+
+@Composable
+private fun ClaimsPreviewCard(
+    claims: List<com.example.iqoo_hexnil.data.ReleaseClaim>,
+    totalClaimsCount: Int,
+    onViewAllClaims: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
+        color = HexnilCard
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "RELEASE CLAIMS PREVIEW",
+                    color = HexnilMainAccent,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+                Text(
+                    text = "View All $totalClaimsCount ➔",
+                    color = HexnilAccentGlow,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable { onViewAllClaims() }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            claims.forEach { claim ->
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    shape = RoundedCornerShape(6.dp),
+                    color = HexnilSecondaryCard,
+                    border = BorderStroke(1.dp, HexnilBorder)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "${claim.id} · ${claim.title}",
+                                color = HexnilPrimaryText,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Subsystem: ${claim.subsystem}",
+                                color = HexnilSecondaryText,
+                                fontSize = 10.sp
+                            )
+                        }
+                        ValidationStatusChip(status = claim.validationStatus)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AiAnalystPreviewCard(
+    explanation: com.example.iqoo_hexnil.data.AiExplanation,
+    onViewFullAnalysis: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
+        color = HexnilCard
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = "✨", fontSize = 12.sp)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "AI ANALYST PREVIEW",
+                        color = HexnilMainAccent,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    color = HexnilSecondaryCard,
+                    border = BorderStroke(1.dp, HexnilBorder)
+                ) {
+                    Text(
+                        text = explanation.model ?: "Deterministic",
+                        color = HexnilSecondaryText,
+                        fontSize = 9.sp,
+                        fontFamily = FontFamily.Monospace,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Evidence-Grounded Interpretation",
+                color = HexnilPrimaryText,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = explanation.summary,
+                color = HexnilSecondaryText,
+                fontSize = 11.sp,
+                lineHeight = 15.sp,
+                maxLines = 3
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onViewFullAnalysis() },
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "View full analysis ➔",
+                    color = HexnilAccentGlow,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }

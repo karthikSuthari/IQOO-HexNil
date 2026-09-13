@@ -452,7 +452,9 @@ object HexnilRepository {
                 riskLevel = ClaimRiskLevel.HIGH,
                 recommendedWorkload = "video_power_01",
                 predictionSource = "Release note & media decoder commit history",
-                targetMetric = "video_power_01_workload_duration_ms"
+                targetMetric = "video_power_01_workload_duration_ms",
+                validationStatus = "UNCHANGED",
+                priority = WorkloadPriority.HIGH
             ),
             ReleaseClaim(
                 id = "CLM-002",
@@ -463,7 +465,9 @@ object HexnilRepository {
                 riskLevel = ClaimRiskLevel.MODERATE,
                 recommendedWorkload = "startup_01",
                 predictionSource = "Application lifecycle optimization patch",
-                targetMetric = "startup_01_startup_duration_ms"
+                targetMetric = "startup_01_startup_duration_ms",
+                validationStatus = "INCONCLUSIVE",
+                priority = WorkloadPriority.HIGH
             ),
             ReleaseClaim(
                 id = "CLM-003",
@@ -474,7 +478,9 @@ object HexnilRepository {
                 riskLevel = ClaimRiskLevel.LOW,
                 recommendedWorkload = "cpu_01",
                 predictionSource = "Math kernel algorithm update",
-                targetMetric = "cpu_01_compute_duration_ms"
+                targetMetric = "cpu_01_compute_duration_ms",
+                validationStatus = "UNCHANGED",
+                priority = WorkloadPriority.MEDIUM
             ),
             ReleaseClaim(
                 id = "CLM-004",
@@ -485,7 +491,9 @@ object HexnilRepository {
                 riskLevel = ClaimRiskLevel.MODERATE,
                 recommendedWorkload = "scroll_01",
                 predictionSource = "Compose list optimization",
-                targetMetric = "scroll_01_scroll_duration_ms"
+                targetMetric = "scroll_01_scroll_duration_ms",
+                validationStatus = "INCONCLUSIVE",
+                priority = WorkloadPriority.MEDIUM
             ),
             ReleaseClaim(
                 id = "CLM-005",
@@ -496,7 +504,9 @@ object HexnilRepository {
                 riskLevel = ClaimRiskLevel.LOW,
                 recommendedWorkload = "memory_01",
                 predictionSource = "Memory management refactor",
-                targetMetric = "memory_01_workload_duration_ms"
+                targetMetric = "memory_01_workload_duration_ms",
+                validationStatus = "UNCHANGED",
+                priority = WorkloadPriority.LOW
             )
         )
     }
@@ -512,7 +522,10 @@ object HexnilRepository {
                 matchedRunsCount = 3,
                 action = "launch_app",
                 configHash = "2e7a9b1c",
-                lastDurationMs = 7797.4
+                lastDurationMs = 7797.4,
+                purpose = "Validate application launch latency, component graph warm-up and bootstrap telemetry overhead.",
+                isSelected = true,
+                evidenceAvailability = "AVAILABLE"
             ),
             WorkloadDefinition(
                 id = "cpu_01",
@@ -523,7 +536,10 @@ object HexnilRepository {
                 matchedRunsCount = 3,
                 action = "compute_work",
                 configHash = "5f8c3d2a",
-                lastDurationMs = 9755.4
+                lastDurationMs = 9755.4,
+                purpose = "Benchmark SIMD matrix math throughput, integer compute pipelines and CPU thermal scaling.",
+                isSelected = true,
+                evidenceAvailability = "AVAILABLE"
             ),
             WorkloadDefinition(
                 id = "memory_01",
@@ -534,7 +550,10 @@ object HexnilRepository {
                 matchedRunsCount = 3,
                 action = "memory_work",
                 configHash = "8b1a4e7f",
-                lastDurationMs = 9347.7
+                lastDurationMs = 9347.7,
+                purpose = "Measure heap growth, allocation thrashing, GC pause durations and memory leak propensities.",
+                isSelected = true,
+                evidenceAvailability = "AVAILABLE"
             ),
             WorkloadDefinition(
                 id = "scroll_01",
@@ -545,7 +564,10 @@ object HexnilRepository {
                 matchedRunsCount = 3,
                 action = "scroll",
                 configHash = "1c4d9e2a",
-                lastDurationMs = 10549.1
+                lastDurationMs = 10549.1,
+                purpose = "Audit frame pacing, UI thread layout overhead, and surface jank during rapid list flings.",
+                isSelected = true,
+                evidenceAvailability = "AVAILABLE"
             ),
             WorkloadDefinition(
                 id = "video_power_01",
@@ -556,7 +578,10 @@ object HexnilRepository {
                 matchedRunsCount = 3,
                 action = "local_media_playback",
                 configHash = "7a3b8c1d",
-                lastDurationMs = 12733.5
+                lastDurationMs = 12733.5,
+                purpose = "Measure hardware media decoder power consumption, thermal dissipation and execution stability.",
+                isSelected = true,
+                evidenceAvailability = "AVAILABLE"
             )
         )
     }

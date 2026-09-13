@@ -1,7 +1,6 @@
 package com.example.iqoo_hexnil
 
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import androidx.activity.ComponentActivity
@@ -23,12 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -42,24 +36,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.iqoo_hexnil.telemetry.CapabilityStatus
 import com.example.iqoo_hexnil.telemetry.TelemetryEngine
 import com.example.iqoo_hexnil.telemetry.TelemetryRecord
+import com.example.iqoo_hexnil.ui.AppScreen
+import com.example.iqoo_hexnil.ui.DashboardScreen
+import com.example.iqoo_hexnil.ui.StatsScreen
+import com.example.iqoo_hexnil.ui.TelemetryScreen
+import com.example.iqoo_hexnil.ui.WorkloadsScreen
 import com.example.iqoo_hexnil.ui.theme.HexnilAccentGlow
 import com.example.iqoo_hexnil.ui.theme.HexnilBackground
 import com.example.iqoo_hexnil.ui.theme.HexnilBorder
 import com.example.iqoo_hexnil.ui.theme.HexnilCard
-import com.example.iqoo_hexnil.ui.theme.HexnilError
 import com.example.iqoo_hexnil.ui.theme.HexnilMainAccent
 import com.example.iqoo_hexnil.ui.theme.HexnilPrimaryText
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryCard
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryText
-import com.example.iqoo_hexnil.ui.theme.HexnilSuccess
-import com.example.iqoo_hexnil.ui.theme.HexnilWarning
 import com.example.iqoo_hexnil.ui.theme.IQOOHEXNILTheme
 
 class MainActivity : ComponentActivity() {
@@ -75,23 +69,19 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             IQOOHEXNILTheme {
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    containerColor = HexnilBackground
-                ) { innerPadding ->
-                    HexnilCompanionScreen(
-                        activityCreateTime = activityCreateTime,
-                        initialExperimentId = pendingExperimentId,
-                        onRunWorkload = { expId ->
-                            TelemetryEngine.executeSession(
-                                context = this@MainActivity,
-                                experimentId = expId,
-                                workloadId = "startup_basic"
-                            )
-                        },
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                HexnilMainApp(
+                    activityCreateTime = activityCreateTime,
+                    initialExperimentId = pendingExperimentId,
+                    onExecuteSession = { expId, wid, action, ops ->
+                        TelemetryEngine.executeSession(
+                            context = this@MainActivity,
+                            experimentId = expId,
+                            workloadId = wid,
+                            action = action,
+                            operations = ops
+                        )
+                    }
+                )
             }
         }
     }
@@ -123,13 +113,12 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun HexnilCompanionScreen(
+fun HexnilMainApp(
     activityCreateTime: Long,
     initialExperimentId: String?,
-    onRunWorkload: (String) -> List<TelemetryRecord>,
-    modifier: Modifier = Modifier
+    onExecuteSession: (String, String, String, Int) -> List<TelemetryRecord>
 ) {
-    val scrollState = rememberScrollState()
+    var currentScreen by remember { mutableStateOf(AppScreen.DASHBOARD) }
     var currentExperimentId by remember {
         mutableStateOf(initialExperimentId ?: "EXP-READY-001")
     }
@@ -140,376 +129,157 @@ fun HexnilCompanionScreen(
     LaunchedEffect(Unit) {
         val startupDuration = SystemClock.elapsedRealtime() - activityCreateTime
         TelemetryEngine.lastStartupDurationMs = startupDuration
-        // Run initial telemetry baseline
-        telemetryRecords = onRunWorkload(currentExperimentId)
+        telemetryRecords = onExecuteSession(currentExperimentId, "startup_basic", "launch_app", 1)
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(HexnilBackground)
-            .padding(horizontal = 20.dp, vertical = 16.dp)
-            .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // App Header
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.hexnil_logo),
-                contentDescription = "Hexnil Logo",
-                modifier = Modifier
-                    .size(46.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .border(1.dp, HexnilBorder, RoundedCornerShape(10.dp))
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = HexnilBackground,
+        topBar = {
+            HexnilTopAppBar(currentScreen = currentScreen)
+        },
+        bottomBar = {
+            HexnilBottomNavBar(
+                currentScreen = currentScreen,
+                onScreenSelected = { currentScreen = it }
             )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "HEXNIL",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Black,
-                        color = HexnilMainAccent,
-                        letterSpacing = 2.sp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = HexnilSecondaryCard,
-                        border = BorderStroke(1.dp, HexnilBorder)
-                    ) {
-                        Text(
-                            text = "v1.1",
-                            color = HexnilAccentGlow,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
+        }
+    ) { innerPadding ->
+        Box(modifier = Modifier.padding(innerPadding)) {
+            when (currentScreen) {
+                AppScreen.DASHBOARD -> DashboardScreen(
+                    experimentId = currentExperimentId,
+                    telemetryRecords = telemetryRecords,
+                    onNavigateToWorkloads = { currentScreen = AppScreen.WORKLOADS }
+                )
+                AppScreen.TELEMETRY -> TelemetryScreen(
+                    records = telemetryRecords,
+                    isRunning = isRunning,
+                    onCollectSnapshot = {
+                        isRunning = true
+                        telemetryRecords = onExecuteSession(currentExperimentId, "snapshot", "collect_snapshot", 1)
+                        isRunning = false
                     }
-                }
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Universal Telemetry Collection",
-                    color = HexnilSecondaryText,
-                    fontSize = 12.sp
+                )
+                AppScreen.WORKLOADS -> WorkloadsScreen(
+                    onRunWorkloadAction = { wid, action ->
+                        isRunning = true
+                        telemetryRecords = onExecuteSession(currentExperimentId, wid, action, 5000)
+                        isRunning = false
+                    }
+                )
+                AppScreen.STATS -> StatsScreen(
+                    comparisonId = "CMP-20260913-001"
                 )
             }
         }
-
-        // Status Card
-        StatusCard(
-            experimentId = currentExperimentId,
-            recordsCount = telemetryRecords.size
-        )
-
-        // Telemetry Evidence Card
-        TelemetryEvidenceCard(
-            records = telemetryRecords,
-            isRunning = isRunning,
-            onExecuteWorkload = {
-                isRunning = true
-                val newRecords = onRunWorkload(currentExperimentId)
-                telemetryRecords = newRecords
-                isRunning = false
-            }
-        )
-
-        // Device Properties Card
-        DevicePropertiesCard()
-
-        // Architecture Boundary Note Card
-        ArchitectureCard()
-
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
 @Composable
-fun StatusCard(experimentId: String, recordsCount: Int) {
+fun HexnilTopAppBar(currentScreen: AppScreen) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
+            .background(HexnilBackground),
+        color = HexnilBackground
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    painter = painterResource(id = R.drawable.hexnil_logo),
+                    contentDescription = "Hexnil Logo",
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .border(1.dp, HexnilBorder, RoundedCornerShape(8.dp))
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "HEXNIL",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Black,
+                            color = HexnilMainAccent,
+                            letterSpacing = 1.5.sp
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = HexnilSecondaryCard,
+                            border = BorderStroke(1.dp, HexnilBorder)
+                        ) {
+                            Text(
+                                text = "v1.1",
+                                color = HexnilAccentGlow,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                            )
+                        }
+                    }
+                    Text(
+                        text = currentScreen.title,
+                        color = HexnilSecondaryText,
+                        fontSize = 11.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun HexnilBottomNavBar(
+    currentScreen: AppScreen,
+    onScreenSelected: (AppScreen) -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(BorderStroke(1.dp, HexnilBorder)),
         color = HexnilCard
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp, horizontal = 12.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .background(HexnilSuccess, shape = CircleShape)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text(
-                    text = "Telemetry Engine Active",
-                    color = HexnilPrimaryText,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = "Session: $experimentId ($recordsCount records buffered)",
-                    color = HexnilSecondaryText,
-                    fontSize = 12.sp
-                )
+            AppScreen.values().forEach { screen ->
+                val isSelected = screen == currentScreen
+                val textColor = if (isSelected) HexnilMainAccent else HexnilSecondaryText
+                val bgColor = if (isSelected) HexnilSecondaryCard else HexnilCard
+
+                Column(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(bgColor)
+                        .clickable { onScreenSelected(screen) }
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = screen.iconSymbol,
+                        fontSize = 16.sp
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = screen.tabLabel,
+                        color = textColor,
+                        fontSize = 10.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
             }
-        }
-    }
-}
-
-@Composable
-fun TelemetryEvidenceCard(
-    records: List<TelemetryRecord>,
-    isRunning: Boolean,
-    onExecuteWorkload: () -> Unit
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
-        color = HexnilCard
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "ON-DEVICE TELEMETRY EVIDENCE",
-                    color = HexnilMainAccent,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
-                )
-
-                // Capability counts
-                val universal = records.count { it.capability == CapabilityStatus.UNIVERSAL }
-                val conditional = records.count { it.capability == CapabilityStatus.CONDITIONAL }
-                val unsupported = records.count { it.capability == CapabilityStatus.UNSUPPORTED }
-
-                Text(
-                    text = "${universal}U · ${conditional}C · ${unsupported}X",
-                    color = HexnilSecondaryText,
-                    fontSize = 11.sp,
-                    fontFamily = FontFamily.Monospace
-                )
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // Dynamic Metric Summaries extracted from real telemetry
-            val batteryLevel = records.find { it.metric.name == "battery_level_percent" }?.metric?.value
-            val batteryState = records.find { it.metric.name == "battery_charging_state" }?.metric?.value ?: "UNKNOWN"
-            val appHeap = records.find { it.metric.name == "app_heap_allocated_mb" }?.metric?.value
-            val devMemAvail = records.find { it.metric.name == "device_memory_available_mb" }?.metric?.value
-            val thermalStatus = records.find { it.metric.name == "thermal_status_name" }?.metric?.value ?: "NORMAL"
-            val workloadDuration = records.find { it.metric.name == "workload_duration_ms" }?.metric?.value
-            val startupDuration = records.find { it.metric.name == "app_startup_duration_ms" }?.metric?.value
-
-            TelemetryMetricRow(
-                label = "Battery Proxy",
-                value = if (batteryLevel != null) "${"%.1f".format(batteryLevel)}% ($batteryState)" else "Unavailable",
-                capability = CapabilityStatus.UNIVERSAL
-            )
-            TelemetryMetricRow(
-                label = "App Heap Memory",
-                value = if (appHeap != null) "${"%.1f".format(appHeap)} MB" else "Unavailable",
-                capability = CapabilityStatus.UNIVERSAL
-            )
-            TelemetryMetricRow(
-                label = "Device Available RAM",
-                value = if (devMemAvail != null) "${"%.0f".format(devMemAvail)} MB free" else "Unavailable",
-                capability = CapabilityStatus.UNIVERSAL
-            )
-            TelemetryMetricRow(
-                label = "Thermal Status",
-                value = thermalStatus.toString(),
-                capability = CapabilityStatus.UNIVERSAL
-            )
-            TelemetryMetricRow(
-                label = "Workload Duration",
-                value = if (workloadDuration != null) "$workloadDuration ms" else "Not executed",
-                capability = CapabilityStatus.UNIVERSAL
-            )
-            TelemetryMetricRow(
-                label = "App Startup Time",
-                value = if (startupDuration != null) "$startupDuration ms" else "Baseline",
-                capability = CapabilityStatus.CONDITIONAL
-            )
-            TelemetryMetricRow(
-                label = "SoC Silicon Temp",
-                value = "UNSUPPORTED",
-                capability = CapabilityStatus.UNSUPPORTED
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // Workload Trigger Button
-            Button(
-                onClick = onExecuteWorkload,
-                enabled = !isRunning,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = HexnilMainAccent,
-                    contentColor = HexnilPrimaryText
-                ),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = if (isRunning) "Executing Workload..." else "Execute Workload & Collect Telemetry",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun TelemetryMetricRow(
-    label: String,
-    value: String,
-    capability: CapabilityStatus
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            val badgeColor = when (capability) {
-                CapabilityStatus.UNIVERSAL -> HexnilSuccess
-                CapabilityStatus.CONDITIONAL -> HexnilWarning
-                CapabilityStatus.UNSUPPORTED -> HexnilError
-            }
-            Box(
-                modifier = Modifier
-                    .size(6.dp)
-                    .background(badgeColor, CircleShape)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = label,
-                color = HexnilSecondaryText,
-                fontSize = 13.sp
-            )
-        }
-        Text(
-            text = value,
-            color = if (capability == CapabilityStatus.UNSUPPORTED) HexnilSecondaryText else HexnilPrimaryText,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            fontFamily = if (capability == CapabilityStatus.UNSUPPORTED) FontFamily.Monospace else FontFamily.Default
-        )
-    }
-}
-
-@Composable
-fun DevicePropertiesCard() {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
-        color = HexnilCard
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "TARGET HARDWARE IDENTITY",
-                color = HexnilMainAccent,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-
-            PropertyRow("Manufacturer", Build.MANUFACTURER)
-            PropertyRow("Model", Build.MODEL)
-            PropertyRow("Device Codename", Build.DEVICE)
-            PropertyRow("Android Release", Build.VERSION.RELEASE)
-            PropertyRow("API / SDK Level", Build.VERSION.SDK_INT.toString())
-            PropertyRow("Build ID", Build.ID)
-            PropertyRow("ABI Architecture", Build.SUPPORTED_ABIS.firstOrNull() ?: "Unknown")
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "FINGERPRINT",
-                color = HexnilSecondaryText,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = Build.FINGERPRINT,
-                color = HexnilPrimaryText,
-                fontSize = 10.sp,
-                fontFamily = FontFamily.Monospace,
-                lineHeight = 14.sp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(HexnilSecondaryCard, RoundedCornerShape(6.dp))
-                    .padding(8.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun PropertyRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 5.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = label,
-            color = HexnilSecondaryText,
-            fontSize = 13.sp
-        )
-        Text(
-            text = value,
-            color = HexnilPrimaryText,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium
-        )
-    }
-}
-
-@Composable
-fun ArchitectureCard() {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
-        color = HexnilSecondaryCard
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "HOST-DEVICE ARCHITECTURE",
-                color = HexnilSecondaryText,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = "ADB strictly belongs to the host controller machine. The on-device companion serves as the target runtime for later validation phases.",
-                color = HexnilPrimaryText,
-                fontSize = 12.sp,
-                lineHeight = 18.sp
-            )
         }
     }
 }

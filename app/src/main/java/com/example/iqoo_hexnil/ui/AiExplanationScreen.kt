@@ -127,9 +127,9 @@ fun AiExplanationScreen(
         modifier = modifier
             .fillMaxSize()
             .background(HexnilBackground)
-            .padding(horizontal = HexnilSpacing.md, vertical = HexnilSpacing.sm)
+            .padding(horizontal = HexnilSpacing.screenHorizontal, vertical = HexnilSpacing.screenVertical)
             .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sm)
+        verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sectionSpacing)
     ) {
         // Section 1: Ground Truth Header
         Surface(
@@ -139,40 +139,40 @@ fun AiExplanationScreen(
                 .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.hero)),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(HexnilSpacing.md)) {
+            Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                    Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
                         Text(
                             text = "AI ENGINEERING INTELLIGENCE (PHASE 8)",
                             color = HexnilMainAccent,
-                            fontSize = 10.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.sp
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Evidence Advisory & Actions",
+                            text = "Evidence Advisory & Directives",
                             color = HexnilPrimaryText,
-                            fontSize = 15.sp,
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
-                    ResultBadge(verdict = VerdictType.UNCHANGED, isCompact = true)
+                    ResultBadge(verdict = VerdictType.UNCHANGED, isCompact = false)
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 // Metadata Sub-row
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.metadata))
-                        .padding(horizontal = 10.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -182,17 +182,24 @@ fun AiExplanationScreen(
                         Text(
                             text = analysis.comparisonId,
                             color = HexnilAccentGlow,
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = FontFamily.Monospace
                         )
                         Text(
-                            text = "${analysis.deviceModel} (Physical Hardware)",
+                            text = "${analysis.deviceModel} (Physical)",
                             color = HexnilPrimaryText,
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Medium
                         )
                     }
+
+                    Text(
+                        text = "V0: ${analysis.v0ExperimentId}  ➔  V1: ${analysis.v1ExperimentId}",
+                        color = HexnilSecondaryText,
+                        fontSize = 12.sp,
+                        fontFamily = FontFamily.Monospace
+                    )
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -200,15 +207,16 @@ fun AiExplanationScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "V0: ${analysis.v0ExperimentId} ➔ V1: ${analysis.v1ExperimentId}",
-                            color = HexnilSecondaryText,
+                            text = "EVIDENCE AUDIT",
+                            color = HexnilMainAccent,
                             fontSize = 10.sp,
-                            fontFamily = FontFamily.Monospace
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.8.sp
                         )
                         Text(
                             text = "13 Metrics Paired · 0 Regressions",
                             color = HexnilSuccess,
-                            fontSize = 10.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -220,33 +228,36 @@ fun AiExplanationScreen(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(HexnilRadius.metadata))
-                .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.metadata)),
+                .clip(RoundedCornerShape(HexnilRadius.card))
+                .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
             color = HexnilSecondaryCard
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(4.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                    .padding(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 SourceTabChip(
                     label = "DETERMINISTIC ENGINE",
                     isSelected = selectedSource == ExplanationSource.DETERMINISTIC_ANALYSIS,
                     activeColor = HexnilInfo,
-                    onClick = { selectedSource = ExplanationSource.DETERMINISTIC_ANALYSIS }
+                    onClick = { selectedSource = ExplanationSource.DETERMINISTIC_ANALYSIS },
+                    modifier = Modifier.weight(1f)
                 )
                 SourceTabChip(
                     label = "GROQ ANALYST (SERVER)",
                     isSelected = selectedSource == ExplanationSource.GROQ_AI,
                     activeColor = HexnilMainAccent,
-                    onClick = { selectedSource = ExplanationSource.GROQ_AI }
+                    onClick = { selectedSource = ExplanationSource.GROQ_AI },
+                    modifier = Modifier.weight(1f)
                 )
                 SourceTabChip(
                     label = "FALLBACK VERIFIER",
                     isSelected = selectedSource == ExplanationSource.DETERMINISTIC_FALLBACK,
                     activeColor = HexnilWarning,
-                    onClick = { selectedSource = ExplanationSource.DETERMINISTIC_FALLBACK }
+                    onClick = { selectedSource = ExplanationSource.DETERMINISTIC_FALLBACK },
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
@@ -255,7 +266,7 @@ fun AiExplanationScreen(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(HexnilRadius.card))
                 .border(
                     1.dp,
                     when (explanation.source) {
@@ -263,11 +274,11 @@ fun AiExplanationScreen(
                         ExplanationSource.DETERMINISTIC_FALLBACK -> HexnilWarning.copy(alpha = 0.6f)
                         else -> HexnilInfo.copy(alpha = 0.5f)
                     },
-                    RoundedCornerShape(12.dp)
+                    RoundedCornerShape(HexnilRadius.card)
                 ),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
+            Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -276,7 +287,7 @@ fun AiExplanationScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(8.dp)
+                                .size(10.dp)
                                 .clip(CircleShape)
                                 .background(
                                     when (explanation.source) {
@@ -286,7 +297,7 @@ fun AiExplanationScreen(
                                     }
                                 )
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = explanation.source.label,
                             color = when (explanation.source) {
@@ -294,34 +305,34 @@ fun AiExplanationScreen(
                                 ExplanationSource.DETERMINISTIC_FALLBACK -> HexnilWarning
                                 else -> HexnilInfo
                             },
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.5.sp
                         )
                     }
 
                     Surface(
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(HexnilRadius.sm),
                         color = HexnilSecondaryCard,
                         border = BorderStroke(1.dp, HexnilBorder)
                     ) {
                         Text(
                             text = if (explanation.isCached) "CACHED VERIFIED" else "LIVE INFERENCE",
                             color = HexnilSecondaryText,
-                            fontSize = 9.sp,
+                            fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
                     text = explanation.summary,
                     color = HexnilPrimaryText,
-                    fontSize = 12.sp,
-                    lineHeight = 17.sp
+                    fontSize = 14.sp,
+                    lineHeight = 22.sp
                 )
             }
         }
@@ -330,11 +341,12 @@ fun AiExplanationScreen(
         // DEDICATED PART 1: "WHAT HEXNIL FOUND"
         // ==========================================
         SectionHeader(
-            category = "1. WHAT HEXNIL FOUND (EVIDENCE GROUND TRUTH)",
-            actionText = "4 AUDIT DISCOVERIES"
+            category = "AUDIT GROUND TRUTH",
+            title = "1. What Hexnil Found",
+            actionText = "4 DISCOVERIES"
         )
 
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             // Finding 1: Battery Claim Failed
             FindingCard(
                 tag = "CLAIM DISCREPANCY",
@@ -380,11 +392,12 @@ fun AiExplanationScreen(
         // DEDICATED PART 2: "YOU NEED TO DO SOMETHING ABOUT THIS"
         // ==========================================
         SectionHeader(
-            category = "2. WHAT YOU NEED TO DO ABOUT THIS (DIRECTIVES)",
-            actionText = "ACTIONABLE ITEMS"
+            category = "ENGINEERING DIRECTIVES",
+            title = "2. What You Need To Do",
+            actionText = "4 ACTION ITEMS"
         )
 
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             // Directive 1: Block Battery Marketing Claim
             DirectiveCard(
                 priority = "HIGH PRIORITY — RELEASE GATE",
@@ -426,22 +439,23 @@ fun AiExplanationScreen(
         // DEDICATED PART 3: INTERACTIVE AI QUERY BAR
         // ==========================================
         SectionHeader(
-            category = "3. INTERACTIVE AI ADVISOR (ASK ABOUT EVIDENCE)",
-            actionText = "GROUNDED IN 13 METRICS"
+            category = "INTELLIGENCE ASSISTANT",
+            title = "3. Interactive AI Advisor",
+            actionText = "13 METRICS GROUNDED"
         )
 
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .border(1.dp, HexnilMainAccent.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
+                .clip(RoundedCornerShape(HexnilRadius.card))
+                .border(1.dp, HexnilMainAccent.copy(alpha = 0.5f), RoundedCornerShape(HexnilRadius.card)),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(modifier = Modifier.padding(HexnilSpacing.cardPadding), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
                     text = "TAP A QUICK QUESTION OR ASK CUSTOM QUERY:",
                     color = HexnilAccentGlow,
-                    fontSize = 10.sp,
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 0.5.sp
                 )
@@ -449,7 +463,7 @@ fun AiExplanationScreen(
                 // Quick Question Chips
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     QuickQueryPill(
                         text = "Safe to ship?",
@@ -479,7 +493,7 @@ fun AiExplanationScreen(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     QuickQueryPill(
                         text = "What to fix first?",
@@ -510,28 +524,28 @@ fun AiExplanationScreen(
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp)),
+                        .clip(RoundedCornerShape(HexnilRadius.md)),
                     color = HexnilSecondaryCard,
                     border = BorderStroke(1.dp, HexnilBorder)
                 ) {
-                    Column(modifier = Modifier.padding(10.dp)) {
+                    Column(modifier = Modifier.padding(14.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(modifier = Modifier.size(6.dp).background(HexnilMainAccent, CircleShape))
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Box(modifier = Modifier.size(8.dp).background(HexnilMainAccent, CircleShape))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "EVIDENCE-GROUNDED AI RESPONSE",
                                 color = HexnilMainAccent,
-                                fontSize = 10.sp,
+                                fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 0.5.sp
                             )
                         }
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = activeAnswer,
                             color = HexnilPrimaryText,
-                            fontSize = 12.sp,
-                            lineHeight = 17.sp
+                            fontSize = 14.sp,
+                            lineHeight = 21.sp
                         )
                     }
                 }
@@ -546,7 +560,7 @@ fun AiExplanationScreen(
                         value = customQueryInput,
                         onValueChange = { customQueryInput = it },
                         placeholder = {
-                            Text("Ask AI Analyst about Hexnil data...", color = HexnilSecondaryText, fontSize = 11.sp)
+                            Text("Ask AI Analyst about Hexnil data...", color = HexnilSecondaryText, fontSize = 13.sp)
                         },
                         modifier = Modifier.weight(1f),
                         singleLine = true,
@@ -557,7 +571,7 @@ fun AiExplanationScreen(
                             unfocusedTextColor = HexnilPrimaryText,
                             cursorColor = HexnilMainAccent
                         ),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(HexnilRadius.md)
                     )
 
                     Button(
@@ -575,9 +589,10 @@ fun AiExplanationScreen(
                             containerColor = HexnilMainAccent,
                             contentColor = Color.White
                         ),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(HexnilRadius.md),
+                        modifier = Modifier.height(52.dp)
                     ) {
-                        Text("Ask ➔", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text("Ask ➔", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -595,35 +610,37 @@ fun AiExplanationScreen(
                 .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(modifier = Modifier.padding(HexnilSpacing.cardPadding), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 explanation.evidenceReferences.forEachIndexed { index, ref ->
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = "[${ref.referenceId}] ${ref.type.uppercase()}: ",
                                 color = HexnilInfo,
-                                fontSize = 10.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 fontFamily = FontFamily.Monospace
                             )
                             Text(
                                 text = ref.identifier,
                                 color = HexnilPrimaryText,
-                                fontSize = 10.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 fontFamily = FontFamily.Monospace
                             )
                         }
                         if (ref.artifactPath != null) {
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = ref.artifactPath,
                                 color = HexnilSecondaryText,
-                                fontSize = 9.sp,
+                                fontSize = 11.sp,
                                 fontFamily = FontFamily.Monospace
                             )
                         }
                     }
                     if (index < explanation.evidenceReferences.size - 1) {
+                        Spacer(modifier = Modifier.height(4.dp))
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -635,7 +652,7 @@ fun AiExplanationScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
@@ -651,77 +668,77 @@ private fun FindingCard(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .border(1.dp, HexnilBorder, RoundedCornerShape(10.dp)),
+            .clip(RoundedCornerShape(HexnilRadius.card))
+            .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
         color = HexnilCard
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Surface(
-                    shape = RoundedCornerShape(4.dp),
+                    shape = RoundedCornerShape(HexnilRadius.xs),
                     color = tagColor.copy(alpha = 0.15f),
                     border = BorderStroke(1.dp, tagColor.copy(alpha = 0.4f))
                 ) {
                     Text(
                         text = tag,
                         color = tagColor,
-                        fontSize = 9.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                     )
                 }
 
                 Text(
                     text = verdict,
                     color = tagColor,
-                    fontSize = 10.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily.Monospace
                 )
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Text(
                 text = title,
                 color = HexnilPrimaryText,
-                fontSize = 13.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             Text(
                 text = details,
                 color = HexnilSecondaryText,
-                fontSize = 11.sp,
-                lineHeight = 16.sp
+                fontSize = 14.sp,
+                lineHeight = 21.sp
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Inline Metric Observation Strip
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(HexnilSecondaryCard, RoundedCornerShape(6.dp))
-                    .padding(horizontal = 8.dp, vertical = 5.dp),
+                    .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.sm))
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "DATA: ",
                     color = HexnilSecondaryText,
-                    fontSize = 9.sp,
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = metricEvidence,
                     color = HexnilAccentGlow,
-                    fontSize = 10.sp,
+                    fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Medium
                 )
@@ -741,11 +758,11 @@ private fun DirectiveCard(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .border(1.dp, priorityColor.copy(alpha = 0.4f), RoundedCornerShape(10.dp)),
+            .clip(RoundedCornerShape(HexnilRadius.card))
+            .border(1.dp, priorityColor.copy(alpha = 0.4f), RoundedCornerShape(HexnilRadius.card)),
         color = HexnilCard
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -754,34 +771,34 @@ private fun DirectiveCard(
                 Text(
                     text = priority,
                     color = priorityColor,
-                    fontSize = 9.sp,
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 0.5.sp
                 )
                 Text(
                     text = actionLabel,
                     color = HexnilMainAccent,
-                    fontSize = 9.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Text(
                 text = headline,
                 color = HexnilPrimaryText,
-                fontSize = 13.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             Text(
                 text = instruction,
                 color = HexnilSecondaryText,
-                fontSize = 11.sp,
-                lineHeight = 16.sp
+                fontSize = 14.sp,
+                lineHeight = 21.sp
             )
         }
     }
@@ -796,7 +813,7 @@ private fun QuickQueryPill(
 ) {
     Surface(
         modifier = modifier
-            .clip(RoundedCornerShape(6.dp))
+            .clip(RoundedCornerShape(HexnilRadius.sm))
             .clickable(onClick = onClick),
         color = if (isSelected) HexnilAccentSubtle else HexnilSecondaryCard,
         border = BorderStroke(1.dp, if (isSelected) HexnilMainAccent else HexnilBorder)
@@ -804,9 +821,9 @@ private fun QuickQueryPill(
         Text(
             text = text,
             color = if (isSelected) HexnilMainAccent else HexnilPrimaryText,
-            fontSize = 10.sp,
+            fontSize = 12.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
             maxLines = 1
         )
     }
@@ -817,21 +834,28 @@ private fun SourceTabChip(
     label: String,
     isSelected: Boolean,
     activeColor: Color,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = Modifier
-            .clip(RoundedCornerShape(6.dp))
+        modifier = modifier
+            .clip(RoundedCornerShape(HexnilRadius.sm))
             .clickable(onClick = onClick),
         color = if (isSelected) activeColor.copy(alpha = 0.2f) else Color.Transparent,
         border = if (isSelected) BorderStroke(1.dp, activeColor) else null
     ) {
-        Text(
-            text = label,
-            color = if (isSelected) activeColor else HexnilSecondaryText,
-            fontSize = 10.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-        )
+        Box(
+            modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = label,
+                color = if (isSelected) activeColor else HexnilSecondaryText,
+                fontSize = 11.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                maxLines = 1
+            )
+        }
     }
 }
+

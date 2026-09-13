@@ -45,61 +45,63 @@ fun ComparisonCard(
             .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
         color = HexnilCard
     ) {
-        Column(modifier = Modifier.padding(HexnilSpacing.md)) {
+        Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
             // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                     Text(
                         text = metric.workloadId,
                         color = HexnilSecondaryText,
-                        fontSize = 10.sp,
+                        fontSize = 12.sp,
                         fontFamily = FontFamily.Monospace
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = metric.displayName,
                         color = HexnilPrimaryText,
-                        fontSize = 14.sp,
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
-                ResultBadge(verdict = metric.verdict, isCompact = true)
+                ResultBadge(verdict = metric.verdict, isCompact = false)
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Matched Experiment Comparison Block (No nested borders)
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 // V0 Column
                 Surface(
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(HexnilRadius.metadata),
+                    shape = RoundedCornerShape(HexnilRadius.md),
                     color = HexnilSecondaryCard
                 ) {
-                    Column(modifier = Modifier.padding(10.dp)) {
+                    Column(modifier = Modifier.padding(12.dp)) {
                         Text(
                             text = "V0 BASELINE",
                             color = HexnilSecondaryText,
-                            fontSize = 9.sp,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = v0ExpId,
                             color = HexnilAccentGlow,
-                            fontSize = 10.sp,
+                            fontSize = 11.sp,
                             fontFamily = FontFamily.Monospace
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = if (metric.v0Mean != null) "${"%.1f".format(metric.v0Mean)} ${metric.unit}" else "N/A",
                             color = HexnilPrimaryText,
-                            fontSize = 14.sp,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = FontFamily.Monospace
                         )
@@ -109,27 +111,28 @@ fun ComparisonCard(
                 // V1 Column
                 Surface(
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(HexnilRadius.metadata),
+                    shape = RoundedCornerShape(HexnilRadius.md),
                     color = HexnilSecondaryCard
                 ) {
-                    Column(modifier = Modifier.padding(10.dp)) {
+                    Column(modifier = Modifier.padding(12.dp)) {
                         Text(
                             text = "V1 CANDIDATE",
                             color = HexnilSecondaryText,
-                            fontSize = 9.sp,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = v1ExpId,
                             color = HexnilAccentGlow,
-                            fontSize = 10.sp,
+                            fontSize = 11.sp,
                             fontFamily = FontFamily.Monospace
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = if (metric.v1Mean != null) "${"%.1f".format(metric.v1Mean)} ${metric.unit}" else "N/A",
                             color = HexnilPrimaryText,
-                            fontSize = 14.sp,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = FontFamily.Monospace
                         )
@@ -137,7 +140,7 @@ fun ComparisonCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Statistical summary row
             Row(
@@ -148,7 +151,7 @@ fun ComparisonCard(
                 Text(
                     text = "Delta: ${if (metric.percentDelta != null) "${if (metric.percentDelta > 0) "+" else ""}${"%.1f".format(metric.percentDelta)}%" else "N/A"}",
                     color = HexnilMainAccent,
-                    fontSize = 12.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily.Monospace
                 )
@@ -157,7 +160,7 @@ fun ComparisonCard(
                     Text(
                         text = "95% CI: [${"%.1f".format(metric.ciLower)}, ${"%.1f".format(metric.ciUpper)}]",
                         color = HexnilSecondaryText,
-                        fontSize = 10.sp,
+                        fontSize = 12.sp,
                         fontFamily = FontFamily.Monospace
                     )
                 }
@@ -165,3 +168,4 @@ fun ComparisonCard(
         }
     }
 }
+

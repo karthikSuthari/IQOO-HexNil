@@ -5,16 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -58,7 +49,7 @@ fun HexnilTopBar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -69,43 +60,43 @@ fun HexnilTopBar(
                     if (canNavigateBack && onNavigateBack != null) {
                         Box(
                             modifier = Modifier
-                                .size(34.dp)
-                                .clip(RoundedCornerShape(8.dp))
+                                .size(38.dp)
+                                .clip(RoundedCornerShape(10.dp))
                                 .background(HexnilSecondaryCard)
-                                .border(1.dp, HexnilBorder, RoundedCornerShape(8.dp))
+                                .border(1.dp, HexnilBorder, RoundedCornerShape(10.dp))
                                 .clickable { onNavigateBack() },
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = "←",
                                 color = HexnilPrimaryText,
-                                fontSize = 18.sp,
+                                fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
-                        Spacer(modifier = Modifier.width(10.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
                     } else {
                         Image(
                             painter = painterResource(id = R.drawable.hexnil_logo),
                             contentDescription = "Hexnil Logo",
                             modifier = Modifier
-                                .size(34.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .border(1.dp, HexnilBorder, RoundedCornerShape(8.dp))
+                                .size(38.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .border(1.dp, HexnilBorder, RoundedCornerShape(10.dp))
                         )
-                        Spacer(modifier = Modifier.width(10.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
                     }
 
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = "HEXNIL",
-                                fontSize = 15.sp,
+                                fontSize = 16.sp,
                                 fontWeight = FontWeight.Black,
                                 color = HexnilMainAccent,
                                 letterSpacing = 1.5.sp
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Surface(
                                 shape = RoundedCornerShape(4.dp),
                                 color = HexnilSecondaryCard,
@@ -114,16 +105,18 @@ fun HexnilTopBar(
                                 Text(
                                     text = "v1.1",
                                     color = HexnilAccentGlow,
-                                    fontSize = 9.sp,
+                                    fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                 )
                             }
                         }
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = screenTitle,
-                            color = HexnilSecondaryText,
-                            fontSize = 11.sp,
+                            color = HexnilPrimaryText.copy(alpha = 0.85f),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -131,20 +124,20 @@ fun HexnilTopBar(
                 }
 
                 if (onOpenSettings != null) {
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
                     Box(
                         modifier = Modifier
-                            .size(34.dp)
-                            .clip(RoundedCornerShape(8.dp))
+                            .size(38.dp)
+                            .clip(RoundedCornerShape(10.dp))
                             .background(HexnilSecondaryCard)
-                            .border(1.dp, HexnilBorder, RoundedCornerShape(8.dp))
+                            .border(1.dp, HexnilBorder, RoundedCornerShape(10.dp))
                             .clickable { onOpenSettings() },
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "⚙",
-                            color = HexnilSecondaryText,
-                            fontSize = 15.sp
+                            color = HexnilPrimaryText,
+                            fontSize = 17.sp
                         )
                     }
                 }
@@ -152,3 +145,4 @@ fun HexnilTopBar(
         }
     }
 }
+

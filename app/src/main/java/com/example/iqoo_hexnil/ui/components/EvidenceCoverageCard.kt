@@ -31,8 +31,10 @@ import com.example.iqoo_hexnil.ui.theme.HexnilCard
 import com.example.iqoo_hexnil.ui.theme.HexnilError
 import com.example.iqoo_hexnil.ui.theme.HexnilMainAccent
 import com.example.iqoo_hexnil.ui.theme.HexnilPrimaryText
+import com.example.iqoo_hexnil.ui.theme.HexnilRadius
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryCard
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryText
+import com.example.iqoo_hexnil.ui.theme.HexnilSpacing
 import com.example.iqoo_hexnil.ui.theme.HexnilSuccess
 import com.example.iqoo_hexnil.ui.theme.HexnilWarning
 
@@ -48,11 +50,11 @@ fun EvidenceCoverageCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
+            .clip(RoundedCornerShape(HexnilRadius.hero))
+            .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.hero)),
         color = HexnilCard
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -61,20 +63,20 @@ fun EvidenceCoverageCard(
                 Text(
                     text = "UPDATE VALIDATION EVIDENCE",
                     color = HexnilMainAccent,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
                 )
                 Text(
                     text = analysis.comparisonId,
                     color = HexnilAccentGlow,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold
                 )
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -85,12 +87,13 @@ fun EvidenceCoverageCard(
                     Text(
                         text = "Evidence Coverage",
                         color = HexnilSecondaryText,
-                        fontSize = 12.sp
+                        fontSize = 13.sp
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "${analysis.metricsEligible} / ${analysis.metricsAnalyzed} Metrics",
                         color = HexnilPrimaryText,
-                        fontSize = 20.sp,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -98,29 +101,29 @@ fun EvidenceCoverageCard(
                 Text(
                     text = "${(coverageFraction * 100).toInt()}% Confirmed",
                     color = HexnilSuccess,
-                    fontSize = 13.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             LinearProgressIndicator(
                 progress = { coverageFraction },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(3.dp)),
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(4.dp)),
                 color = HexnilSuccess,
                 trackColor = HexnilSecondaryCard
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Verdict breakdown badges
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 CoverageVerdictBadge(
                     label = "UNCHANGED",
@@ -142,12 +145,12 @@ fun EvidenceCoverageCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = "No statistically and engineering-significant regression detected in measured evidence.",
                 color = HexnilSecondaryText,
-                fontSize = 11.sp,
-                lineHeight = 15.sp
+                fontSize = 13.sp,
+                lineHeight = 19.sp
             )
         }
     }
@@ -162,25 +165,26 @@ fun CoverageVerdictBadge(
 ) {
     Surface(
         modifier = modifier
-            .clip(RoundedCornerShape(6.dp))
-            .border(1.dp, HexnilBorder, RoundedCornerShape(6.dp)),
+            .clip(RoundedCornerShape(HexnilRadius.md))
+            .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.md)),
         color = HexnilSecondaryCard
     ) {
         Column(
-            modifier = Modifier.padding(vertical = 6.dp, horizontal = 4.dp),
+            modifier = Modifier.padding(vertical = 10.dp, horizontal = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = "$count",
                 color = color,
-                fontSize = 14.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.Monospace
             )
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = label,
                 color = HexnilSecondaryText,
-                fontSize = 8.sp,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 0.5.sp,
                 maxLines = 1
@@ -188,3 +192,4 @@ fun CoverageVerdictBadge(
         }
     }
 }
+

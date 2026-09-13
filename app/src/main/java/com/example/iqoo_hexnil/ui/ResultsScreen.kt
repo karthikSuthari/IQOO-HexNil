@@ -41,6 +41,7 @@ import com.example.iqoo_hexnil.ui.theme.HexnilAccentGlow
 import com.example.iqoo_hexnil.ui.theme.HexnilAccentSubtle
 import com.example.iqoo_hexnil.ui.theme.HexnilBackground
 import com.example.iqoo_hexnil.ui.theme.HexnilBorder
+import com.example.iqoo_hexnil.ui.theme.HexnilBorderSubtle
 import com.example.iqoo_hexnil.ui.theme.HexnilCard
 import com.example.iqoo_hexnil.ui.theme.HexnilError
 import com.example.iqoo_hexnil.ui.theme.HexnilErrorSubtle
@@ -74,9 +75,9 @@ fun ResultsScreen(
         modifier = modifier
             .fillMaxSize()
             .background(HexnilBackground)
-            .padding(horizontal = HexnilSpacing.md, vertical = HexnilSpacing.sm)
+            .padding(horizontal = HexnilSpacing.screenHorizontal, vertical = HexnilSpacing.screenVertical)
             .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sm)
+        verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sectionSpacing)
     ) {
         // Authoritative Outcome Hero
         Surface(
@@ -92,7 +93,7 @@ fun ResultsScreen(
                 ),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(HexnilSpacing.md)) {
+            Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -101,20 +102,20 @@ fun ResultsScreen(
                     Text(
                         text = "V0 VS V1 COMPARISON MATRIX",
                         color = HexnilMainAccent,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp
                     )
                     Text(
                         text = analysis.comparisonId,
                         color = HexnilAccentGlow,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace
                     )
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 // Hero Number + Verdict
                 Row(
@@ -126,120 +127,151 @@ fun ResultsScreen(
                         Text(
                             text = "${analysis.metricsRegressions}",
                             style = DisplayLargeNumber.copy(
-                                color = if (analysis.metricsRegressions == 0) HexnilSuccess else HexnilError
+                                color = if (analysis.metricsRegressions == 0) HexnilSuccess else HexnilError,
+                                fontSize = 38.sp
                             )
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = if (analysis.metricsRegressions == 0) "0 REGRESSIONS DETECTED" else "${analysis.metricsRegressions} REGRESSIONS DETECTED",
                             color = if (analysis.metricsRegressions == 0) HexnilSuccess else HexnilError,
-                            fontSize = 12.sp,
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.8.sp
                         )
                     }
 
                     Surface(
-                        shape = RoundedCornerShape(HexnilRadius.metadata),
+                        shape = RoundedCornerShape(HexnilRadius.pill),
                         color = if (analysis.metricsRegressions == 0) HexnilSuccessSubtle else HexnilErrorSubtle,
                         border = BorderStroke(1.dp, if (analysis.metricsRegressions == 0) HexnilSuccess.copy(alpha = 0.4f) else HexnilError.copy(alpha = 0.4f))
                     ) {
                         Text(
                             text = if (analysis.metricsRegressions == 0) "✓ PASS" else "⚠ FAIL",
                             color = if (analysis.metricsRegressions == 0) HexnilSuccess else HexnilError,
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     text = if (analysis.metricsRegressions == 0)
-                        "No statistically supported regressions detected. Paired t-test comparisons across 13 metrics demonstrate that observed shifts remain within the configured 5.0% threshold."
+                        "No statistically supported regressions detected. Paired t-test comparisons across 13 metrics demonstrate that observed shifts remain safely within the 5.0% engineering threshold."
                     else
                         "${analysis.metricsRegressions} metric(s) exceeded the 5.0% threshold with statistical significance.",
                     color = HexnilSecondaryText,
-                    fontSize = 12.sp,
-                    lineHeight = 16.sp
+                    fontSize = 13.sp,
+                    lineHeight = 19.sp
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
-                // Lineage Metadata Row (No nested border)
-                Row(
+                // Lineage Metadata (Structured & Spacious)
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.metadata))
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.md))
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "COMPARISON LINEAGE",
+                            color = HexnilMainAccent,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.8.sp
+                        )
+                        Text(
+                            text = "3 paired iterations",
+                            color = HexnilSecondaryText,
+                            fontSize = 11.sp,
+                            fontFamily = FontFamily.Monospace
+                        )
+                    }
                     Text(
-                        text = "V0: ${analysis.v0ExperimentId}",
-                        color = HexnilSecondaryText,
-                        fontSize = 10.sp,
-                        fontFamily = FontFamily.Monospace
-                    )
-                    Text(text = "➔", color = HexnilSecondaryText, fontSize = 10.sp)
-                    Text(
-                        text = "V1: ${analysis.v1ExperimentId}",
-                        color = HexnilAccentGlow,
-                        fontSize = 10.sp,
-                        fontFamily = FontFamily.Monospace
-                    )
-                    Text(
-                        text = "3 runs paired",
-                        color = HexnilSecondaryText,
-                        fontSize = 10.sp,
+                        text = "V0: ${analysis.v0ExperimentId}  ➔  V1: ${analysis.v1ExperimentId}",
+                        color = HexnilPrimaryText,
+                        fontSize = 12.sp,
                         fontFamily = FontFamily.Monospace
                     )
                 }
             }
         }
 
-        // Summary Breakdown Card (4 columns)
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(HexnilRadius.card))
-                .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
-            color = HexnilCard
+        // Spacious 2x2 Outcome Breakdown Grid
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(HexnilSpacing.sm),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                ResultsOutcomeColumn("${analysis.metricsRegressions}", "REGRESSION", if (analysis.metricsRegressions == 0) HexnilSuccess else HexnilError)
-                ResultsOutcomeColumn("0", "IMPROVEMENT", HexnilSuccess)
-                ResultsOutcomeColumn("${analysis.metricsUnchanged}", "UNCHANGED", HexnilPrimaryText)
-                ResultsOutcomeColumn("${analysis.metricsInconclusive}", "INCONCLUSIVE", HexnilWarning)
+                ResultsMetricTile(
+                    label = "Regressions",
+                    count = "${analysis.metricsRegressions}",
+                    subtitle = "0 Exceeded Tolerance",
+                    color = if (analysis.metricsRegressions == 0) HexnilSuccess else HexnilError,
+                    modifier = Modifier.weight(1f)
+                )
+                ResultsMetricTile(
+                    label = "Improvements",
+                    count = "${analysis.metricsImprovements}",
+                    subtitle = "Statistically Confirmed",
+                    color = HexnilSuccess,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                ResultsMetricTile(
+                    label = "Unchanged",
+                    count = "${analysis.metricsUnchanged}",
+                    subtitle = "Within Tolerances",
+                    color = HexnilPrimaryText,
+                    modifier = Modifier.weight(1f)
+                )
+                ResultsMetricTile(
+                    label = "Inconclusive",
+                    count = "${analysis.metricsInconclusive}",
+                    subtitle = "p ≥ 0.05 Variance",
+                    color = HexnilWarning,
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
 
         // Honest Principle Banner
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(HexnilRadius.metadata),
+            shape = RoundedCornerShape(HexnilRadius.md),
             color = HexnilSecondaryCard,
-            border = BorderStroke(1.dp, HexnilBorder)
+            border = BorderStroke(1.dp, HexnilBorderSubtle)
         ) {
             Text(
-                text = "STATISTICAL EVIDENCE: INCONCLUSIVE ≠ REGRESSION · UNSUPPORTED ≠ ZERO · THRESHOLD: 5.0%",
+                text = "STATISTICAL RIGOR: Inconclusive ≠ Regression · Unsupported ≠ Zero · Tolerance: ≤ 5.0%",
                 color = HexnilSecondaryText,
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.5.sp,
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                letterSpacing = 0.4.sp,
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
             )
         }
 
         // Filter Verdict Chips Row
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(5.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             FilterVerdictChip(
                 label = "ALL (${analysis.metricsAnalyzed})",
@@ -308,49 +340,64 @@ private fun FilterVerdictChip(
     modifier: Modifier = Modifier
 ) {
     val bgColor = if (isSelected) HexnilAccentSubtle else HexnilSecondaryCard
-    val borderColor = if (isSelected) color else HexnilBorder
+    val borderColor = if (isSelected) color else HexnilBorderSubtle
 
     Surface(
         modifier = modifier.clickable { onClick() },
-        shape = RoundedCornerShape(6.dp),
+        shape = RoundedCornerShape(HexnilRadius.md),
         color = bgColor,
         border = BorderStroke(1.dp, borderColor)
     ) {
         Text(
             text = label,
             color = if (isSelected) color else HexnilSecondaryText,
-            fontSize = 9.sp,
+            fontSize = 11.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
-            modifier = Modifier.padding(vertical = 8.dp, horizontal = 2.dp),
+            modifier = Modifier.padding(vertical = 9.dp, horizontal = 4.dp),
             maxLines = 1
         )
     }
 }
 
 @Composable
-private fun ResultsOutcomeColumn(
-    count: String,
+private fun ResultsMetricTile(
     label: String,
-    color: Color
+    count: String,
+    subtitle: String,
+    color: Color,
+    modifier: Modifier = Modifier
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp)
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(HexnilRadius.md),
+        color = HexnilSecondaryCard,
+        border = BorderStroke(1.dp, HexnilBorderSubtle)
     ) {
-        Text(
-            text = count,
-            color = color,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            fontFamily = FontFamily.Monospace
-        )
-        Text(
-            text = label,
-            color = HexnilSecondaryText,
-            fontSize = 9.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 0.5.sp
-        )
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)
+        ) {
+            Text(
+                text = count,
+                color = color,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Black,
+                fontFamily = FontFamily.Monospace
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = label,
+                color = HexnilPrimaryText,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = subtitle,
+                color = HexnilSecondaryText,
+                fontSize = 11.sp,
+                maxLines = 1
+            )
+        }
     }
 }
 

@@ -24,14 +24,18 @@ import androidx.compose.ui.unit.sp
 import com.example.iqoo_hexnil.data.MetricStatus
 import com.example.iqoo_hexnil.data.StatisticalMetricResult
 import com.example.iqoo_hexnil.data.VerdictType
+import com.example.iqoo_hexnil.ui.theme.HexnilAccentGlow
 import com.example.iqoo_hexnil.ui.theme.HexnilBorder
+import com.example.iqoo_hexnil.ui.theme.HexnilBorderSubtle
 import com.example.iqoo_hexnil.ui.theme.HexnilCard
 import com.example.iqoo_hexnil.ui.theme.HexnilError
 import com.example.iqoo_hexnil.ui.theme.HexnilMainAccent
+import com.example.iqoo_hexnil.ui.theme.HexnilMutedText
 import com.example.iqoo_hexnil.ui.theme.HexnilPrimaryText
 import com.example.iqoo_hexnil.ui.theme.HexnilRadius
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryCard
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryText
+import com.example.iqoo_hexnil.ui.theme.HexnilSpacing
 import com.example.iqoo_hexnil.ui.theme.HexnilSuccess
 import com.example.iqoo_hexnil.ui.theme.HexnilWarning
 
@@ -45,28 +49,29 @@ fun MetricCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(HexnilRadius.card))
-            .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card))
+            .border(1.dp, HexnilBorderSubtle, RoundedCornerShape(HexnilRadius.card))
             .clickable { onClick() },
         color = HexnilCard
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
             // Row 1: Metric Name + Verdict
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                     Text(
                         text = metric.displayName,
                         color = HexnilPrimaryText,
-                        fontSize = 14.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = metric.workloadId,
                         color = HexnilSecondaryText,
-                        fontSize = 10.sp,
+                        fontSize = 12.sp,
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Medium
                     )
@@ -74,14 +79,14 @@ fun MetricCard(
                 ResultBadge(verdict = metric.verdict, isCompact = false)
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Values Row (Clean inline strip without nested border)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.metadata))
-                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                    .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.md))
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -90,10 +95,11 @@ fun MetricCard(
                     Text(
                         text = "V0 BASELINE",
                         color = HexnilSecondaryText,
-                        fontSize = 8.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.5.sp
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = if (metric.v0Mean != null) {
                             "${"%.1f".format(metric.v0Mean)} ${metric.unit}"
@@ -101,7 +107,7 @@ fun MetricCard(
                             "${"%.1f".format(metric.v0Values.first())} ${metric.unit}"
                         } else "—",
                         color = HexnilPrimaryText,
-                        fontSize = 12.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         fontFamily = FontFamily.Monospace
                     )
@@ -110,7 +116,7 @@ fun MetricCard(
                 Text(
                     text = "➔",
                     color = HexnilSecondaryText,
-                    fontSize = 12.sp
+                    fontSize = 14.sp
                 )
 
                 // V1
@@ -118,10 +124,11 @@ fun MetricCard(
                     Text(
                         text = "V1 CANDIDATE",
                         color = HexnilSecondaryText,
-                        fontSize = 8.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.5.sp
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = if (metric.v1Mean != null) {
                             "${"%.1f".format(metric.v1Mean)} ${metric.unit}"
@@ -129,7 +136,7 @@ fun MetricCard(
                             "${"%.1f".format(metric.v1Values.first())} ${metric.unit}"
                         } else "—",
                         color = HexnilPrimaryText,
-                        fontSize = 12.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         fontFamily = FontFamily.Monospace
                     )
@@ -140,10 +147,11 @@ fun MetricCard(
                     Text(
                         text = "DELTA",
                         color = HexnilSecondaryText,
-                        fontSize = 8.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.5.sp
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     val deltaText = if (metric.percentDelta != null) {
                         "${if (metric.percentDelta > 0) "+" else ""}${"%.2f".format(metric.percentDelta)}%"
                     } else if (metric.status == MetricStatus.UNSUPPORTED) {
@@ -161,14 +169,14 @@ fun MetricCard(
                     Text(
                         text = deltaText,
                         color = deltaColor,
-                        fontSize = 12.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Evidence line & drilldown prompt
             Row(
@@ -178,21 +186,21 @@ fun MetricCard(
             ) {
                 Text(
                     text = if (metric.pValue != null) {
-                        "p=${"%.4f".format(metric.pValue)} · d=${"%.2f".format(metric.effectSize ?: 0.0)} · n=${metric.sampleCount}"
+                        "p=${"%.4f".format(metric.pValue)} · CI [${"%.1f".format(metric.ciLower ?: 0.0)}, ${"%.1f".format(metric.ciUpper ?: 0.0)}]"
                     } else if (metric.status == MetricStatus.UNSUPPORTED) {
-                        "Hardware Capability Unsupported"
+                        "Restricted on device (Android 16)"
                     } else {
-                        "n=${metric.sampleCount} (< 3 required for paired test)"
+                        "Insufficient sample observations"
                     },
-                    color = HexnilSecondaryText,
-                    fontSize = 10.sp,
+                    color = HexnilMutedText,
+                    fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace
                 )
 
                 Text(
-                    text = "Detail ➔",
-                    color = HexnilMainAccent,
-                    fontSize = 10.sp,
+                    text = "Details ➔",
+                    color = HexnilAccentGlow,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
             }

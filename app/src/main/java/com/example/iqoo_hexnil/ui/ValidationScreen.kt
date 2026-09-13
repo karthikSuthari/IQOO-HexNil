@@ -45,6 +45,7 @@ import com.example.iqoo_hexnil.ui.theme.HexnilAccentGlow
 import com.example.iqoo_hexnil.ui.theme.HexnilAccentSubtle
 import com.example.iqoo_hexnil.ui.theme.HexnilBackground
 import com.example.iqoo_hexnil.ui.theme.HexnilBorder
+import com.example.iqoo_hexnil.ui.theme.HexnilBorderSubtle
 import com.example.iqoo_hexnil.ui.theme.HexnilCard
 import com.example.iqoo_hexnil.ui.theme.HexnilInfo
 import com.example.iqoo_hexnil.ui.theme.HexnilMainAccent
@@ -80,60 +81,60 @@ fun ValidationScreen(
         modifier = modifier
             .fillMaxSize()
             .background(HexnilBackground)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(horizontal = HexnilSpacing.screenHorizontal, vertical = HexnilSpacing.screenVertical)
             .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sectionSpacing)
     ) {
         // Validation Engine Header Card
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
+                .clip(RoundedCornerShape(HexnilRadius.card))
+                .border(1.dp, HexnilBorderSubtle, RoundedCornerShape(HexnilRadius.card)),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "DETERMINISTIC WORKLOAD ENGINE (PHASE 3)",
+                        text = "DECLARATIVE WORKLOAD ENGINE",
                         color = HexnilMainAccent,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp
                     )
                     Surface(
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(HexnilRadius.metadata),
                         color = HexnilSecondaryCard,
-                        border = BorderStroke(1.dp, HexnilBorder)
+                        border = BorderStroke(1.dp, HexnilBorderSubtle)
                     ) {
                         Text(
                             text = "${workloads.size} WORKLOADS LOCKED",
                             color = HexnilAccentGlow,
-                            fontSize = 9.sp,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = FontFamily.Monospace,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     text = "5 Locked Declarative Benchmarks",
                     color = HexnilPrimaryText,
-                    fontSize = 16.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "Enforces reproducible execution on physical Android hardware with pre-run thermal stabilization, battery gatekeeping, and immutable random seed (42). Tap any workload to inspect its execution contract.",
                     color = HexnilSecondaryText,
-                    fontSize = 12.sp,
-                    lineHeight = 16.sp
+                    fontSize = 13.sp,
+                    lineHeight = 19.sp
                 )
             }
         }
@@ -141,7 +142,7 @@ fun ValidationScreen(
         // Priority Filter Chips Row
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             WorkloadFilterChip(
                 label = "ALL (${workloads.size})",
@@ -368,20 +369,20 @@ private fun WorkloadFilterChip(
     modifier: Modifier = Modifier
 ) {
     val bgColor = if (isSelected) HexnilAccentSubtle else HexnilSecondaryCard
-    val borderColor = if (isSelected) color else HexnilBorder
+    val borderColor = if (isSelected) color else HexnilBorderSubtle
 
     Surface(
         modifier = modifier.clickable { onClick() },
-        shape = RoundedCornerShape(HexnilRadius.metadata),
+        shape = RoundedCornerShape(HexnilRadius.md),
         color = bgColor,
         border = BorderStroke(1.dp, borderColor)
     ) {
         Text(
             text = label,
             color = if (isSelected) color else HexnilSecondaryText,
-            fontSize = 10.sp,
+            fontSize = 12.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
-            modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+            modifier = Modifier.padding(vertical = 10.dp, horizontal = 6.dp),
             maxLines = 1
         )
     }
@@ -396,15 +397,15 @@ private fun InspectionPropertyRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 2.dp),
+            .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = label, color = HexnilSecondaryText, fontSize = 11.sp)
+        Text(text = label, color = HexnilSecondaryText, fontSize = 13.sp)
         Text(
             text = value,
             color = if (isMonospace) HexnilAccentGlow else HexnilPrimaryText,
-            fontSize = 11.sp,
+            fontSize = 13.sp,
             fontWeight = if (isMonospace) FontWeight.Bold else FontWeight.Medium,
             fontFamily = if (isMonospace) FontFamily.Monospace else FontFamily.Default
         )
@@ -418,20 +419,20 @@ private fun InspectionSectionBlock(
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(3.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
             text = title,
             color = HexnilAccentGlow,
-            fontSize = 10.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.5.sp
         )
         Text(
             text = content,
             color = HexnilPrimaryText,
-            fontSize = 12.sp,
-            lineHeight = 16.sp
+            fontSize = 14.sp,
+            lineHeight = 20.sp
         )
     }
 }

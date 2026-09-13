@@ -54,7 +54,7 @@ fun DeviceCard(
             .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.hero)),
         color = HexnilCard
     ) {
-        Column(modifier = Modifier.padding(HexnilSpacing.md)) {
+        Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -63,7 +63,7 @@ fun DeviceCard(
                 Text(
                     text = "TARGET HARDWARE STATE",
                     color = HexnilMainAccent,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
                 )
@@ -79,22 +79,22 @@ fun DeviceCard(
                             .size(8.dp)
                             .background(dotColor, CircleShape)
                     )
-                    Spacer(modifier = Modifier.width(5.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = statusLabel,
                         color = dotColor,
-                        fontSize = 10.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Quick Hardware Stats Tiles
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 DeviceStatusTile(
                     label = "Model",
@@ -110,11 +110,11 @@ fun DeviceCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 DeviceStatusTile(
                     label = "Battery Proxy",
@@ -145,39 +145,39 @@ fun BuildIdentityCard(
             .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
         color = HexnilCard
     ) {
-        Column(modifier = Modifier.padding(HexnilSpacing.md)) {
+        Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
             Text(
                 text = "BUILD FINGERPRINT & PROVENANCE",
                 color = HexnilMainAccent,
-                fontSize = 11.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp
             )
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             BuildPropertyRow("Build ID", device.buildId)
             BuildPropertyRow("ABI Architecture", device.abi)
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = "SYSTEM FINGERPRINT",
                 color = HexnilSecondaryText,
-                fontSize = 10.sp,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.Bold
             )
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(HexnilRadius.metadata),
+                shape = RoundedCornerShape(HexnilRadius.md),
                 color = HexnilSecondaryCard
             ) {
                 Text(
                     text = device.fingerprint,
                     color = HexnilPrimaryText,
-                    fontSize = 10.sp,
+                    fontSize = 11.sp,
                     fontFamily = FontFamily.Monospace,
-                    lineHeight = 14.sp,
-                    modifier = Modifier.padding(8.dp)
+                    lineHeight = 16.sp,
+                    modifier = Modifier.padding(10.dp)
                 )
             }
         }
@@ -193,24 +193,25 @@ private fun DeviceStatusTile(
 ) {
     Surface(
         modifier = modifier
-            .clip(RoundedCornerShape(HexnilRadius.metadata))
-            .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.metadata)),
+            .clip(RoundedCornerShape(HexnilRadius.md))
+            .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.md)),
         color = HexnilSecondaryCard
     ) {
-        Column(modifier = Modifier.padding(10.dp)) {
-            Text(text = label, color = HexnilSecondaryText, fontSize = 10.sp)
-            Spacer(modifier = Modifier.height(2.dp))
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(text = label, color = HexnilSecondaryText, fontSize = 12.sp)
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = value,
                 color = HexnilPrimaryText,
-                fontSize = 13.sp,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1
             )
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = sub,
                 color = HexnilAccentGlow,
-                fontSize = 9.sp,
+                fontSize = 11.sp,
                 maxLines = 1
             )
         }
@@ -222,17 +223,18 @@ private fun BuildPropertyRow(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 3.dp),
+            .padding(vertical = 5.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = label, color = HexnilSecondaryText, fontSize = 12.sp)
+        Text(text = label, color = HexnilSecondaryText, fontSize = 13.sp)
         Text(
             text = value,
             color = HexnilPrimaryText,
-            fontSize = 12.sp,
+            fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
             fontFamily = FontFamily.Monospace
         )
     }
 }
+

@@ -84,9 +84,9 @@ fun ClaimsScreen(
         modifier = modifier
             .fillMaxSize()
             .background(HexnilBackground)
-            .padding(horizontal = HexnilSpacing.md, vertical = HexnilSpacing.sm)
+            .padding(horizontal = HexnilSpacing.screenHorizontal, vertical = HexnilSpacing.screenVertical)
             .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(HexnilSpacing.md)
+        verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sectionSpacing)
     ) {
         // Claim Intelligence Header Card
         Surface(
@@ -96,7 +96,7 @@ fun ClaimsScreen(
                 .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(HexnilSpacing.md)) {
+            Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -105,39 +105,39 @@ fun ClaimsScreen(
                     Text(
                         text = "RELEASE CLAIM INTELLIGENCE (PHASE 7)",
                         color = HexnilMainAccent,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp
                     )
                     Surface(
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(HexnilRadius.xs),
                         color = HexnilSecondaryCard,
                         border = BorderStroke(1.dp, HexnilBorder)
                     ) {
                         Text(
                             text = "${claims.size} CLAIMS AUDITED",
                             color = HexnilAccentGlow,
-                            fontSize = 9.sp,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = FontFamily.Monospace,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(HexnilSpacing.xs))
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "OEM Hypotheses vs Measured Validation",
                     color = HexnilPrimaryText,
-                    fontSize = 16.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "Release claims extracted from changelogs, commits, and OEM telemetry map directly to deterministic benchmark workloads with explicit risk ratings and measured validation outcomes.",
                     color = HexnilSecondaryText,
-                    fontSize = 11.sp,
-                    lineHeight = 15.sp
+                    fontSize = 13.sp,
+                    lineHeight = 19.sp
                 )
             }
         }
@@ -147,7 +147,7 @@ fun ClaimsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(filterScrollState),
-            horizontalArrangement = Arrangement.spacedBy(HexnilSpacing.xs)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             ClaimFilterChip(
                 label = "ALL (${claims.size})",
@@ -188,14 +188,14 @@ fun ClaimsScreen(
                 message = "Zero release claims match the selected filter category '${selectedFilter.label}'."
             )
         } else {
-            Column(verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sm)) {
+            Column(verticalArrangement = Arrangement.spacedBy(HexnilSpacing.cardSpacing)) {
                 filteredClaims.forEach { claim ->
                     ClaimCard(claim = claim)
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(HexnilSpacing.xs))
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
@@ -211,17 +211,18 @@ private fun ClaimFilterChip(
 
     Surface(
         modifier = Modifier.clickable { onClick() },
-        shape = RoundedCornerShape(HexnilRadius.metadata),
+        shape = RoundedCornerShape(HexnilRadius.md),
         color = bgColor,
         border = BorderStroke(1.dp, borderColor)
     ) {
         Text(
             text = label,
             color = if (isSelected) color else HexnilSecondaryText,
-            fontSize = 11.sp,
+            fontSize = 12.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-            modifier = Modifier.padding(vertical = 6.dp, horizontal = 10.dp),
+            modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp),
             maxLines = 1
         )
     }
 }
+

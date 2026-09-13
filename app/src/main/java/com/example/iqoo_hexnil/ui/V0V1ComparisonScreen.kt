@@ -50,9 +50,9 @@ fun V0V1ComparisonScreen(
         modifier = modifier
             .fillMaxSize()
             .background(HexnilBackground)
-            .padding(horizontal = HexnilSpacing.md, vertical = HexnilSpacing.sm)
+            .padding(horizontal = HexnilSpacing.screenHorizontal, vertical = HexnilSpacing.screenVertical)
             .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sm)
+        verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sectionSpacing)
     ) {
         // Paired Experiment Lock Header Card
         Surface(
@@ -62,7 +62,7 @@ fun V0V1ComparisonScreen(
                 .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.hero)),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(HexnilSpacing.md)) {
+            Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -71,14 +71,14 @@ fun V0V1ComparisonScreen(
                     Text(
                         text = "MATCHED DIFFERENTIAL EXPERIMENT",
                         color = HexnilMainAccent,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp
                     )
                     Text(
                         text = analysis.comparisonId,
                         color = HexnilAccentGlow,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Bold
                     )
@@ -88,58 +88,56 @@ fun V0V1ComparisonScreen(
                 Text(
                     text = "SAME DEVICE + SAME WORKLOAD + V0 vs V1",
                     color = HexnilPrimaryText,
-                    fontSize = 14.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "All runs execute under locked physical thermal boundaries, battery charge state, and identical workload seeds to isolate true software deltas.",
                     color = HexnilSecondaryText,
-                    fontSize = 11.sp,
-                    lineHeight = 15.sp
+                    fontSize = 13.sp,
+                    lineHeight = 19.sp
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 // Build Fingerprint & Hash Matching Box (No nested border)
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.metadata))
-                        .padding(10.dp)
+                        .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.md))
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(text = "Target Hardware", color = HexnilSecondaryText, fontSize = 11.sp)
-                            Text(text = analysis.deviceModel, color = HexnilPrimaryText, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(text = "V0 Experiment", color = HexnilSecondaryText, fontSize = 11.sp)
-                            Text(text = analysis.v0ExperimentId, color = HexnilAccentGlow, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(text = "V1 Experiment", color = HexnilSecondaryText, fontSize = 11.sp)
-                            Text(text = analysis.v1ExperimentId, color = HexnilAccentGlow, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(text = "Engineering Threshold", color = HexnilSecondaryText, fontSize = 11.sp)
-                            Text(text = "5.0% meaningful change", color = HexnilSuccess, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(text = "Target Hardware", color = HexnilSecondaryText, fontSize = 12.sp)
+                        Text(text = analysis.deviceModel, color = HexnilPrimaryText, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(text = "V0 Experiment", color = HexnilSecondaryText, fontSize = 12.sp)
+                        Text(text = analysis.v0ExperimentId, color = HexnilAccentGlow, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(text = "V1 Experiment", color = HexnilSecondaryText, fontSize = 12.sp)
+                        Text(text = analysis.v1ExperimentId, color = HexnilAccentGlow, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(text = "Engineering Threshold", color = HexnilSecondaryText, fontSize = 12.sp)
+                        Text(text = "5.0% meaningful change", color = HexnilSuccess, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
             }
         }
 
@@ -150,14 +148,16 @@ fun V0V1ComparisonScreen(
         )
 
         // Comparison Cards
-        analysis.metricResults.forEach { metric ->
-            ComparisonCard(
-                metric = metric,
-                v0ExpId = analysis.v0ExperimentId,
-                v1ExpId = analysis.v1ExperimentId
-            )
+        Column(verticalArrangement = Arrangement.spacedBy(HexnilSpacing.cardSpacing)) {
+            analysis.metricResults.forEach { metric ->
+                ComparisonCard(
+                    metric = metric,
+                    v0ExpId = analysis.v0ExperimentId,
+                    v1ExpId = analysis.v1ExperimentId
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
+

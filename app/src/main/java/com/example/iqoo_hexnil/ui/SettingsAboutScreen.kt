@@ -47,9 +47,9 @@ fun SettingsAboutScreen(
         modifier = modifier
             .fillMaxSize()
             .background(HexnilBackground)
-            .padding(horizontal = HexnilSpacing.md, vertical = HexnilSpacing.sm)
+            .padding(horizontal = HexnilSpacing.screenHorizontal, vertical = HexnilSpacing.screenVertical)
             .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sm)
+        verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sectionSpacing)
     ) {
         // Methodology Hero Card
         Surface(
@@ -59,27 +59,27 @@ fun SettingsAboutScreen(
                 .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.hero)),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(HexnilSpacing.md)) {
+            Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
                 Text(
                     text = "HEXNIL METHODOLOGY & INTEGRITY",
                     color = HexnilMainAccent,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
                 )
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Release Validation Intelligence",
                     color = HexnilPrimaryText,
-                    fontSize = 16.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "Hexnil enforces statistical evidence, capability-aware telemetry, and immutable auditability for Android software update validation.",
                     color = HexnilSecondaryText,
-                    fontSize = 12.sp,
-                    lineHeight = 16.sp
+                    fontSize = 13.sp,
+                    lineHeight = 19.sp
                 )
             }
         }
@@ -97,7 +97,7 @@ fun SettingsAboutScreen(
                 .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(HexnilSpacing.md)) {
+            Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
                 SettingsInfoRow("Hexnil Companion App", "v1.1 (Build 2)")
                 SettingsInfoRow("Statistical Engine Phase", "Phase 6 (Analysis v1.0.0)")
                 SettingsInfoRow("Engineering Threshold", "5.0% meaningful shift delta")
@@ -121,7 +121,7 @@ fun SettingsAboutScreen(
                 .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(HexnilSpacing.md), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(modifier = Modifier.padding(HexnilSpacing.cardPadding), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 RuleItem("1. INCONCLUSIVE ≠ REGRESSION", "High variance crossing zero or sample size n < 3 is classified as INCONCLUSIVE, never as an engineering regression.")
                 RuleItem("2. UNSUPPORTED ≠ ZERO", "Missing hardware sensor capabilities are recorded as UNSUPPORTED. Hexnil never fabricates sensor values.")
                 RuleItem("3. THRESHOLD MATTERS", "Statistical significance (p < 0.05) does not constitute a regression if the delta is below the 5.0% engineering threshold.")
@@ -129,7 +129,7 @@ fun SettingsAboutScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
@@ -138,15 +138,15 @@ private fun SettingsInfoRow(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 6.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = label, color = HexnilSecondaryText, fontSize = 11.sp)
+        Text(text = label, color = HexnilSecondaryText, fontSize = 13.sp)
         Text(
             text = value,
             color = HexnilPrimaryText,
-            fontSize = 11.sp,
+            fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
             fontFamily = FontFamily.Monospace
         )
@@ -158,11 +158,12 @@ private fun RuleItem(title: String, desc: String) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.metadata))
-            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.md))
+            .padding(horizontal = 14.dp, vertical = 12.dp)
     ) {
-        Text(text = title, color = HexnilAccentGlow, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(text = desc, color = HexnilSecondaryText, fontSize = 11.sp, lineHeight = 15.sp)
+        Text(text = title, color = HexnilAccentGlow, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(text = desc, color = HexnilSecondaryText, fontSize = 13.sp, lineHeight = 19.sp)
     }
 }
+

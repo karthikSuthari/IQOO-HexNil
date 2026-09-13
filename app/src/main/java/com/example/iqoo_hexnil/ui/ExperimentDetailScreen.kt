@@ -61,9 +61,9 @@ fun ExperimentDetailScreen(
         modifier = modifier
             .fillMaxSize()
             .background(HexnilBackground)
-            .padding(horizontal = HexnilSpacing.md, vertical = HexnilSpacing.sm)
+            .padding(horizontal = HexnilSpacing.screenHorizontal, vertical = HexnilSpacing.screenVertical)
             .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sm)
+        verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sectionSpacing)
     ) {
         // Audit Header Card
         Surface(
@@ -73,7 +73,7 @@ fun ExperimentDetailScreen(
                 .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.hero)),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(HexnilSpacing.md)) {
+            Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -82,38 +82,38 @@ fun ExperimentDetailScreen(
                     Text(
                         text = "AUDIT TRAIL & PROVENANCE",
                         color = HexnilMainAccent,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp
                     )
                     Surface(
-                        shape = RoundedCornerShape(HexnilRadius.metadata),
+                        shape = RoundedCornerShape(HexnilRadius.xs),
                         color = HexnilSecondaryCard,
                         border = BorderStroke(1.dp, HexnilSuccess.copy(alpha = 0.5f))
                     ) {
                         Text(
                             text = "INTEGRITY VERIFIED",
                             color = HexnilSuccess,
-                            fontSize = 9.sp,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Cryptographic Reproducibility",
                     color = HexnilPrimaryText,
-                    fontSize = 16.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "Every observation traces back to immutable experiment IDs, artifact storage directories, APK SHA-256 signatures, and deterministic configuration hashes.",
                     color = HexnilSecondaryText,
-                    fontSize = 12.sp,
-                    lineHeight = 16.sp
+                    fontSize = 13.sp,
+                    lineHeight = 19.sp
                 )
             }
         }
@@ -132,8 +132,8 @@ fun ExperimentDetailScreen(
             color = HexnilCard
         ) {
             Column(
-                modifier = Modifier.padding(HexnilSpacing.md),
-                verticalArrangement = Arrangement.spacedBy(HexnilSpacing.xxs)
+                modifier = Modifier.padding(HexnilSpacing.cardPadding),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 LineageStepNode(
                     stepNumber = "1",
@@ -176,7 +176,7 @@ fun ExperimentDetailScreen(
             isExpanded = isParametersExpanded,
             onToggle = { isParametersExpanded = !isParametersExpanded }
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 ProvenanceRow("Comparison ID", analysis.comparisonId, isAccent = true)
                 ProvenanceRow("Analysis ID", analysis.analysisId)
                 ProvenanceRow("V0 Baseline Exp", analysis.v0ExperimentId)
@@ -198,33 +198,42 @@ fun ExperimentDetailScreen(
             isExpanded = isSignaturesExpanded,
             onToggle = { isSignaturesExpanded = !isSignaturesExpanded }
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(text = "V0 BASELINE APK SHA-256", color = HexnilSecondaryText, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                Text(
-                    text = analysis.v0ApkSha256,
-                    color = HexnilPrimaryText,
-                    fontSize = 10.sp,
-                    fontFamily = FontFamily.Monospace,
-                    lineHeight = 14.sp
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column {
+                    Text(text = "V0 BASELINE APK SHA-256", color = HexnilSecondaryText, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = analysis.v0ApkSha256,
+                        color = HexnilPrimaryText,
+                        fontSize = 12.sp,
+                        fontFamily = FontFamily.Monospace,
+                        lineHeight = 17.sp
+                    )
+                }
 
-                Text(text = "V1 CANDIDATE APK SHA-256", color = HexnilSecondaryText, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                Text(
-                    text = analysis.v1ApkSha256,
-                    color = HexnilAccentGlow,
-                    fontSize = 10.sp,
-                    fontFamily = FontFamily.Monospace,
-                    lineHeight = 14.sp
-                )
+                Column {
+                    Text(text = "V1 CANDIDATE APK SHA-256", color = HexnilSecondaryText, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = analysis.v1ApkSha256,
+                        color = HexnilAccentGlow,
+                        fontSize = 12.sp,
+                        fontFamily = FontFamily.Monospace,
+                        lineHeight = 17.sp
+                    )
+                }
 
-                Text(text = "SYSTEM FINGERPRINT", color = HexnilSecondaryText, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                Text(
-                    text = analysis.buildFingerprint,
-                    color = HexnilPrimaryText,
-                    fontSize = 10.sp,
-                    fontFamily = FontFamily.Monospace,
-                    lineHeight = 14.sp
-                )
+                Column {
+                    Text(text = "SYSTEM FINGERPRINT", color = HexnilSecondaryText, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = analysis.buildFingerprint,
+                        color = HexnilPrimaryText,
+                        fontSize = 12.sp,
+                        fontFamily = FontFamily.Monospace,
+                        lineHeight = 17.sp
+                    )
+                }
             }
         }
 
@@ -235,25 +244,25 @@ fun ExperimentDetailScreen(
             isExpanded = isArtifactsExpanded,
             onToggle = { isArtifactsExpanded = !isArtifactsExpanded }
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
                     text = "data/experiments/comparisons/${analysis.comparisonId}/",
                     color = HexnilAccentGlow,
-                    fontSize = 11.sp,
+                    fontSize = 13.sp,
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "├── comparison.json\n├── metric_results.json\n├── quality.json\n└── statistical_analysis/\n    ├── analysis.json\n    └── comparison_summary.json",
                     color = HexnilSecondaryText,
-                    fontSize = 10.sp,
+                    fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace,
-                    lineHeight = 15.sp
+                    lineHeight = 18.sp
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
@@ -272,7 +281,7 @@ private fun LineageStepNode(
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box(
                 modifier = Modifier
-                    .size(22.dp)
+                    .size(28.dp)
                     .background(HexnilSecondaryCard, CircleShape)
                     .border(1.dp, HexnilMainAccent, CircleShape),
                 contentAlignment = Alignment.Center
@@ -280,36 +289,38 @@ private fun LineageStepNode(
                 Text(
                     text = stepNumber,
                     color = HexnilMainAccent,
-                    fontSize = 10.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
             if (!isLast) {
                 Box(
                     modifier = Modifier
-                        .width(1.dp)
-                        .height(36.dp)
+                        .width(2.dp)
+                        .height(42.dp)
                         .background(HexnilBorder)
                 )
             }
         }
 
-        Spacer(modifier = Modifier.width(10.dp))
+        Spacer(modifier = Modifier.width(14.dp))
 
         Column {
-            Text(text = stepName, color = HexnilSecondaryText, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+            Text(text = stepName, color = HexnilSecondaryText, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = identifier,
                 color = HexnilPrimaryText,
-                fontSize = 11.sp,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.Monospace
             )
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = description,
                 color = HexnilSecondaryText,
-                fontSize = 10.sp,
-                lineHeight = 13.sp
+                fontSize = 12.sp,
+                lineHeight = 17.sp
             )
         }
     }
@@ -324,15 +335,15 @@ private fun ProvenanceRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 3.dp),
+            .padding(vertical = 5.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = label, color = HexnilSecondaryText, fontSize = 11.sp)
+        Text(text = label, color = HexnilSecondaryText, fontSize = 13.sp)
         Text(
             text = value,
             color = if (isAccent) HexnilMainAccent else HexnilPrimaryText,
-            fontSize = 11.sp,
+            fontSize = 13.sp,
             fontWeight = if (isAccent) FontWeight.Bold else FontWeight.Medium,
             fontFamily = FontFamily.Monospace
         )
@@ -354,7 +365,7 @@ private fun CollapsibleAuditSection(
             .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
         color = HexnilCard
     ) {
-        Column(modifier = Modifier.padding(HexnilSpacing.md)) {
+        Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -362,43 +373,45 @@ private fun CollapsibleAuditSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                     Text(
                         text = title,
                         color = HexnilMainAccent,
-                        fontSize = 11.sp,
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = subtitle,
                         color = HexnilSecondaryText,
-                        fontSize = 10.sp,
-                        lineHeight = 13.sp
+                        fontSize = 12.sp,
+                        lineHeight = 16.sp
                     )
                 }
 
                 Surface(
-                    shape = RoundedCornerShape(4.dp),
+                    shape = RoundedCornerShape(HexnilRadius.xs),
                     color = HexnilSecondaryCard,
                     border = BorderStroke(1.dp, HexnilBorder)
                 ) {
                     Text(
                         text = if (isExpanded) "▲ COLLAPSE" else "▼ EXPAND",
                         color = HexnilAccentGlow,
-                        fontSize = 9.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
             }
 
             if (isExpanded) {
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(14.dp))
                 content()
             }
         }
     }
 }
+
 

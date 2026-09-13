@@ -34,6 +34,7 @@ import com.example.iqoo_hexnil.ui.theme.HexnilAccentGlow
 import com.example.iqoo_hexnil.ui.theme.HexnilAccentSubtle
 import com.example.iqoo_hexnil.ui.theme.HexnilBackground
 import com.example.iqoo_hexnil.ui.theme.HexnilBorder
+import com.example.iqoo_hexnil.ui.theme.HexnilBorderSubtle
 import com.example.iqoo_hexnil.ui.theme.HexnilCard
 import com.example.iqoo_hexnil.ui.theme.HexnilMainAccent
 import com.example.iqoo_hexnil.ui.theme.HexnilPrimaryText
@@ -75,7 +76,7 @@ fun WorkloadCard(
             .then(if (onCardClick != null) Modifier.clickable { onCardClick() } else Modifier),
         color = HexnilCard
     ) {
-        Column(modifier = Modifier.padding(HexnilSpacing.md)) {
+        Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
             // Top row: ID, Selection badge on left; Priority & Execution Status on right
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -89,22 +90,22 @@ fun WorkloadCard(
                     Text(
                         text = workload.id,
                         color = if (isHighPriority) HexnilMainAccent else HexnilPrimaryText,
-                        fontSize = 13.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace
                     )
                     if (workload.isSelected) {
                         Surface(
-                            shape = RoundedCornerShape(4.dp),
+                            shape = RoundedCornerShape(HexnilRadius.metadata),
                             color = HexnilAccentSubtle,
                             border = BorderStroke(1.dp, HexnilMainAccent.copy(alpha = 0.5f))
                         ) {
                             Text(
                                 text = "SELECTED",
                                 color = HexnilMainAccent,
-                                fontSize = 8.sp,
+                                fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
                             )
                         }
                     }
@@ -119,51 +120,58 @@ fun WorkloadCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(HexnilSpacing.xs))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Workload Name
             Text(
                 text = workload.name,
                 color = HexnilPrimaryText,
-                fontSize = 15.sp,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.Bold
             )
+
+            Spacer(modifier = Modifier.height(4.dp))
 
             // Workload Purpose & Telemetry Scope
             Text(
                 text = workload.purpose,
                 color = HexnilSecondaryText,
-                fontSize = 11.sp,
-                lineHeight = 15.sp
+                fontSize = 13.sp,
+                lineHeight = 19.sp
             )
 
-            Spacer(modifier = Modifier.height(HexnilSpacing.sm))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            // Engineering Details Row (Inline, clean spacing)
-            Row(
+            // Engineering Details (Structured, zero text collisions)
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.metadata))
-                    .padding(horizontal = 10.dp, vertical = 7.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.md))
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(HexnilSpacing.xs)
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     EvidenceAvailabilityChip(availability = workload.evidenceAvailability)
-                    Text(text = targetTelemetry, color = HexnilAccentGlow, fontSize = 10.sp, fontWeight = FontWeight.Medium)
+                    Text(
+                        text = "#${workload.configHash}",
+                        color = HexnilSecondaryText,
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily.Monospace
+                    )
                 }
                 Text(
-                    text = "#${workload.configHash}",
-                    color = HexnilSecondaryText,
-                    fontSize = 9.sp,
-                    fontFamily = FontFamily.Monospace
+                    text = targetTelemetry,
+                    color = HexnilAccentGlow,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium
                 )
             }
 
-            Spacer(modifier = Modifier.height(HexnilSpacing.sm))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Footer: Last measured duration + Execute Button
             Row(
@@ -173,34 +181,36 @@ fun WorkloadCard(
             ) {
                 Column {
                     Text(
-                        text = "LATEST EXECUTION",
+                        text = "LAST MEASUREMENT",
                         color = HexnilSecondaryText,
-                        fontSize = 8.sp,
-                        fontWeight = FontWeight.Bold
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = if (workload.lastDurationMs != null) "${"%.1f".format(workload.lastDurationMs)} ms" else "NOT RUN",
                         color = if (workload.lastDurationMs != null) HexnilSuccess else HexnilSecondaryText,
-                        fontSize = 13.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace
                     )
                 }
 
-                Row(horizontalArrangement = Arrangement.spacedBy(HexnilSpacing.xs)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (onCardClick != null) {
                         Surface(
                             modifier = Modifier.clickable { onCardClick() },
                             shape = RoundedCornerShape(HexnilRadius.button),
                             color = HexnilSecondaryCard,
-                            border = BorderStroke(1.dp, HexnilBorder)
+                            border = BorderStroke(1.dp, HexnilBorderSubtle)
                         ) {
                             Text(
                                 text = "Inspect ➔",
                                 color = HexnilSecondaryText,
-                                fontSize = 11.sp,
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp)
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp)
                             )
                         }
                     }
@@ -217,7 +227,7 @@ fun WorkloadCard(
                     ) {
                         Text(
                             text = if (isRunning) "Running..." else "Execute ➔",
-                            fontSize = 11.sp,
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }

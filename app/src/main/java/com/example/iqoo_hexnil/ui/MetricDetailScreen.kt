@@ -59,9 +59,9 @@ fun MetricDetailScreen(
         modifier = modifier
             .fillMaxSize()
             .background(HexnilBackground)
-            .padding(horizontal = HexnilSpacing.md, vertical = HexnilSpacing.sm)
+            .padding(horizontal = HexnilSpacing.screenHorizontal, vertical = HexnilSpacing.screenVertical)
             .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sm)
+        verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sectionSpacing)
     ) {
         // Main Metric Verdict & Primary Delta Hero Card
         Surface(
@@ -71,7 +71,7 @@ fun MetricDetailScreen(
                 .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.hero)),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(HexnilSpacing.md)) {
+            Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
                 // Top Tag: Workload & Verdict Badge
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -81,7 +81,7 @@ fun MetricDetailScreen(
                     Text(
                         text = metric.workloadId,
                         color = HexnilMainAccent,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.5.sp
@@ -89,24 +89,26 @@ fun MetricDetailScreen(
                     ResultBadge(verdict = metric.verdict)
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 // Metric Title
                 Text(
                     text = metric.displayName,
                     color = HexnilPrimaryText,
-                    fontSize = 18.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
+
+                Spacer(modifier = Modifier.height(2.dp))
 
                 Text(
                     text = "ID: ${metric.metricName} · Unit: ${metric.unit}",
                     color = HexnilSecondaryText,
-                    fontSize = 10.sp,
+                    fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace
                 )
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // PRIMARY DELTA DISPLAY
                 val deltaColor = when (metric.verdict) {
@@ -131,12 +133,13 @@ fun MetricDetailScreen(
                             text = deltaPercentText,
                             style = DisplayLargeNumber.copy(color = deltaColor)
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = if (metric.absoluteDelta != null) {
                                 "${if (metric.absoluteDelta > 0) "+" else ""}${"%.3f".format(metric.absoluteDelta)} ${metric.unit} SHIFT"
                             } else "STATISTICALLY UNCERTAIN",
                             color = HexnilSecondaryText,
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.5.sp
                         )
@@ -144,61 +147,64 @@ fun MetricDetailScreen(
 
                     // Baseline to Candidate Inline Transition
                     Surface(
-                        shape = RoundedCornerShape(HexnilRadius.metadata),
+                        shape = RoundedCornerShape(HexnilRadius.md),
                         color = HexnilSecondaryCard,
                         border = BorderStroke(1.dp, HexnilBorder)
                     ) {
                         Column(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                             horizontalAlignment = Alignment.End
                         ) {
                             Text(
                                 text = "THRESHOLD: ${metric.thresholdPercent ?: 5.0}%",
                                 color = HexnilSecondaryText,
-                                fontSize = 9.sp,
+                                fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 0.5.sp
                             )
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = metric.verdict.label,
                                 color = deltaColor,
-                                fontSize = 11.sp,
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // V0 -> V1 Mean Transition Strip
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.metadata))
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                        .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.md))
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text(text = "V0 BASELINE", color = HexnilSecondaryText, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "V0 BASELINE", color = HexnilSecondaryText, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = if (metric.v0Mean != null) "${"%.3f".format(metric.v0Mean)} ${metric.unit}" else "—",
                             color = HexnilPrimaryText,
-                            fontSize = 12.sp,
+                            fontSize = 14.sp,
                             fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.Bold
                         )
                     }
-                    Text(text = "➔", color = HexnilSecondaryText, fontSize = 12.sp)
+                    Text(text = "➔", color = HexnilSecondaryText, fontSize = 14.sp)
                     Column(horizontalAlignment = Alignment.End) {
-                        Text(text = "V1 CANDIDATE", color = HexnilSecondaryText, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "V1 CANDIDATE", color = HexnilSecondaryText, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = if (metric.v1Mean != null) "${"%.3f".format(metric.v1Mean)} ${metric.unit}" else "—",
                             color = HexnilAccentGlow,
-                            fontSize = 12.sp,
+                            fontSize = 14.sp,
                             fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
@@ -229,7 +235,7 @@ fun MetricDetailScreen(
                 .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
+            Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
                 MetricDetailRow("Metric Key", metric.key, isMonospace = true)
                 MetricDetailRow("V0 Baseline Mean", if (metric.v0Mean != null) "${"%.3f".format(metric.v0Mean)} ${metric.unit}" else "N/A")
                 MetricDetailRow("V1 Candidate Mean", if (metric.v1Mean != null) "${"%.3f".format(metric.v1Mean)} ${metric.unit}" else "N/A")
@@ -260,70 +266,73 @@ fun MetricDetailScreen(
                 .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
+            Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
                 Text(
                     text = "V0 Raw Measurements (${metric.v0Values.size} runs)",
                     color = HexnilSecondaryText,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = if (metric.v0Values.isNotEmpty()) metric.v0Values.joinToString(", ") { "${"%.3f".format(it)} ${metric.unit}" } else "No observations",
                     color = HexnilPrimaryText,
-                    fontSize = 11.sp,
-                    fontFamily = FontFamily.Monospace
+                    fontSize = 13.sp,
+                    fontFamily = FontFamily.Monospace,
+                    lineHeight = 18.sp
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
                     text = "V1 Raw Measurements (${metric.v1Values.size} runs)",
                     color = HexnilSecondaryText,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = if (metric.v1Values.isNotEmpty()) metric.v1Values.joinToString(", ") { "${"%.3f".format(it)} ${metric.unit}" } else "No observations",
                     color = HexnilPrimaryText,
-                    fontSize = 11.sp,
-                    fontFamily = FontFamily.Monospace
+                    fontSize = 13.sp,
+                    fontFamily = FontFamily.Monospace,
+                    lineHeight = 18.sp
                 )
 
                 if (metric.pairedDifferences.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
                     Text(
                         text = "Paired Differences (V1 - V0)",
                         color = HexnilSecondaryText,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = metric.pairedDifferences.joinToString(", ") { "${if (it > 0) "+" else ""}${"%.3f".format(it)}" },
                         color = HexnilAccentGlow,
-                        fontSize = 11.sp,
-                        fontFamily = FontFamily.Monospace
+                        fontSize = 13.sp,
+                        fontFamily = FontFamily.Monospace,
+                        lineHeight = 18.sp
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 // Provenance Run Identifiers
                 Text(
                     text = "MATCHED RUN LINEAGE",
                     color = HexnilSecondaryText,
-                    fontSize = 10.sp,
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 metric.v0RunIds.forEachIndexed { index, runId ->
                     val v1RunId = metric.v1RunIds.getOrNull(index) ?: ""
                     Text(
                         text = "Pair #${index + 1}: $runId ➔ $v1RunId",
                         color = HexnilSecondaryText,
-                        fontSize = 9.sp,
+                        fontSize = 11.sp,
                         fontFamily = FontFamily.Monospace
                     )
                 }
@@ -343,25 +352,25 @@ fun MetricDetailScreen(
                 .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
+            Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
                 Text(
                     text = "CLASSIFIER REASONING",
                     color = HexnilMainAccent,
-                    fontSize = 10.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
                 )
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = metric.reason,
                     color = HexnilPrimaryText,
-                    fontSize = 12.sp,
-                    lineHeight = 17.sp
+                    fontSize = 14.sp,
+                    lineHeight = 21.sp
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
@@ -384,16 +393,16 @@ private fun MetricComparisonVisualizer(
             .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
         color = HexnilCard
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
             Text(
                 text = "VISUAL COMPARISON (PROPORTIONAL BARS)",
                 color = HexnilMainAccent,
-                fontSize = 10.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // V0 Baseline Bar
             Row(
@@ -403,15 +412,15 @@ private fun MetricComparisonVisualizer(
                 Text(
                     text = "V0",
                     color = HexnilSecondaryText,
-                    fontSize = 11.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.width(32.dp)
+                    modifier = Modifier.width(36.dp)
                 )
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(18.dp)
-                        .clip(RoundedCornerShape(4.dp))
+                        .height(24.dp)
+                        .clip(RoundedCornerShape(HexnilRadius.xs))
                         .background(HexnilSecondaryCard)
                 ) {
                     Box(
@@ -421,17 +430,18 @@ private fun MetricComparisonVisualizer(
                             .background(HexnilBorder)
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(10.dp))
                 Text(
                     text = "${"%.1f".format(v0Value)} $unit",
                     color = HexnilPrimaryText,
-                    fontSize = 11.sp,
+                    fontSize = 13.sp,
                     fontFamily = FontFamily.Monospace,
-                    modifier = Modifier.width(75.dp)
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.width(85.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // V1 Candidate Bar
             Row(
@@ -441,9 +451,9 @@ private fun MetricComparisonVisualizer(
                 Text(
                     text = "V1",
                     color = HexnilAccentGlow,
-                    fontSize = 11.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.width(32.dp)
+                    modifier = Modifier.width(36.dp)
                 )
                 val v1BarColor = when (verdict) {
                     VerdictType.REGRESSION -> HexnilError
@@ -456,8 +466,8 @@ private fun MetricComparisonVisualizer(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(18.dp)
-                        .clip(RoundedCornerShape(4.dp))
+                        .height(24.dp)
+                        .clip(RoundedCornerShape(HexnilRadius.xs))
                         .background(HexnilSecondaryCard)
                 ) {
                     Box(
@@ -467,13 +477,14 @@ private fun MetricComparisonVisualizer(
                             .background(v1BarColor)
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(10.dp))
                 Text(
                     text = "${"%.1f".format(v1Value)} $unit",
                     color = HexnilPrimaryText,
-                    fontSize = 11.sp,
+                    fontSize = 13.sp,
                     fontFamily = FontFamily.Monospace,
-                    modifier = Modifier.width(75.dp)
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.width(85.dp)
                 )
             }
         }
@@ -490,21 +501,22 @@ private fun MetricDetailRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 6.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = label,
             color = HexnilSecondaryText,
-            fontSize = 11.sp
+            fontSize = 13.sp
         )
         Text(
             text = value,
             color = if (isAccent) HexnilMainAccent else HexnilPrimaryText,
-            fontSize = 11.sp,
+            fontSize = 13.sp,
             fontWeight = if (isAccent) FontWeight.Bold else FontWeight.Medium,
             fontFamily = if (isMonospace) FontFamily.Monospace else FontFamily.Default
         )
     }
 }
+

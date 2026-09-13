@@ -44,7 +44,7 @@ fun ClaimCard(
             .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
         color = HexnilCard
     ) {
-        Column(modifier = Modifier.padding(HexnilSpacing.md)) {
+        Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
             // Top row: ID, Subsystem & Status Chips
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -55,20 +55,20 @@ fun ClaimCard(
                     Text(
                         text = claim.id,
                         color = HexnilMainAccent,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = " · ${claim.subsystem}",
                         color = HexnilSecondaryText,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )
                 }
 
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     PriorityChip(priority = claim.priority)
@@ -76,7 +76,7 @@ fun ClaimCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(HexnilSpacing.xs))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Claim Title & Validation Status
             Row(
@@ -87,32 +87,32 @@ fun ClaimCard(
                 Text(
                     text = claim.title,
                     color = HexnilPrimaryText,
-                    fontSize = 15.sp,
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f).padding(end = 8.dp)
                 )
                 ValidationStatusChip(status = claim.validationStatus)
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             // Claim Statement / Description
             Text(
                 text = claim.description,
                 color = HexnilSecondaryText,
-                fontSize = 12.sp,
-                lineHeight = 16.sp
+                fontSize = 14.sp,
+                lineHeight = 21.sp
             )
 
-            Spacer(modifier = Modifier.height(HexnilSpacing.sm))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Clean Metadata Details (Subtle background, no heavy nested border)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.metadata))
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(3.dp)
+                    .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.md))
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 ClaimPropertyRow("Affected Subsystem", claim.subsystem)
                 ClaimPropertyRow("Expected Direction", claim.expectedDirection)
@@ -133,21 +133,24 @@ private fun ClaimPropertyRow(
     isMonospace: Boolean = false
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = label,
             color = HexnilSecondaryText,
-            fontSize = 10.sp
+            fontSize = 12.sp
         )
         Text(
             text = value,
             color = if (isMonospace) HexnilAccentGlow else HexnilPrimaryText,
-            fontSize = 10.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
             fontFamily = if (isMonospace) FontFamily.Monospace else FontFamily.Default
         )
     }
 }
+

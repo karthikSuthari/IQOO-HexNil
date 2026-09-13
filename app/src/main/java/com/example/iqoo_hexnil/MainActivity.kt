@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.example.iqoo_hexnil.data.HexnilRepository
+import com.example.iqoo_hexnil.service.HexnilBackgroundService
 import com.example.iqoo_hexnil.telemetry.TelemetryEngine
 import com.example.iqoo_hexnil.telemetry.TelemetryRecord
 import com.example.iqoo_hexnil.ui.AiExplanationScreen
@@ -58,6 +59,14 @@ class MainActivity : ComponentActivity() {
         Log.i(TAG, "==================================================")
 
         handleIncomingIntent(intent)
+
+        // Resume persistent background monitoring if previously enabled
+        val prefs = getSharedPreferences(HexnilBackgroundService.PREFS_NAME, MODE_PRIVATE)
+        val bgEnabled = prefs.getBoolean(HexnilBackgroundService.KEY_BG_ENABLED, false)
+        if (bgEnabled && !HexnilBackgroundService.isRunning.value) {
+            Log.i(TAG, "[INIT] Resuming persistent background service")
+            HexnilBackgroundService.start(this)
+        }
 
         setContent {
             IQOOHEXNILTheme {

@@ -32,7 +32,7 @@ fun SectionHeader(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
+            .padding(top = 10.dp, bottom = 4.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -44,37 +44,42 @@ fun SectionHeader(
                 color = HexnilMainAccent,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
-                letterSpacing = 1.2.sp
+                letterSpacing = 1.1.sp,
+                maxLines = 1,
+                modifier = Modifier.weight(1f, fill = false)
             )
-            if (actionText != null && onActionClick != null) {
+            if (actionText != null) {
                 Text(
                     text = actionText,
                     color = HexnilAccentGlow,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clickable { onActionClick() }
+                    letterSpacing = 0.5.sp,
+                    maxLines = 1,
+                    modifier = if (onActionClick != null) Modifier.clickable { onActionClick() } else Modifier
                 )
             }
         }
 
         if (title != null) {
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = title,
                 color = HexnilPrimaryText,
-                fontSize = 16.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
         }
 
         if (subtitle != null) {
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = subtitle,
                 color = HexnilSecondaryText,
-                fontSize = 12.sp,
-                lineHeight = 16.sp
+                fontSize = 13.sp,
+                lineHeight = 19.sp
             )
         }
     }
 }
+

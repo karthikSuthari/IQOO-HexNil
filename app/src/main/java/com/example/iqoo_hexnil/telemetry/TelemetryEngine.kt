@@ -28,7 +28,9 @@ object TelemetryEngine {
         context: Context,
         experimentId: String,
         workloadId: String = "startup_basic",
-        iteration: Int = 1
+        iteration: Int = 1,
+        action: String = "compute_work",
+        operations: Int = 5000
     ): List<TelemetryRecord> {
         val device = getDeviceIdentity()
         val workload = WorkloadIdentity(id = workloadId, iteration = iteration)
@@ -59,7 +61,9 @@ object TelemetryEngine {
             experimentId = experimentId,
             device = device,
             workloadId = workloadId,
-            iteration = iteration
+            iteration = iteration,
+            operations = operations,
+            action = action
         )
         allRecords.addAll(workloadResult.records)
 

@@ -1,0 +1,46 @@
+{
+  "workload_id": "cpu_01",
+  "version": "1.0.0",
+  "description": "Deterministic SHA-256 CPU compute workload with fixed seed and iteration count",
+  "configuration": {
+    "algorithm": "SHA-256",
+    "operations_count": 10000,
+    "seed": "HexnilSeedPayload_v1_cpu01"
+  },
+  "preconditions": {
+    "screen_on": true,
+    "battery_min_percent": 15,
+    "thermal_state_max": "moderate"
+  },
+  "steps": [
+    {
+      "step_id": "launch_companion_app",
+      "action": "launch_app",
+      "parameters": {
+        "package": "com.example.iqoo_hexnil",
+        "activity": ".MainActivity"
+      },
+      "description": "Ensure companion app is in foreground"
+    },
+    {
+      "step_id": "execute_cpu_compute",
+      "action": "compute_work",
+      "parameters": {
+        "operations_count": 10000,
+        "seed": "HexnilSeedPayload_v1_cpu01"
+      },
+      "timeout_ms": 15000,
+      "description": "Execute repeated SHA-256 hashing on device CPU"
+    },
+    {
+      "step_id": "capture_cpu_telemetry",
+      "action": "collect_snapshot",
+      "parameters": {},
+      "description": "Capture thermal, battery, and execution duration telemetry"
+    }
+  ],
+  "duration_limits": {
+    "min_ms": 5.0,
+    "max_ms": 15000.0
+  }
+}

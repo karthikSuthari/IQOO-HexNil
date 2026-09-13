@@ -18,6 +18,9 @@ from hexnil.experiments.ids import generate_experiment_id
 from hexnil.experiments.store import ExperimentStore
 from hexnil.telemetry.bridge import TelemetryBridge, TelemetrySummary
 from hexnil.telemetry.models import CapabilityStatus, TelemetryRecord
+from hexnil.workloads.engine import WorkloadExecutionEngine
+from hexnil.workloads.models import RunStatus, WorkloadDefinition, WorkloadRun
+from hexnil.workloads.registry import WorkloadNotFoundError, WorkloadRegistry
 
 logger = logging.getLogger("hexnil.cli")
 
@@ -343,6 +346,141 @@ def handle_telemetry_show(args: argparse.Namespace, config: HexnilConfig) -> int
     return 0
 
 
+def handle_workload_list(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """List all registered declarative workloads."""
+    registry = WorkloadRegistry()
+    workloads = registry.list_workloads()
+    if getattr(args, "json", False):
+        data = [
+            {
+                "workload_id": w.workload_id,
+                "version": w.version,
+                "description": w.description,
+                "configuration_hash": w.compute_hash(),
+                "steps_count": len(w.steps),
+            }
+            for w in workloads
+        ]
+        print(json.dumps(data, indent=2))
+        return 0
+
+    print("Registered Hexnil Workloads")
+    print("---------------------------")
+    for w in workloads:
+        print(f"- {w.workload_id:<18} (v{w.version}, hash: {w.compute_hash()})")
+        print(f"  {w.description}")
+        print(f"  Steps: {len(w.steps)} | Preconditions: {list(w.preconditions.keys())}")
+    return 0
+
+
+def handle_workload_show(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Display full details of a specific workload definition."""
+    registry = WorkloadRegistry()
+    workload = registry.get(args.workload_id)
+    if getattr(args, "json", False):
+        data = workload.model_dump()
+        data["configuration_hash"] = workload.compute_hash()
+        data["canonical_configuration"] = workload.canonical_json()
+        print(json.dumps(data, indent=2))
+        return 0
+
+    print(f"Workload Definition: {workload.workload_id} (v{workload.version})")
+    print("--------------------------------------------------")
+    print(f"Description: {workload.description}")
+    print(f"Configuration Hash: {workload.compute_hash()}")
+    print("\nPreconditions:")
+    for k, v in workload.preconditions.items():
+        print(f"  - {k}: {v}")
+    print("\nSteps:")
+    for i, s in enumerate(workload.steps, 1):
+        desc = f" ({s.description})" if s.description else ""
+        print(f"  {i}. [{s.step_id}] {s.action.value} - {s.parameters}{desc}")
+    return 0
+
+
+def handle_workload_validate(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Validate a workload definition structure and limits."""
+    registry = WorkloadRegistry()
+    valid, errors = registry.validate(args.workload_id)
+    if getattr(args, "json", False):
+        print(json.dumps({"workload_id": args.workload_id, "valid": valid, "errors": errors}, indent=2))
+        return 0 if valid else 1
+
+    if valid:
+        w = registry.get(args.workload_id)
+        print(f"Workload '{args.workload_id}' (v{w.version}, hash: {w.compute_hash()}) is VALID.")
+        return 0
+    else:
+        print(f"Workload '{args.workload_id}' validation FAILED:")
+        for err in errors:
+            print(f"  - {err}")
+        return 1
+
+
+def handle_workload_run(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Execute a workload against a connected Android device."""
+    registry = WorkloadRegistry()
+    workload = registry.get(args.workload_id)
+
+    adb_client = AdbClient(adb_path=config.adb_path)
+    discovery = DeviceDiscovery(adb_client)
+    target_device = discovery.select_device(target_serial=args.serial)
+
+    metadata_collector = MetadataCollector(adb_client)
+    metadata, adb_status, warnings = metadata_collector.collect(target_device.serial)
+
+    store = ExperimentStore(config.data_dir)
+    experiment_id = store.generate_experiment_id()
+    created_at = (
+        datetime.datetime.now(datetime.timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+    )
+
+    exp_record = ExperimentRecord(
+        experiment_id=experiment_id,
+        created_at=created_at,
+        device=metadata,
+        adb=adb_status,
+        phase="03_deterministic_workload_engine",
+        status="ready",
+        warnings=warnings,
+    )
+    store.save(exp_record, as_directory=True)
+
+    iterations = getattr(args, "iterations", 1) or 1
+    engine = WorkloadExecutionEngine(adb_client, store)
+    runs = engine.execute(
+        serial=target_device.serial,
+        experiment_record=exp_record,
+        workload=workload,
+        iterations=iterations,
+    )
+
+    if getattr(args, "json", False):
+        print(json.dumps([r.model_dump() for r in runs], indent=2))
+        return 0
+
+    print(f"\nHexnil Workload Execution Summary")
+    print(f"---------------------------------")
+    print(f"Experiment ID:      {experiment_id}")
+    print(f"Device:             {metadata.manufacturer} {metadata.model} ({target_device.serial})")
+    print(f"Workload:           {workload.workload_id} (v{workload.version})")
+    print(f"Configuration Hash: {workload.compute_hash()}")
+    print(f"Total Iterations:   {len(runs)}")
+    print("\nRuns Breakdown:")
+    all_success = True
+    for r in runs:
+        status_sym = "[OK]" if r.status == RunStatus.SUCCESS else "[FAIL]"
+        if r.status != RunStatus.SUCCESS:
+            all_success = False
+        print(f"  {status_sym} [{r.run_id}] Iteration {r.iteration}: {r.duration_ms:.1f} ms -> {r.status.value}")
+        if r.error_reason:
+            print(f"    Reason: {r.error_reason}")
+    print(f"\nSaved run artifacts to: data/experiments/{experiment_id}/workload_runs/{workload.workload_id}/")
+    return 0 if all_success else 1
+
+
 def create_parser() -> argparse.ArgumentParser:
     """Construct CLI argument parser."""
     parser = argparse.ArgumentParser(
@@ -475,6 +613,58 @@ def create_parser() -> argparse.ArgumentParser:
         help="Output record as JSON.",
     )
 
+    # 4. 'workload' command group
+    wl_parser = subparsers.add_parser(
+        "workload", help="Deterministic workload suite and execution"
+    )
+    wl_subparsers = wl_parser.add_subparsers(
+        dest="subcommand", help="Workload subcommands"
+    )
+
+    wl_list_parser = wl_subparsers.add_parser("list", help="List registered workloads")
+    wl_list_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output list as JSON.",
+    )
+
+    wl_show_parser = wl_subparsers.add_parser("show", help="Show workload definition")
+    wl_show_parser.add_argument("workload_id", help="Workload ID to display")
+    wl_show_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output definition as JSON.",
+    )
+
+    wl_val_parser = wl_subparsers.add_parser("validate", help="Validate workload definition")
+    wl_val_parser.add_argument("workload_id", help="Workload ID to validate")
+    wl_val_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output validation as JSON.",
+    )
+
+    wl_run_parser = wl_subparsers.add_parser("run", help="Execute workload against device")
+    wl_run_parser.add_argument("workload_id", help="Workload ID to execute")
+    wl_run_parser.add_argument(
+        "--serial",
+        "-s",
+        help="Target specific device by ADB serial.",
+        default=None,
+    )
+    wl_run_parser.add_argument(
+        "--iterations",
+        "-i",
+        type=int,
+        default=1,
+        help="Number of repeated iterations to execute (default: 1).",
+    )
+    wl_run_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output execution run records as JSON.",
+    )
+
     return parser
 
 
@@ -521,6 +711,19 @@ def main(argv=None) -> int:
                 return handle_experiment_list(args, config)
             elif args.subcommand == "show":
                 return handle_experiment_show(args, config)
+            else:
+                parser.print_help()
+                return 1
+
+        elif args.command == "workload":
+            if args.subcommand in (None, "list"):
+                return handle_workload_list(args, config)
+            elif args.subcommand == "show":
+                return handle_workload_show(args, config)
+            elif args.subcommand == "validate":
+                return handle_workload_validate(args, config)
+            elif args.subcommand == "run":
+                return handle_workload_run(args, config)
             else:
                 parser.print_help()
                 return 1

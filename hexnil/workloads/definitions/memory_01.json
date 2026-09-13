@@ -1,0 +1,45 @@
+{
+  "workload_id": "memory_01",
+  "version": "1.0.0",
+  "description": "Deterministic memory allocation, touch pattern, and garbage collection cycle",
+  "configuration": {
+    "allocation_mb": 50,
+    "blocks_count": 5,
+    "pattern": "sequential_fill_and_release"
+  },
+  "preconditions": {
+    "screen_on": true,
+    "battery_min_percent": 15
+  },
+  "steps": [
+    {
+      "step_id": "launch_companion_app",
+      "action": "launch_app",
+      "parameters": {
+        "package": "com.example.iqoo_hexnil",
+        "activity": ".MainActivity"
+      },
+      "description": "Ensure companion app is in foreground"
+    },
+    {
+      "step_id": "allocate_and_touch_heap",
+      "action": "memory_work",
+      "parameters": {
+        "allocation_mb": 50,
+        "blocks_count": 5
+      },
+      "timeout_ms": 10000,
+      "description": "Allocate fixed memory blocks, touch memory, and trigger release"
+    },
+    {
+      "step_id": "capture_memory_telemetry",
+      "action": "collect_snapshot",
+      "parameters": {},
+      "description": "Capture app heap and system memory telemetry"
+    }
+  ],
+  "duration_limits": {
+    "min_ms": 5.0,
+    "max_ms": 10000.0
+  }
+}

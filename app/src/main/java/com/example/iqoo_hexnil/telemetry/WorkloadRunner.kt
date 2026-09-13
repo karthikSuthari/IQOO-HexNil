@@ -22,20 +22,55 @@ object WorkloadRunner {
         device: DeviceIdentity,
         workloadId: String = "startup_basic",
         iteration: Int = 1,
-        operations: Int = 5000
+        operations: Int = 5000,
+        action: String = "compute_work"
     ): WorkloadResult {
         val workload = WorkloadIdentity(id = workloadId, iteration = iteration)
         val startInstant = Instant.now()
         val startMillis = SystemClock.elapsedRealtime()
 
         var success = true
+        var effectiveOperations = operations
+
         try {
-            // Deterministic compute workload: repeatable SHA-256 hashing over fixed seed
-            val digest = MessageDigest.getInstance("SHA-256")
-            var data = "HexnilPhase2SeedPayload_$workloadId".toByteArray(Charsets.UTF_8)
-            for (i in 0 until operations) {
-                digest.update(data)
-                data = digest.digest()
+            when (action) {
+                "memory_work" -> {
+                    // Allocate fixed memory blocks, touch each page, then clear references
+                    val blocks = mutableListOf<ByteArray>()
+                    val blockSize = 10 * 1024 * 1024 // 10 MB per block
+                    val blockCount = 5 // 50 MB total
+                    for (b in 0 until blockCount) {
+                        val arr = ByteArray(blockSize)
+                        // Sequential touch pattern
+                        for (i in 0 until 1000) {
+                            arr[i * 1024] = (i % 256).toByte()
+                        }
+                        blocks.add(arr)
+                    }
+                    effectiveOperations = blockCount
+                    blocks.clear()
+                    System.gc()
+                }
+
+                "local_media_playback" -> {
+                    // Deterministic media simulation: compute pseudo-frames for fixed duration
+                    var sum = 0L
+                    for (f in 0 until 300) {
+                        sum += (f * 31L) xor 0x5DEECE66DL
+                    }
+                    effectiveOperations = 300
+                }
+
+                else -> {
+                    // Default compute workload: repeatable SHA-256 hashing over fixed seed
+                    val digest = MessageDigest.getInstance("SHA-256")
+                    var data = "HexnilPhase3SeedPayload_$workloadId".toByteArray(Charsets.UTF_8)
+                    for (i in 0 until operations) {
+                        digest.update(data)
+                        data = digest.digest()
+                    }
+                    effectiveOperations = operations
+                }
             }
         } catch (e: Exception) {
             success = false
@@ -78,7 +113,7 @@ object WorkloadRunner {
                 timestamp = endInstant.toString(),
                 device = device,
                 workload = workload,
-                metric = MetricValue("workload_operations_count", operations, "operations"),
+                metric = MetricValue("workload_operations_count", effectiveOperations, "operations"),
                 capability = CapabilityStatus.UNIVERSAL
             )
         )
@@ -116,7 +151,7 @@ object WorkloadRunner {
             endTimestamp = endInstant.toString(),
             durationMs = durationMs,
             success = success,
-            operationsCount = operations,
+            operationsCount = effectiveOperations,
             records = records
         )
     }

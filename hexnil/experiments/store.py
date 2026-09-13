@@ -23,6 +23,11 @@ class ExperimentStore:
         """Get the directory path for an experiment."""
         return self.store_dir / experiment_id
 
+    def generate_experiment_id(self) -> str:
+        """Generate next sequential experiment ID."""
+        from hexnil.experiments.ids import generate_experiment_id
+        return generate_experiment_id(self.store_dir)
+
     def ensure_experiment_dir(self, experiment_id: str) -> Path:
         """Ensure the experiment directory and its subfolders exist."""
         exp_dir = self.get_experiment_dir(experiment_id)
@@ -170,6 +175,70 @@ class ExperimentStore:
                         logger.warning("Skipping corrupted telemetry line in %s: %s", f.name, exc)
 
         return records
+
+    def save_workload_run(self, experiment_id: str, run: "WorkloadRun") -> Path:
+        """Save a WorkloadRun record under data/experiments/<exp_id>/workload_runs/<workload_id>/<run_id>.json."""
+        exp_dir = self.ensure_experiment_dir(experiment_id)
+        runs_dir = exp_dir / "workload_runs" / run.workload_id
+        runs_dir.mkdir(parents=True, exist_ok=True)
+        target_file = runs_dir / f"{run.run_id}.json"
+        temp_file = runs_dir / f".{run.run_id}.tmp"
+        try:
+            temp_file.write_text(run.model_dump_json(indent=2), encoding="utf-8")
+            temp_file.replace(target_file)
+            logger.info("Saved workload run %s to %s", run.run_id, target_file)
+            return target_file
+        except Exception as exc:
+            raise ExperimentPersistenceError(str(target_file), str(exc)) from exc
+
+    def load_workload_run(
+        self, experiment_id: str, workload_id: str, run_id: str
+    ) -> "WorkloadRun":
+        """Load a specific WorkloadRun by ID."""
+        from hexnil.workloads.models import WorkloadRun
+        exp_dir = self.get_experiment_dir(experiment_id)
+        target_file = exp_dir / "workload_runs" / workload_id / f"{run_id}.json"
+        if not target_file.exists():
+            raise ExperimentPersistenceError(
+                str(target_file),
+                f"Workload run '{run_id}' does not exist for experiment '{experiment_id}'.",
+            )
+        try:
+            content = target_file.read_text(encoding="utf-8")
+            return WorkloadRun.model_validate_json(content)
+        except Exception as exc:
+            raise ExperimentPersistenceError(str(target_file), str(exc)) from exc
+
+    def list_workload_runs(
+        self, experiment_id: str, workload_id: Optional[str] = None
+    ) -> List["WorkloadRun"]:
+        """List all WorkloadRun records for an experiment, optionally filtered by workload_id."""
+        from hexnil.workloads.models import WorkloadRun
+        exp_dir = self.get_experiment_dir(experiment_id)
+        runs_base = exp_dir / "workload_runs"
+        if not runs_base.exists():
+            return []
+
+        search_dirs = (
+            [runs_base / workload_id]
+            if workload_id
+            else [d for d in runs_base.iterdir() if d.is_dir()]
+        )
+        runs: List[WorkloadRun] = []
+
+        for d in search_dirs:
+            if not d.exists() or not d.is_dir():
+                continue
+            for f in d.glob("RUN-*.json"):
+                if f.is_file():
+                    try:
+                        content = f.read_text(encoding="utf-8")
+                        runs.append(WorkloadRun.model_validate_json(content))
+                    except Exception as exc:
+                        logger.warning("Skipping invalid run file %s: %s", f.name, exc)
+
+        runs.sort(key=lambda r: (r.iteration, r.started_at))
+        return runs
 
     def list_all(self) -> List[ExperimentRecord]:
         """List all valid experiment records sorted by ID descending."""

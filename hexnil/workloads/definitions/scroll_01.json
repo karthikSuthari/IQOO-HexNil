@@ -1,0 +1,47 @@
+{
+  "workload_id": "scroll_01",
+  "version": "1.0.0",
+  "description": "Deterministic fixed-distance vertical scrolling over local view items",
+  "configuration": {
+    "pause_between_swipes_ms": 500,
+    "scroll_swipes": 5,
+    "swipe_distance_px": 800,
+    "swipe_duration_ms": 300
+  },
+  "preconditions": {
+    "screen_on": true,
+    "battery_min_percent": 15
+  },
+  "steps": [
+    {
+      "step_id": "launch_companion_app",
+      "action": "launch_app",
+      "parameters": {
+        "package": "com.example.iqoo_hexnil",
+        "activity": ".MainActivity"
+      },
+      "description": "Ensure companion app is in foreground"
+    },
+    {
+      "step_id": "execute_fixed_swipes",
+      "action": "scroll",
+      "parameters": {
+        "scroll_swipes": 5,
+        "swipe_distance_px": 800,
+        "swipe_duration_ms": 300
+      },
+      "timeout_ms": 10000,
+      "description": "Execute repeated fixed coordinate swipes"
+    },
+    {
+      "step_id": "capture_gfx_telemetry",
+      "action": "collect_snapshot",
+      "parameters": {},
+      "description": "Capture dumpsys gfxinfo jank telemetry"
+    }
+  ],
+  "duration_limits": {
+    "min_ms": 100.0,
+    "max_ms": 10000.0
+  }
+}

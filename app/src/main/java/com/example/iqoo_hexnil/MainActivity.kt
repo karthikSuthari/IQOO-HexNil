@@ -106,8 +106,18 @@ class MainActivity : ComponentActivity() {
         if (intent != null && intent.action == "com.example.iqoo_hexnil.ACTION_RUN_WORKLOAD") {
             pendingExperimentId = intent.getStringExtra("experiment_id")
             val workloadId = intent.getStringExtra("workload_id") ?: "startup_basic"
+            val iteration = intent.getIntExtra("iteration", 1)
+            val action = intent.getStringExtra("workload_action") ?: "compute_work"
+            val operations = intent.getIntExtra("operations_count", 5000)
             val expId = pendingExperimentId ?: "EXP-LOCAL-001"
-            TelemetryEngine.executeSession(this, expId, workloadId)
+            TelemetryEngine.executeSession(
+                context = this,
+                experimentId = expId,
+                workloadId = workloadId,
+                iteration = iteration,
+                action = action,
+                operations = operations
+            )
         }
     }
 }

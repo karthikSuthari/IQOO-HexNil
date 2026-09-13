@@ -1,0 +1,9 @@
+--------- beginning of main
+09-13 13:38:19.406 15591 19780 I FontLog : (REDACTED) Received query %s, URI %s
+09-13 13:38:19.406 15591 19780 I FontLog : (REDACTED) Query [%s] resolved to %s
+09-13 13:38:19.412 15591 19780 I FontLog : (REDACTED) Fetch %s end status %s
+09-13 13:38:19.414 15591 19780 I FontLog : (REDACTED) Pulling font file for id = %d, cache size = %d
+09-13 13:38:19.424 15591 19780 I FontLog : (REDACTED) Pulling font file for id = %d, cache size = %d
+--------- beginning of system
+09-13 13:38:19.911  1742  1823 D BatteryStatsService: noteFpsPipe  : POWER_ID_FPS_PIPE initFps=2,fpsPipe=10
+09-13 13:38:21.549 24310 24372 D ULogGuard: Monitoring: 12 threads, 0 requests, 0 time-bombs; 2 guards. ResetFlags = 0x7

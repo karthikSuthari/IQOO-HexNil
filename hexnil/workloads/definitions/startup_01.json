@@ -1,0 +1,56 @@
+{
+  "workload_id": "startup_01",
+  "version": "1.0.0",
+  "description": "Cold application launch and initial rendering readiness",
+  "configuration": {
+    "package": "com.example.iqoo_hexnil",
+    "activity": ".MainActivity",
+    "launch_mode": "cold",
+    "timeout_ms": 10000
+  },
+  "preconditions": {
+    "screen_on": true,
+    "battery_min_percent": 15,
+    "thermal_state_max": "moderate",
+    "app_clean_state": true
+  },
+  "steps": [
+    {
+      "step_id": "stop_previous_instance",
+      "action": "stop_app",
+      "parameters": {
+        "package": "com.example.iqoo_hexnil"
+      },
+      "description": "Ensure application process is killed prior to cold launch"
+    },
+    {
+      "step_id": "wait_system_settle",
+      "action": "wait",
+      "parameters": {
+        "duration_ms": 1000
+      },
+      "description": "Allow system processes to stabilize"
+    },
+    {
+      "step_id": "launch_cold_activity",
+      "action": "launch_app",
+      "parameters": {
+        "package": "com.example.iqoo_hexnil",
+        "activity": ".MainActivity",
+        "wait_for_render": true
+      },
+      "timeout_ms": 10000,
+      "description": "Trigger cold launch via Android activity manager"
+    },
+    {
+      "step_id": "capture_startup_telemetry",
+      "action": "collect_snapshot",
+      "parameters": {},
+      "description": "Capture on-device and host performance telemetry"
+    }
+  ],
+  "duration_limits": {
+    "min_ms": 50.0,
+    "max_ms": 10000.0
+  }
+}

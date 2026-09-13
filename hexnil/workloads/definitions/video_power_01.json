@@ -1,0 +1,44 @@
+{
+  "workload_id": "video_power_01",
+  "version": "1.0.0",
+  "description": "Deterministic local media playback and display battery discharge proxy",
+  "configuration": {
+    "display_mode": "full_screen",
+    "playback_duration_ms": 5000,
+    "resolution": "1080p"
+  },
+  "preconditions": {
+    "screen_on": true,
+    "battery_min_percent": 15
+  },
+  "steps": [
+    {
+      "step_id": "launch_companion_app",
+      "action": "launch_app",
+      "parameters": {
+        "package": "com.example.iqoo_hexnil",
+        "activity": ".MainActivity"
+      },
+      "description": "Ensure companion app is in foreground"
+    },
+    {
+      "step_id": "simulate_media_playback",
+      "action": "local_media_playback",
+      "parameters": {
+        "playback_duration_ms": 5000
+      },
+      "timeout_ms": 10000,
+      "description": "Play local media canvas for fixed duration"
+    },
+    {
+      "step_id": "capture_battery_telemetry",
+      "action": "collect_snapshot",
+      "parameters": {},
+      "description": "Capture battery discharge proxy telemetry"
+    }
+  ],
+  "duration_limits": {
+    "min_ms": 4000.0,
+    "max_ms": 12000.0
+  }
+}

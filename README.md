@@ -9,225 +9,176 @@ Predict → Prioritize → Validate → Explain → Learn
 ```
 
 - **Phase 1**: Android Device Foundation (ADB discovery, serial selection, health checks, metadata capture, experiment IDs, JSON persistence).
-- **Phase 2**: Universal Telemetry Collection (On-device Kotlin/Compose engine, host-side ADB bridge, deterministic workload runner, capability taxonomy, JSONL persistence, artifact capture).
+- **Phase 2**: Universal Telemetry Collection (On-device Kotlin/Compose engine, host-side ADB bridge, deterministic workload foundation, capability taxonomy, JSONL persistence, artifact capture).
+- **Phase 3**: Deterministic Workload Engine (Declarative workload definitions, canonical configuration hashing, controlled preconditions, monotonic execution engine, repeated iterations, run models, workload suite & registry).
 
 ---
 
-## Phase 2 Architecture
+## Phase 3 Architecture: Deterministic Workload Engine
 
 ```
 +-------------------------------------------------------------------------+
-| ANDROID TARGET DEVICE (Hardware: vivo I2302 / Android 16 / SDK 36)      |
-|                                                                         |
-|  Hexnil Companion App (com.example.iqoo_hexnil)                         |
-|    ├── TelemetryEngine       (Snapshot coordinator & on-device JSONL)   |
-|    ├── BatteryTelemetry      (Level, charging state, temp, voltage)    |
-|    ├── MemoryTelemetry       (App PSS heap vs Device RAM/pressure)     |
-|    ├── ThermalTelemetry      (ThermalStatus & headroom via public API)  |
-|    ├── WorkloadRunner        (Deterministic workload execution & timing)|
-|    └── Compose Dashboard     (Minimal dark UI with live capability map) |
+| WORKLOAD REGISTRY & DEFINITIONS (Host: hexnil/workloads/definitions/)   |
+|   ├── startup_01.json        (Cold launch timing & readiness)           |
+|   ├── cpu_01.json            (Deterministic SHA-256 CPU hashing)        |
+|   ├── memory_01.json         (Heap allocation, touch & GC release)      |
+|   ├── scroll_01.json         (Fixed-distance vertical UI scrolling)     |
+|   └── video_power_01.json    (Local media playback / battery discharge) |
 +------------------------------------+------------------------------------+
                                      |
-                          am start / run-as / JSONL pull
+                       Load, Validate, Canonical Hash
                                      |
                                      v
 +-------------------------------------------------------------------------+
-| HOST CONTROLLER (Python 3.11+)                                          |
-|                                                                         |
-|  hexnil.cli                                                             |
-|    ├── hexnil.telemetry.bridge       (Host-device coordinator)          |
-|    ├── hexnil.telemetry.adb_collectors:                                 |
-|    │     ├── AdbLogcatCollector      (Bounded logcat capture)           |
-|    │     ├── AdbMeminfoCollector     (dumpsys meminfo parser)           |
-|    │     ├── AdbGfxinfoCollector     (dumpsys gfxinfo framestats parser)|
-|    │     ├── AdbThermalCollector     (dumpsys thermalservice HAL parser)|
-|    │     ├── AdbBatterystatsCollector(dumpsys batterystats collector)   |
-|    │     └── AdbPerfettoCollector    (Bounded Perfetto trace capture)   |
-|    └── hexnil.experiments.store      (JSONL telemetry & artifacts)      |
+| HOST EXECUTION ENGINE (Python 3.11+: hexnil.workloads.engine)           |
+|   ├── PreconditionEvaluator  (Screen state, battery %, thermals, clean) |
+|   ├── Monotonic Timer        (time.perf_counter_ns duration measurement)|
+|   ├── Iteration Controller   (Unique run IDs, identical config hash)    |
+|   └── TelemetryBridge Link   (Phase 2 snapshots around execution steps) |
++------------------------------------+------------------------------------+
+                                     |
+                          am start / input / run-as
+                                     |
+                                     v
++-------------------------------------------------------------------------+
+| TARGET ANDROID DEVICE (Hardware: vivo I2302 / Android 16 / SDK 36)      |
+|   └── Companion App (com.example.iqoo_hexnil)                           |
+|         ├── WorkloadRunner   (On-device compute, memory, and timing)    |
+|         └── TelemetryEngine  (Pre- & post-run telemetry snapshots)      |
++------------------------------------+------------------------------------+
+                                     |
+                             Store Persistence
+                                     |
+                                     v
++-------------------------------------------------------------------------+
+| LOCAL EXPERIMENT & RUN STORE (data/experiments/EXP-YYYYMMDD-XXX/)       |
+|   ├── metadata.json                                                     |
+|   ├── workload_runs/<workload_id>/RUN-*.json                            |
+|   ├── telemetry/android.jsonl & adb.jsonl                               |
+|   └── artifacts/ (dumpsys, logcat, traces)                              |
 +-------------------------------------------------------------------------+
 ```
 
-> [!IMPORTANT]
-> **Host vs App Separation**: The Android application is the primary device-side collector using Android public APIs. Host ADB signals (logcat, dumpsys, Perfetto) strictly execute from Python on the host machine. ADB is never embedded inside the APK.
+---
+
+## Workload Suite
+
+| Workload ID | Version | Configuration Hash | Description | Preconditions |
+|---|---|---|---|---|
+| `startup_01` | `1.0.0` | `085d1a2b54a0c08d` | Cold application launch and initial rendering readiness | Screen ON, Battery >= 15%, Thermal <= Moderate, Clean state (force-stop) |
+| `cpu_01` | `1.0.0` | `6e7f4490bb4eef72` | Deterministic SHA-256 CPU hashing with fixed seed (10,000 ops) | Screen ON, Battery >= 15%, Thermal <= Moderate |
+| `memory_01` | `1.0.0` | `d57a0caea43ad47f` | Memory allocation (50 MB), touch pattern, and GC release cycle | Screen ON, Battery >= 15% |
+| `scroll_01` | `1.0.0` | `be7217ff86a2ef88` | Fixed-distance vertical scrolling over local view items | Screen ON, Battery >= 15% |
+| `video_power_01`| `1.0.0`| `b794a8f175d4aa46` | Deterministic local media playback & battery discharge proxy | Screen ON, Battery >= 15% |
 
 ---
 
-## Telemetry Principles
+## Canonical Configuration Hashing
 
-1. **Real Data > Complete Data**: Never fabricate a metric. If Android or the device does not legitimately expose a metric, mark it `UNSUPPORTED` with a descriptive `reason`. Missing metrics have `value: null, unit: null` (never 0, -1, or 999 fake placeholders).
-2. **Capability Taxonomy**:
-   - `UNIVERSAL`: Reliably available across standard Android devices via public APIs or standard ADB.
-   - `CONDITIONAL`: Dependent on specific API levels, vendor HAL implementations, or hardware sensors.
-   - `UNSUPPORTED`: Not exposed by public APIs without root or restricted by sandbox security.
-3. **App vs Device Separation**: Never conflate application memory (heap PSS) with total device RAM.
-4. **Honest Terminology**: Battery percentage is a proxy/estimate, never labeled as direct "power consumption".
+Workload configurations are serialized to canonical JSON (sorted keys recursively, strict compact separators) and hashed via SHA-256:
+- **Hash Stability**: The hash remains identical across runs and machines as long as the workload configuration has not changed.
+- **Hash Sensitivity**: Changing any parameter (e.g. `operations_count` from 10,000 to 10,001) produces a completely different hash.
+- **Run Identity**: Persisted run records include `workload_id`, `workload_version`, and `configuration_hash`.
 
 ---
 
-## Telemetry Data Schema
+## Controlled Preconditions Model
 
-Every telemetry metric record adheres to the following unified schema:
+Preconditions are verified before executing workload steps. Each produces a `PreconditionResult`:
+- `SATISFIED`: Precondition was met or automatically enforced.
+- `NOT_SATISFIED`: Precondition failed (run is flagged as `PRECONDITION_FAILED` and steps do not execute).
+- `NOT_SUPPORTED`: Precondition is not supported by the current device/evaluator.
+- `ERROR`: Unexpected error during evaluation.
 
-```json
-{
-  "experiment_id": "EXP-20260913-004",
-  "timestamp": "2026-09-13T07:13:02.549449Z",
-  "device": {
-    "serial": "adb-10BE38254U0003T-PJiTJm._adb-tls-connect._tcp",
-    "manufacturer": "vivo",
-    "model": "I2302",
-    "codename": "I2302T",
-    "android_version": "16",
-    "sdk": 36,
-    "build_id": "BP2A.250605.031.A3",
-    "build_fingerprint": "iQOO/I2302T/I2302:16/BP2A.250605.031.A3/...:user/release-keys",
-    "abi": "arm64-v8a"
-  },
-  "software": {
-    "package": "com.example.iqoo_hexnil",
-    "version_name": "1.0",
-    "version_code": 1
-  },
-  "workload": {
-    "id": "startup_basic",
-    "iteration": 1
-  },
-  "metric": {
-    "name": "device_memory_available_mb",
-    "value": 1709.27,
-    "unit": "megabytes"
-  },
-  "source": "android_app",
-  "capability": "UNIVERSAL",
-  "reason": null
-}
-```
-
-If a metric is unsupported:
-```json
-{
-  "metric": {
-    "name": "soc_silicon_temperature_celsius",
-    "value": null,
-    "unit": "celsius"
-  },
-  "source": "android_app",
-  "capability": "UNSUPPORTED",
-  "reason": "Exact SoC / CPU silicon temperature is not exposed by public Android SDK without root (use host ADB thermalservice)"
-}
-```
+Supported Preconditions:
+- `screen_on` (boolean): Display awake and powered on.
+- `battery_min_percent` (integer): Charge level threshold.
+- `charging_state` (`"discharging"`, `"charging"`, `"any"`).
+- `thermal_state_max` (`"none"`, `"light"`, `"moderate"`, `"severe"`).
+- `app_clean_state` (boolean): Force-stop prior to launch.
 
 ---
 
-## Telemetry Storage Structure
+## Monotonic Duration Timing
 
-Experiments are stored under `data/experiments/EXP-YYYYMMDD-XXX/`:
+- **Durations**: Computed using high-precision monotonic timers (`time.perf_counter_ns()` on host, `SystemClock.elapsedRealtime()` on Android). Monotonic clocks never jump or drift when system wall-clocks synchronize.
+- **Timestamps**: All persisted timestamps (`started_at`, `ended_at`) strictly use UTC ISO-8601 formatting.
+
+---
+
+## Storage Structure
 
 ```
 data/
   experiments/
-    EXP-20260913-004/
-      metadata.json          # Phase 1 & 2 experiment metadata
+    EXP-20260913-007/
+      metadata.json
+      workload_runs/
+        cpu_01/
+          RUN-20260913-080912-001-A231.json
+          RUN-20260913-080923-002-AF2F.json
+          RUN-20260913-080934-003-BC55.json
       telemetry/
-        android.jsonl        # On-device timestamped telemetry records
-        adb.jsonl            # Host-side ADB timestamped telemetry records
+        android.jsonl
+        adb.jsonl
       artifacts/
-        dumpsys_meminfo.txt
-        dumpsys_gfxinfo.txt
-        dumpsys_thermalservice.txt
         dumpsys_batterystats.txt
+        dumpsys_gfxinfo.txt
+        dumpsys_meminfo.txt
+        dumpsys_thermalservice.txt
         logcat.txt
-        trace.perfetto-trace (if supported)
 ```
-
----
-
-## Telemetry Categories Collected
-
-| Category | Source | Metric Name | Capability | Description |
-|---|---|---|---|---|
-| **Battery** | `android_app` | `battery_level_percent` | `UNIVERSAL` | Battery charge percentage |
-| | `android_app` | `battery_charging_state` | `UNIVERSAL` | Charging / Discharging / Full |
-| | `android_app` | `battery_temperature_celsius` | `CONDITIONAL` | Battery thermal reading |
-| | `android_app` | `battery_voltage_volts` | `CONDITIONAL` | Battery voltage |
-| | `android_app` | `battery_current_microamps` | `CONDITIONAL` | Real-time current flow |
-| **Memory** | `android_app` | `app_heap_allocated_mb` | `UNIVERSAL` | Allocated JVM heap |
-| | `android_app` | `app_heap_max_mb` | `UNIVERSAL` | Max available JVM heap |
-| | `android_app` | `device_memory_available_mb`| `UNIVERSAL` | System-wide available RAM |
-| | `android_app` | `device_memory_total_mb` | `UNIVERSAL` | Total device physical RAM |
-| | `android_app` | `device_memory_low_pressure`| `UNIVERSAL` | Low memory pressure flag |
-| | `adb` | `adb_mem_total_pss_kb` | `UNIVERSAL` | dumpsys meminfo Total PSS |
-| | `adb` | `adb_mem_native_heap_pss_kb`| `UNIVERSAL` | Native heap PSS |
-| | `adb` | `adb_mem_dalvik_heap_pss_kb`| `UNIVERSAL` | Dalvik heap PSS |
-| **Thermal** | `android_app` | `thermal_status_name` | `UNIVERSAL` | PowerManager thermal status |
-| | `android_app` | `thermal_headroom_ratio` | `CONDITIONAL` | API 30+ thermal headroom |
-| | `android_app` | `soc_silicon_temperature_celsius`| `UNSUPPORTED`| Unexposed to non-root apps |
-| | `adb` | `adb_thermal_cpu_celsius` | `UNIVERSAL` | dumpsys thermalservice CPU HAL |
-| | `adb` | `adb_thermal_gpu_celsius` | `UNIVERSAL` | dumpsys thermalservice GPU HAL |
-| | `adb` | `adb_thermal_battery_celsius` | `UNIVERSAL` | dumpsys thermalservice Battery HAL |
-| | `adb` | `adb_thermal_skin_celsius` | `UNIVERSAL` | dumpsys thermalservice Skin HAL |
-| **Workload**| `android_app` | `workload_duration_ms` | `UNIVERSAL` | Deterministic execution time |
-| | `android_app` | `workload_success` | `UNIVERSAL` | Boolean workload status |
-| | `android_app` | `workload_operations_count`| `UNIVERSAL` | Completed workload cycles |
-| **Startup** | `android_app` | `app_startup_duration_ms` | `CONDITIONAL` | Measured application launch |
-| **UI Jank** | `android_app` | `ui_frame_jank_percent` | `CONDITIONAL` | In-app FrameMetrics |
-| | `adb` | `adb_gfx_total_frames` | `UNIVERSAL` | dumpsys gfxinfo total frames |
-| | `adb` | `adb_gfx_janky_frames` | `UNIVERSAL` | dumpsys gfxinfo janky frames |
-| | `adb` | `adb_gfx_p50_ms` - `p99_ms`| `UNIVERSAL` | Frame duration percentiles |
-| **Logcat** | `adb` | `adb_logcat_lines` | `UNIVERSAL` | Bounded experiment log snippet |
-| **Perfetto**| `adb` | `adb_perfetto_trace_bytes` | `CONDITIONAL` | System trace file capture |
 
 ---
 
 ## CLI Usage
 
-### 1. Collect Telemetry
-Execute deterministic workload and collect on-device + host ADB telemetry:
+### Workload Management
 ```bash
-python -m hexnil telemetry collect --serial <SERIAL>
-```
-Output as JSON:
-```bash
-python -m hexnil telemetry collect --serial <SERIAL> --json
+# List all registered declarative workloads
+python -m hexnil workload list
+
+# Inspect workload definition and configuration hash
+python -m hexnil workload show cpu_01
+
+# Validate workload schema and preconditions
+python -m hexnil workload validate cpu_01
 ```
 
-### 2. Inspect Experiment Telemetry
-Display all telemetry records for an experiment:
+### Workload Execution
 ```bash
-python -m hexnil telemetry show EXP-20260913-004
-```
-Output as JSON:
-```bash
-python -m hexnil telemetry show EXP-20260913-004 --json
-```
+# Run a single iteration against a connected device
+python -m hexnil workload run startup_01 --serial <SERIAL>
 
-### 3. Device Discovery & Health (Phase 1)
-```bash
-python -m hexnil device list
-python -m hexnil device status --serial <SERIAL>
-python -m hexnil experiment list
+# Run repeated iterations with telemetry collection
+python -m hexnil workload run cpu_01 --serial <SERIAL> --iterations 3
+
+# Output execution runs as JSON
+python -m hexnil workload run cpu_01 --serial <SERIAL> --iterations 3 --json
 ```
 
 ---
 
 ## Verification & Testing
 
-### Unit Test Suite (60 passed in 1.12s)
+### Unit Test Suite (78 passed in 1.18s)
 ```bash
 python -m pytest tests/ -v
 ```
-- Schema validation, required fields, and null handling
-- Capability enum enforcement (`UNIVERSAL`, `CONDITIONAL`, `UNSUPPORTED`)
-- Dumpsys parsers (`meminfo`, `gfxinfo`, `thermalservice`, `batterystats`)
-- Bounded logcat collector
-- Telemetry JSONL append/load roundtrip
-- Artifact persistence
-- CLI argument parsing and error formatting
+- Workload domain models, canonical serialization, and SHA-256 hash stability
+- Registry discovery and schema validation
+- Precondition evaluation logic (screen, battery, charging, thermals)
+- Monotonic execution engine, step ordering, timeouts, and multi-iteration runs
+- WorkloadRun persistence, loading, and filtering
+- CLI argument parsing and execution formatting
 
 ### Real Hardware Verification (vivo I2302)
-- **Device**: vivo I2302 (`adb-10BE38254U0003T-PJiTJm._adb-tls-connect._tcp`)
-- **OS**: Android 16 (SDK 36, arm64-v8a)
-- **Experiment ID**: `EXP-20260913-004`
-- **Workload**: `startup_basic` (5000 iterations, 9 ms duration)
-- **Telemetry Records**: 56 records (42 Universal, 9 Conditional, 5 Unsupported)
-- **Artifacts Saved**: 5 files (`dumpsys_meminfo.txt`, `dumpsys_gfxinfo.txt`, `dumpsys_thermalservice.txt`, `dumpsys_batterystats.txt`, `logcat.txt`)
+- **Device**: vivo I2302 (`adb-10BE38254U0003T-PJiTJm._adb-tls-connect._tcp`, Android 16 / SDK 36)
+- **Workload**: `cpu_01` (3 repeated iterations)
+- **Configuration Hash**: `6e7f4490bb4eef72` (identical across all iterations)
+- **Results**:
+  - Iteration 1: `11037.5 ms` (`RUN-20260913-080912-001-A231`) -> `SUCCESS`
+  - Iteration 2: `10651.2 ms` (`RUN-20260913-080923-002-AF2F`) -> `SUCCESS`
+  - Iteration 3: `10655.0 ms` (`RUN-20260913-080934-003-BC55`) -> `SUCCESS`
+- **Telemetry Linked**: 56 metrics per iteration (37 Android, 19 host ADB)
+- **Artifacts Saved**: 5 raw diagnostic files per iteration under `artifacts/`

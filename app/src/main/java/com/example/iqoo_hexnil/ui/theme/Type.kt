@@ -132,3 +132,34 @@ val MonospaceEmphasized = TextStyle(
     letterSpacing = 0.sp,
     color = HexnilMainAccent
 )
+
+val DisplayLargeNumber = TextStyle(
+    fontFamily = FontFamily.Default,
+    fontWeight = FontWeight.Bold,
+    fontSize = 30.sp,
+    lineHeight = 36.sp,
+    letterSpacing = (-0.5).sp,
+    color = HexnilPrimaryText
+)
+
+val MonospaceValue = TextStyle(
+    fontFamily = FontFamily.Monospace,
+    fontWeight = FontWeight.SemiBold,
+    fontSize = 11.sp,
+    lineHeight = 15.sp,
+    letterSpacing = 0.sp,
+    color = HexnilPrimaryText
+)
+
+val SectionCaption = TextStyle(
+    fontFamily = FontFamily.Default,
+    fontWeight = FontWeight.Normal,
+    fontSize = 10.sp,
+    lineHeight = 14.sp,
+    letterSpacing = 0.2.sp,
+    color = HexnilSecondaryText
+)
+
+val Typography.DisplayLargeNumber: TextStyle get() = com.example.iqoo_hexnil.ui.theme.DisplayLargeNumber
+val Typography.MonospaceValue: TextStyle get() = com.example.iqoo_hexnil.ui.theme.MonospaceValue
+val Typography.SectionCaption: TextStyle get() = com.example.iqoo_hexnil.ui.theme.SectionCaption

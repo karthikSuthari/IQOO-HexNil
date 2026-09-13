@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -30,6 +32,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.iqoo_hexnil.data.ClaimRiskLevel
 import com.example.iqoo_hexnil.data.ReleaseClaim
 import com.example.iqoo_hexnil.ui.components.ClaimCard
 import com.example.iqoo_hexnil.ui.components.EmptyState
@@ -40,10 +43,20 @@ import com.example.iqoo_hexnil.ui.theme.HexnilBorder
 import com.example.iqoo_hexnil.ui.theme.HexnilCard
 import com.example.iqoo_hexnil.ui.theme.HexnilMainAccent
 import com.example.iqoo_hexnil.ui.theme.HexnilPrimaryText
+import com.example.iqoo_hexnil.ui.theme.HexnilRadius
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryCard
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryText
+import com.example.iqoo_hexnil.ui.theme.HexnilSpacing
 import com.example.iqoo_hexnil.ui.theme.HexnilSuccess
 import com.example.iqoo_hexnil.ui.theme.HexnilWarning
+
+enum class ClaimFilterCategory(val label: String) {
+    ALL("ALL"),
+    HIGH_RISK("HIGH RISK"),
+    MEDIUM_RISK("MEDIUM RISK"),
+    UNCHANGED("UNCHANGED"),
+    INCONCLUSIVE("INCONCLUSIVE")
+}
 
 @Composable
 fun ClaimsScreen(
@@ -51,14 +64,19 @@ fun ClaimsScreen(
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
-    var selectedFilter by remember { mutableStateOf<String?>(null) }
+    val filterScrollState = rememberScrollState()
+    var selectedFilter by remember { mutableStateOf(ClaimFilterCategory.ALL) }
 
-    val filteredClaims = if (selectedFilter != null) {
-        claims.filter { it.validationStatus.equals(selectedFilter, ignoreCase = true) }
-    } else {
-        claims
+    val filteredClaims = when (selectedFilter) {
+        ClaimFilterCategory.ALL -> claims
+        ClaimFilterCategory.HIGH_RISK -> claims.filter { it.riskLevel == ClaimRiskLevel.HIGH }
+        ClaimFilterCategory.MEDIUM_RISK -> claims.filter { it.riskLevel == ClaimRiskLevel.MODERATE }
+        ClaimFilterCategory.UNCHANGED -> claims.filter { it.validationStatus.equals("UNCHANGED", ignoreCase = true) }
+        ClaimFilterCategory.INCONCLUSIVE -> claims.filter { it.validationStatus.equals("INCONCLUSIVE", ignoreCase = true) }
     }
 
+    val highRiskCount = claims.count { it.riskLevel == ClaimRiskLevel.HIGH }
+    val medRiskCount = claims.count { it.riskLevel == ClaimRiskLevel.MODERATE }
     val unchangedCount = claims.count { it.validationStatus.equals("UNCHANGED", ignoreCase = true) }
     val inconclusiveCount = claims.count { it.validationStatus.equals("INCONCLUSIVE", ignoreCase = true) }
 
@@ -66,19 +84,19 @@ fun ClaimsScreen(
         modifier = modifier
             .fillMaxSize()
             .background(HexnilBackground)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(horizontal = HexnilSpacing.md, vertical = HexnilSpacing.sm)
             .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(HexnilSpacing.md)
     ) {
         // Claim Intelligence Header Card
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
+                .clip(RoundedCornerShape(HexnilRadius.card))
+                .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(HexnilSpacing.md)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -107,7 +125,7 @@ fun ClaimsScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(HexnilSpacing.xs))
                 Text(
                     text = "OEM Hypotheses vs Measured Validation",
                     color = HexnilPrimaryText,
@@ -118,53 +136,66 @@ fun ClaimsScreen(
                 Text(
                     text = "Release claims extracted from changelogs, commits, and OEM telemetry map directly to deterministic benchmark workloads with explicit risk ratings and measured validation outcomes.",
                     color = HexnilSecondaryText,
-                    fontSize = 12.sp,
-                    lineHeight = 16.sp
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp
                 )
             }
         }
 
-        // Status Filter Chips Row
+        // Section 8 Filter Chips Row (ALL, HIGH RISK, MEDIUM RISK, UNCHANGED, INCONCLUSIVE)
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(filterScrollState),
+            horizontalArrangement = Arrangement.spacedBy(HexnilSpacing.xs)
         ) {
             ClaimFilterChip(
                 label = "ALL (${claims.size})",
-                isSelected = selectedFilter == null,
+                isSelected = selectedFilter == ClaimFilterCategory.ALL,
                 color = HexnilMainAccent,
-                onClick = { selectedFilter = null },
-                modifier = Modifier.weight(1f)
+                onClick = { selectedFilter = ClaimFilterCategory.ALL }
+            )
+            ClaimFilterChip(
+                label = "HIGH RISK ($highRiskCount)",
+                isSelected = selectedFilter == ClaimFilterCategory.HIGH_RISK,
+                color = HexnilMainAccent,
+                onClick = { selectedFilter = ClaimFilterCategory.HIGH_RISK }
+            )
+            ClaimFilterChip(
+                label = "MEDIUM RISK ($medRiskCount)",
+                isSelected = selectedFilter == ClaimFilterCategory.MEDIUM_RISK,
+                color = HexnilWarning,
+                onClick = { selectedFilter = ClaimFilterCategory.MEDIUM_RISK }
             )
             ClaimFilterChip(
                 label = "UNCHANGED ($unchangedCount)",
-                isSelected = selectedFilter.equals("UNCHANGED", ignoreCase = true),
+                isSelected = selectedFilter == ClaimFilterCategory.UNCHANGED,
                 color = HexnilSuccess,
-                onClick = { selectedFilter = "UNCHANGED" },
-                modifier = Modifier.weight(1f)
+                onClick = { selectedFilter = ClaimFilterCategory.UNCHANGED }
             )
             ClaimFilterChip(
-                label = "INCONCL. ($inconclusiveCount)",
-                isSelected = selectedFilter.equals("INCONCLUSIVE", ignoreCase = true),
+                label = "INCONCLUSIVE ($inconclusiveCount)",
+                isSelected = selectedFilter == ClaimFilterCategory.INCONCLUSIVE,
                 color = HexnilWarning,
-                onClick = { selectedFilter = "INCONCLUSIVE" },
-                modifier = Modifier.weight(1f)
+                onClick = { selectedFilter = ClaimFilterCategory.INCONCLUSIVE }
             )
         }
 
+        // Claims List or Meaningful Empty State
         if (filteredClaims.isEmpty()) {
             EmptyState(
-                title = "No Claims Matched Filter",
-                message = "Select 'ALL' to inspect all 5 release claims."
+                title = "No Claims Match Filter",
+                message = "Zero release claims match the selected filter category '${selectedFilter.label}'."
             )
         } else {
-            // List of Vertical Claim Cards
-            filteredClaims.forEach { claim ->
-                ClaimCard(claim = claim)
+            Column(verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sm)) {
+                filteredClaims.forEach { claim ->
+                    ClaimCard(claim = claim)
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(HexnilSpacing.xs))
     }
 }
 
@@ -173,24 +204,23 @@ private fun ClaimFilterChip(
     label: String,
     isSelected: Boolean,
     color: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onClick: () -> Unit
 ) {
     val bgColor = if (isSelected) HexnilAccentSubtle else HexnilSecondaryCard
     val borderColor = if (isSelected) color else HexnilBorder
 
     Surface(
-        modifier = modifier.clickable { onClick() },
-        shape = RoundedCornerShape(6.dp),
+        modifier = Modifier.clickable { onClick() },
+        shape = RoundedCornerShape(HexnilRadius.metadata),
         color = bgColor,
         border = BorderStroke(1.dp, borderColor)
     ) {
         Text(
             text = label,
             color = if (isSelected) color else HexnilSecondaryText,
-            fontSize = 10.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
-            modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+            fontSize = 11.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            modifier = Modifier.padding(vertical = 6.dp, horizontal = 10.dp),
             maxLines = 1
         )
     }

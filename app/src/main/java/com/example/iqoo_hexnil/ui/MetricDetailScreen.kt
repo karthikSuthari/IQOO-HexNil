@@ -40,8 +40,11 @@ import com.example.iqoo_hexnil.ui.theme.HexnilCard
 import com.example.iqoo_hexnil.ui.theme.HexnilError
 import com.example.iqoo_hexnil.ui.theme.HexnilMainAccent
 import com.example.iqoo_hexnil.ui.theme.HexnilPrimaryText
+import com.example.iqoo_hexnil.ui.theme.HexnilRadius
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryCard
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryText
+import com.example.iqoo_hexnil.ui.theme.DisplayLargeNumber
+import com.example.iqoo_hexnil.ui.theme.HexnilSpacing
 import com.example.iqoo_hexnil.ui.theme.HexnilSuccess
 import com.example.iqoo_hexnil.ui.theme.HexnilWarning
 
@@ -56,19 +59,20 @@ fun MetricDetailScreen(
         modifier = modifier
             .fillMaxSize()
             .background(HexnilBackground)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(horizontal = HexnilSpacing.md, vertical = HexnilSpacing.sm)
             .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sm)
     ) {
-        // Main Metric Verdict Header Card
+        // Main Metric Verdict & Primary Delta Hero Card
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
+                .clip(RoundedCornerShape(HexnilRadius.hero))
+                .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.hero)),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(HexnilSpacing.md)) {
+                // Top Tag: Workload & Verdict Badge
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -76,16 +80,18 @@ fun MetricDetailScreen(
                 ) {
                     Text(
                         text = metric.workloadId,
-                        color = HexnilSecondaryText,
+                        color = HexnilMainAccent,
                         fontSize = 11.sp,
                         fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
                     )
                     ResultBadge(verdict = metric.verdict)
                 }
 
                 Spacer(modifier = Modifier.height(6.dp))
 
+                // Metric Title
                 Text(
                     text = metric.displayName,
                     color = HexnilPrimaryText,
@@ -96,40 +102,110 @@ fun MetricDetailScreen(
                 Text(
                     text = "ID: ${metric.metricName} · Unit: ${metric.unit}",
                     color = HexnilSecondaryText,
-                    fontSize = 11.sp,
+                    fontSize = 10.sp,
                     fontFamily = FontFamily.Monospace
                 )
 
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // PRIMARY DELTA DISPLAY
+                val deltaColor = when (metric.verdict) {
+                    VerdictType.REGRESSION -> HexnilError
+                    VerdictType.IMPROVEMENT -> HexnilSuccess
+                    VerdictType.UNCHANGED -> HexnilPrimaryText
+                    VerdictType.INCONCLUSIVE -> HexnilWarning
+                    else -> HexnilSecondaryText
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Column {
+                        val deltaPercentText = if (metric.percentDelta != null) {
+                            "${if (metric.percentDelta > 0) "+" else ""}${"%.2f".format(metric.percentDelta)}%"
+                        } else "N/A"
+
+                        Text(
+                            text = deltaPercentText,
+                            style = DisplayLargeNumber.copy(color = deltaColor)
+                        )
+                        Text(
+                            text = if (metric.absoluteDelta != null) {
+                                "${if (metric.absoluteDelta > 0) "+" else ""}${"%.3f".format(metric.absoluteDelta)} ${metric.unit} SHIFT"
+                            } else "STATISTICALLY UNCERTAIN",
+                            color = HexnilSecondaryText,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp
+                        )
+                    }
+
+                    // Baseline to Candidate Inline Transition
+                    Surface(
+                        shape = RoundedCornerShape(HexnilRadius.metadata),
+                        color = HexnilSecondaryCard,
+                        border = BorderStroke(1.dp, HexnilBorder)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            horizontalAlignment = Alignment.End
+                        ) {
+                            Text(
+                                text = "THRESHOLD: ${metric.thresholdPercent ?: 5.0}%",
+                                color = HexnilSecondaryText,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp
+                            )
+                            Text(
+                                text = metric.verdict.label,
+                                color = deltaColor,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Verdict Reasoning Card
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    color = HexnilSecondaryCard,
-                    border = BorderStroke(1.dp, HexnilBorder)
+                // V0 -> V1 Mean Transition Strip
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.metadata))
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
+                    Column {
+                        Text(text = "V0 BASELINE", color = HexnilSecondaryText, fontSize = 8.sp, fontWeight = FontWeight.Bold)
                         Text(
-                            text = "STATISTICAL VERDICT REASONING",
-                            color = HexnilMainAccent,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = metric.reason,
+                            text = if (metric.v0Mean != null) "${"%.3f".format(metric.v0Mean)} ${metric.unit}" else "—",
                             color = HexnilPrimaryText,
                             fontSize = 12.sp,
-                            lineHeight = 16.sp
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    Text(text = "➔", color = HexnilSecondaryText, fontSize = 12.sp)
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(text = "V1 CANDIDATE", color = HexnilSecondaryText, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = if (metric.v1Mean != null) "${"%.3f".format(metric.v1Mean)} ${metric.unit}" else "—",
+                            color = HexnilAccentGlow,
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
             }
         }
 
-        // Visual Comparison Representation (Proportional Magnitude Visualization)
+        // Truthful Proportional Comparison Bars
         if (metric.v0Mean != null && metric.v1Mean != null && metric.v0Mean > 0 && metric.v1Mean > 0) {
             MetricComparisonVisualizer(
                 v0Value = metric.v0Mean,
@@ -149,8 +225,8 @@ fun MetricDetailScreen(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
+                .clip(RoundedCornerShape(HexnilRadius.card))
+                .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
             color = HexnilCard
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
@@ -180,8 +256,8 @@ fun MetricDetailScreen(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
+                .clip(RoundedCornerShape(HexnilRadius.card))
+                .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
             color = HexnilCard
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
@@ -254,6 +330,37 @@ fun MetricDetailScreen(
             }
         }
 
+        // Statistical Interpretation & Reasoning
+        SectionHeader(
+            category = "STATISTICAL INTERPRETATION",
+            subtitle = "Deterministic classification reasoning produced by Phase 6 statistical store."
+        )
+
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(HexnilRadius.card))
+                .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
+            color = HexnilCard
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                Text(
+                    text = "CLASSIFIER REASONING",
+                    color = HexnilMainAccent,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = metric.reason,
+                    color = HexnilPrimaryText,
+                    fontSize = 12.sp,
+                    lineHeight = 17.sp
+                )
+            }
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
     }
 }
@@ -273,8 +380,8 @@ private fun MetricComparisonVisualizer(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
+            .clip(RoundedCornerShape(HexnilRadius.card))
+            .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
         color = HexnilCard
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
@@ -338,6 +445,14 @@ private fun MetricComparisonVisualizer(
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.width(32.dp)
                 )
+                val v1BarColor = when (verdict) {
+                    VerdictType.REGRESSION -> HexnilError
+                    VerdictType.IMPROVEMENT -> HexnilSuccess
+                    VerdictType.UNCHANGED -> HexnilAccentGlow
+                    VerdictType.INCONCLUSIVE -> HexnilWarning
+                    else -> HexnilSecondaryText
+                }
+
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -349,7 +464,7 @@ private fun MetricComparisonVisualizer(
                         modifier = Modifier
                             .fillMaxWidth(v1Ratio)
                             .fillMaxHeight()
-                            .background(if (verdict == VerdictType.REGRESSION) HexnilError else HexnilSuccess)
+                            .background(v1BarColor)
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))

@@ -25,8 +25,10 @@ import com.example.iqoo_hexnil.ui.theme.HexnilBorder
 import com.example.iqoo_hexnil.ui.theme.HexnilCard
 import com.example.iqoo_hexnil.ui.theme.HexnilMainAccent
 import com.example.iqoo_hexnil.ui.theme.HexnilPrimaryText
+import com.example.iqoo_hexnil.ui.theme.HexnilRadius
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryCard
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryText
+import com.example.iqoo_hexnil.ui.theme.HexnilSpacing
 import com.example.iqoo_hexnil.ui.theme.HexnilSuccess
 
 @Composable
@@ -39,11 +41,11 @@ fun ComparisonCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
+            .clip(RoundedCornerShape(HexnilRadius.card))
+            .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
         color = HexnilCard
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(HexnilSpacing.md)) {
             // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -69,7 +71,7 @@ fun ComparisonCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Matched Experiment Comparison Block
+            // Matched Experiment Comparison Block (No nested borders)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -77,9 +79,8 @@ fun ComparisonCard(
                 // V0 Column
                 Surface(
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(8.dp),
-                    color = HexnilSecondaryCard,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, HexnilBorder)
+                    shape = RoundedCornerShape(HexnilRadius.metadata),
+                    color = HexnilSecondaryCard
                 ) {
                     Column(modifier = Modifier.padding(10.dp)) {
                         Text(
@@ -108,9 +109,8 @@ fun ComparisonCard(
                 // V1 Column
                 Surface(
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(8.dp),
-                    color = HexnilSecondaryCard,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, HexnilBorder)
+                    shape = RoundedCornerShape(HexnilRadius.metadata),
+                    color = HexnilSecondaryCard
                 ) {
                     Column(modifier = Modifier.padding(10.dp)) {
                         Text(

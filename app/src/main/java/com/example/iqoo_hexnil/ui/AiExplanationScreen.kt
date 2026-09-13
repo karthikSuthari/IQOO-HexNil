@@ -53,8 +53,10 @@ import com.example.iqoo_hexnil.ui.theme.HexnilInfo
 import com.example.iqoo_hexnil.ui.theme.HexnilInfoSubtle
 import com.example.iqoo_hexnil.ui.theme.HexnilMainAccent
 import com.example.iqoo_hexnil.ui.theme.HexnilPrimaryText
+import com.example.iqoo_hexnil.ui.theme.HexnilRadius
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryCard
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryText
+import com.example.iqoo_hexnil.ui.theme.HexnilSpacing
 import com.example.iqoo_hexnil.ui.theme.HexnilSuccess
 import com.example.iqoo_hexnil.ui.theme.HexnilSuccessSubtle
 import com.example.iqoo_hexnil.ui.theme.HexnilWarning
@@ -82,7 +84,7 @@ fun AiExplanationScreen(
             modifier = modifier
                 .fillMaxSize()
                 .background(HexnilBackground)
-                .padding(24.dp),
+                .padding(HexnilSpacing.lg),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -109,19 +111,19 @@ fun AiExplanationScreen(
         modifier = modifier
             .fillMaxSize()
             .background(HexnilBackground)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(horizontal = HexnilSpacing.md, vertical = HexnilSpacing.sm)
             .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sm)
     ) {
-        // Section 1: Authoritative Deterministic Verdict Banner
+        // Section 1: Ground Truth Deterministic Header
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
+                .clip(RoundedCornerShape(HexnilRadius.hero))
+                .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.hero)),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(HexnilSpacing.md)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -129,17 +131,17 @@ fun AiExplanationScreen(
                 ) {
                     Column {
                         Text(
-                            text = "DETERMINISTIC VERDICT",
-                            color = HexnilSecondaryText,
+                            text = "AI EVIDENCE ANALYST (PHASE 8)",
+                            color = HexnilMainAccent,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.sp
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Mathematical Ground Truth",
+                            text = "Evidence-Grounded Interpretation",
                             color = HexnilPrimaryText,
-                            fontSize = 15.sp,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -148,32 +150,61 @@ fun AiExplanationScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                // Robust 2-Row Context Header (Fixes text wrapping / squishing)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.metadata))
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Column {
-                        Text(text = "Comparison ID", color = HexnilSecondaryText, fontSize = 10.sp)
-                        Text(text = analysis.comparisonId, color = HexnilPrimaryText, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = analysis.comparisonId,
+                            color = HexnilAccentGlow,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace
+                        )
+                        Text(
+                            text = "${analysis.deviceModel} (Physical)",
+                            color = HexnilPrimaryText,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
-                    Column {
-                        Text(text = "Baseline -> Update", color = HexnilSecondaryText, fontSize = 10.sp)
-                        Text(text = "${analysis.v0ExperimentId} -> ${analysis.v1ExperimentId}", color = HexnilPrimaryText, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
-                    }
-                    Column {
-                        Text(text = "Hardware", color = HexnilSecondaryText, fontSize = 10.sp)
-                        Text(text = analysis.deviceModel, color = HexnilPrimaryText, fontSize = 11.sp)
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "V0: ${analysis.v0ExperimentId} ➔ V1: ${analysis.v1ExperimentId}",
+                            color = HexnilSecondaryText,
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Monospace
+                        )
+                        Text(
+                            text = "13 Metrics Paired",
+                            color = HexnilSecondaryText,
+                            fontSize = 10.sp
+                        )
                     }
                 }
             }
         }
 
-        // Section 2: Explanation Source Toggle Bar (Groq vs Deterministic vs Fallback)
+        // Section 2: Explanation Source Selector
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .border(1.dp, HexnilBorder, RoundedCornerShape(10.dp)),
+                .clip(RoundedCornerShape(HexnilRadius.metadata))
+                .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.metadata)),
             color = HexnilSecondaryCard
         ) {
             Row(
@@ -183,19 +214,19 @@ fun AiExplanationScreen(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 SourceTabChip(
-                    label = "Deterministic",
+                    label = "DETERMINISTIC ENGINE",
                     isSelected = selectedSource == ExplanationSource.DETERMINISTIC_ANALYSIS,
                     activeColor = HexnilInfo,
                     onClick = { selectedSource = ExplanationSource.DETERMINISTIC_ANALYSIS }
                 )
                 SourceTabChip(
-                    label = "AI (Groq)",
+                    label = "GROQ ANALYST (SERVER)",
                     isSelected = selectedSource == ExplanationSource.GROQ_AI,
                     activeColor = HexnilMainAccent,
                     onClick = { selectedSource = ExplanationSource.GROQ_AI }
                 )
                 SourceTabChip(
-                    label = "Fallback",
+                    label = "FALLBACK VERIFIER",
                     isSelected = selectedSource == ExplanationSource.DETERMINISTIC_FALLBACK,
                     activeColor = HexnilWarning,
                     onClick = { selectedSource = ExplanationSource.DETERMINISTIC_FALLBACK }
@@ -288,22 +319,22 @@ fun AiExplanationScreen(
             }
         }
 
-        // Section 4: What Was Measured (Observed Changes)
+        // Section 4: What Was Measured (Facts)
         SectionHeader(
             category = "WHAT WAS MEASURED (FACTS)",
             actionText = "${explanation.observedChanges.size} OBSERVED"
         )
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            explanation.observedChanges.take(6).forEach { fact ->
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .border(1.dp, HexnilBorder, RoundedCornerShape(8.dp)),
-                    color = HexnilCard
-                ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(HexnilRadius.card))
+                .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
+            color = HexnilCard
+        ) {
+            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                explanation.observedChanges.take(6).forEachIndexed { index, fact ->
                     Row(
-                        modifier = Modifier.padding(12.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Box(
@@ -319,6 +350,14 @@ fun AiExplanationScreen(
                             fontSize = 11.sp,
                             lineHeight = 15.sp,
                             fontFamily = FontFamily.Monospace
+                        )
+                    }
+                    if (index < explanation.observedChanges.take(6).size - 1) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(HexnilBorder.copy(alpha = 0.5f))
                         )
                     }
                 }
@@ -453,46 +492,48 @@ fun AiExplanationScreen(
             category = "EVIDENCE REFERENCES (LINEAGE)",
             actionText = "${explanation.evidenceReferences.size} REFS"
         )
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            explanation.evidenceReferences.forEach { ref ->
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .border(1.dp, HexnilBorder, RoundedCornerShape(8.dp)),
-                    color = HexnilSecondaryCard
-                ) {
-                    Row(
-                        modifier = Modifier.padding(10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "[${ref.referenceId}] ${ref.type.uppercase()}: ",
-                                    color = HexnilInfo,
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = FontFamily.Monospace
-                                )
-                                Text(
-                                    text = ref.identifier,
-                                    color = HexnilPrimaryText,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = FontFamily.Monospace
-                                )
-                            }
-                            if (ref.artifactPath != null) {
-                                Text(
-                                    text = ref.artifactPath,
-                                    color = HexnilSecondaryText,
-                                    fontSize = 9.sp,
-                                    fontFamily = FontFamily.Monospace
-                                )
-                            }
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(HexnilRadius.card))
+                .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
+            color = HexnilCard
+        ) {
+            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                explanation.evidenceReferences.forEachIndexed { index, ref ->
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "[${ref.referenceId}] ${ref.type.uppercase()}: ",
+                                color = HexnilInfo,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.Monospace
+                            )
+                            Text(
+                                text = ref.identifier,
+                                color = HexnilPrimaryText,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.Monospace
+                            )
                         }
+                        if (ref.artifactPath != null) {
+                            Text(
+                                text = ref.artifactPath,
+                                color = HexnilSecondaryText,
+                                fontSize = 9.sp,
+                                fontFamily = FontFamily.Monospace
+                            )
+                        }
+                    }
+                    if (index < explanation.evidenceReferences.size - 1) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(HexnilBorder.copy(alpha = 0.5f))
+                        )
                     }
                 }
             }

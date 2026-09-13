@@ -33,8 +33,10 @@ import com.example.iqoo_hexnil.ui.theme.HexnilBorder
 import com.example.iqoo_hexnil.ui.theme.HexnilCard
 import com.example.iqoo_hexnil.ui.theme.HexnilMainAccent
 import com.example.iqoo_hexnil.ui.theme.HexnilPrimaryText
+import com.example.iqoo_hexnil.ui.theme.HexnilRadius
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryCard
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryText
+import com.example.iqoo_hexnil.ui.theme.HexnilSpacing
 import com.example.iqoo_hexnil.ui.theme.HexnilSuccess
 
 @Composable
@@ -48,19 +50,19 @@ fun V0V1ComparisonScreen(
         modifier = modifier
             .fillMaxSize()
             .background(HexnilBackground)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(horizontal = HexnilSpacing.md, vertical = HexnilSpacing.sm)
             .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sm)
     ) {
         // Paired Experiment Lock Header Card
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
+                .clip(RoundedCornerShape(HexnilRadius.hero))
+                .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.hero)),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(HexnilSpacing.md)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -97,16 +99,15 @@ fun V0V1ComparisonScreen(
                     lineHeight = 15.sp
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-                // Build Fingerprint & Hash Matching Box
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    color = HexnilSecondaryCard,
-                    border = BorderStroke(1.dp, HexnilBorder)
+                // Build Fingerprint & Hash Matching Box (No nested border)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.metadata))
+                        .padding(10.dp)
                 ) {
-                    Column(modifier = Modifier.padding(10.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -139,7 +140,6 @@ fun V0V1ComparisonScreen(
                             Text(text = "5.0% meaningful change", color = HexnilSuccess, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
                     }
-                }
             }
         }
 

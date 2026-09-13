@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,6 +22,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,8 +41,10 @@ import com.example.iqoo_hexnil.ui.theme.HexnilBorder
 import com.example.iqoo_hexnil.ui.theme.HexnilCard
 import com.example.iqoo_hexnil.ui.theme.HexnilMainAccent
 import com.example.iqoo_hexnil.ui.theme.HexnilPrimaryText
+import com.example.iqoo_hexnil.ui.theme.HexnilRadius
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryCard
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryText
+import com.example.iqoo_hexnil.ui.theme.HexnilSpacing
 import com.example.iqoo_hexnil.ui.theme.HexnilSuccess
 
 @Composable
@@ -46,24 +53,27 @@ fun ExperimentDetailScreen(
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
+    var isParametersExpanded by remember { mutableStateOf(false) }
+    var isSignaturesExpanded by remember { mutableStateOf(false) }
+    var isArtifactsExpanded by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(HexnilBackground)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(horizontal = HexnilSpacing.md, vertical = HexnilSpacing.sm)
             .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sm)
     ) {
         // Audit Header Card
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
+                .clip(RoundedCornerShape(HexnilRadius.hero))
+                .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.hero)),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(HexnilSpacing.md)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -77,7 +87,7 @@ fun ExperimentDetailScreen(
                         letterSpacing = 1.sp
                     )
                     Surface(
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(HexnilRadius.metadata),
                         color = HexnilSecondaryCard,
                         border = BorderStroke(1.dp, HexnilSuccess.copy(alpha = 0.5f))
                     ) {
@@ -108,30 +118,33 @@ fun ExperimentDetailScreen(
             }
         }
 
-        // Full Evidence Lineage Chain
+        // Full Evidence Lineage Chain (Dominates first viewport)
         SectionHeader(
             category = "TRACEABLE EVIDENCE LINEAGE",
-            subtitle = "Comparison ➔ V0 Baseline ➔ V1 Candidate ➔ Workloads ➔ Telemetry ➔ Evidence"
+            subtitle = "Comparison ➔ V0 Baseline ➔ V1 Candidate ➔ Workloads ➔ Telemetry ➔ Storage"
         )
 
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
+                .clip(RoundedCornerShape(HexnilRadius.card))
+                .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                modifier = Modifier.padding(HexnilSpacing.md),
+                verticalArrangement = Arrangement.spacedBy(HexnilSpacing.xxs)
+            ) {
                 LineageStepNode(
                     stepNumber = "1",
                     stepName = "COMPARISON LEVEL",
                     identifier = analysis.comparisonId,
-                    description = "Matched differential experiment paired on identical device hardware (${analysis.deviceModel})."
+                    description = "Matched differential experiment paired on physical ${analysis.deviceModel}."
                 )
                 LineageStepNode(
                     stepNumber = "2",
-                    stepName = "EXPERIMENT IDENTIFIERS",
-                    identifier = "V0: ${analysis.v0ExperimentId} ➔ V1: ${analysis.v1ExperimentId}",
+                    stepName = "EXPERIMENT PAIR",
+                    identifier = "${analysis.v0ExperimentId} ➔ ${analysis.v1ExperimentId}",
                     description = "Locked baseline and candidate execution runs with isolated software deltas."
                 )
                 LineageStepNode(
@@ -142,41 +155,35 @@ fun ExperimentDetailScreen(
                 )
                 LineageStepNode(
                     stepNumber = "4",
-                    stepName = "RAW TELEMETRY AUDIT",
-                    identifier = "13 Metric Series (9 Eligible, 8 Unchanged, 5 Inconclusive)",
-                    description = "Pairwise differences computed per iteration. Zero regressions detected below 5% threshold."
+                    stepName = "STATISTICAL TELEMETRY",
+                    identifier = "13 Metric Series (9 Confirmed, 8 Unchanged, 5 Inconclusive)",
+                    description = "Zero regressions detected below 5.0% threshold with Paired Student's t-test."
                 )
                 LineageStepNode(
                     stepNumber = "5",
-                    stepName = "IMMUTABLE STORAGE ARTIFACTS",
+                    stepName = "STORAGE ARTIFACTS",
                     identifier = "data/experiments/comparisons/${analysis.comparisonId}/",
-                    description = "Full statistical analysis JSON and cryptographically sealed package.",
+                    description = "Cryptographically sealed analysis JSON package.",
                     isLast = true
                 )
             }
         }
 
-        // Experiment Identifiers Matrix
-        SectionHeader(
-            category = "EXPERIMENT IDENTIFIERS",
-            subtitle = "Canonical records from Hexnil Phase 4, 5, and 6 engines."
-        )
-
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
-            color = HexnilCard
+        // Collapsible Section 1: Experiment Execution Parameters
+        CollapsibleAuditSection(
+            title = "EXECUTION PARAMETERS",
+            subtitle = "Canonical records from Hexnil Phase 4, 5, and 6 engines.",
+            isExpanded = isParametersExpanded,
+            onToggle = { isParametersExpanded = !isParametersExpanded }
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 ProvenanceRow("Comparison ID", analysis.comparisonId, isAccent = true)
                 ProvenanceRow("Analysis ID", analysis.analysisId)
                 ProvenanceRow("V0 Baseline Exp", analysis.v0ExperimentId)
                 ProvenanceRow("V1 Candidate Exp", analysis.v1ExperimentId)
+                ProvenanceRow("Device Model", analysis.deviceModel)
                 ProvenanceRow("Device Serial", analysis.deviceSerial)
-                ProvenanceRow("Target Device", analysis.deviceModel)
-                ProvenanceRow("Statistical Policy", "Pairwise Significance (alpha = 0.05)")
+                ProvenanceRow("Statistical Policy", "Pairwise Student's t-test (α = 0.05)")
                 ProvenanceRow("Engineering Threshold", "5.0% meaningful shift")
                 ProvenanceRow("Random Seed", "42 (Deterministic)")
                 ProvenanceRow("Evidence State", analysis.evidenceState)
@@ -184,22 +191,15 @@ fun ExperimentDetailScreen(
             }
         }
 
-        // APK Cryptographic Signatures
-        SectionHeader(
-            category = "APK CRYPTOGRAPHIC SIGNATURES",
-            subtitle = "SHA-256 package fingerprints guaranteeing build integrity."
-        )
-
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
-            color = HexnilCard
+        // Collapsible Section 2: APK Cryptographic Signatures
+        CollapsibleAuditSection(
+            title = "APK CRYPTOGRAPHIC SIGNATURES",
+            subtitle = "SHA-256 package fingerprints guaranteeing build integrity.",
+            isExpanded = isSignaturesExpanded,
+            onToggle = { isSignaturesExpanded = !isSignaturesExpanded }
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
-                Text(text = "V0 BASELINE APK SHA-256", color = HexnilSecondaryText, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(2.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(text = "V0 BASELINE APK SHA-256", color = HexnilSecondaryText, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                 Text(
                     text = analysis.v0ApkSha256,
                     color = HexnilPrimaryText,
@@ -208,10 +208,7 @@ fun ExperimentDetailScreen(
                     lineHeight = 14.sp
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Text(text = "V1 CANDIDATE APK SHA-256", color = HexnilSecondaryText, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(2.dp))
+                Text(text = "V1 CANDIDATE APK SHA-256", color = HexnilSecondaryText, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                 Text(
                     text = analysis.v1ApkSha256,
                     color = HexnilAccentGlow,
@@ -220,10 +217,7 @@ fun ExperimentDetailScreen(
                     lineHeight = 14.sp
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Text(text = "SYSTEM FINGERPRINT", color = HexnilSecondaryText, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(2.dp))
+                Text(text = "SYSTEM FINGERPRINT", color = HexnilSecondaryText, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                 Text(
                     text = analysis.buildFingerprint,
                     color = HexnilPrimaryText,
@@ -234,20 +228,14 @@ fun ExperimentDetailScreen(
             }
         }
 
-        // Artifact Storage Trail
-        SectionHeader(
-            category = "PHYSICAL STORAGE PATHS",
-            subtitle = "Raw telemetry records and statistical analysis JSON artifacts."
-        )
-
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
-            color = HexnilCard
+        // Collapsible Section 3: Artifact Storage Trail
+        CollapsibleAuditSection(
+            title = "PHYSICAL STORAGE PATHS",
+            subtitle = "Raw telemetry records and statistical analysis JSON artifacts.",
+            isExpanded = isArtifactsExpanded,
+            onToggle = { isArtifactsExpanded = !isArtifactsExpanded }
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = "data/experiments/comparisons/${analysis.comparisonId}/",
                     color = HexnilAccentGlow,
@@ -255,13 +243,12 @@ fun ExperimentDetailScreen(
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "├── comparison.json\n├── metric_results.json\n├── quality.json\n└── statistical_analysis/\n    ├── analysis.json\n    └── comparison_summary.json",
                     color = HexnilSecondaryText,
                     fontSize = 10.sp,
                     fontFamily = FontFamily.Monospace,
-                    lineHeight = 14.sp
+                    lineHeight = 15.sp
                 )
             }
         }
@@ -351,3 +338,67 @@ private fun ProvenanceRow(
         )
     }
 }
+
+@Composable
+private fun CollapsibleAuditSection(
+    title: String,
+    subtitle: String,
+    isExpanded: Boolean,
+    onToggle: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(HexnilRadius.card))
+            .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
+        color = HexnilCard
+    ) {
+        Column(modifier = Modifier.padding(HexnilSpacing.md)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onToggle() },
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = title,
+                        color = HexnilMainAccent,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                    Text(
+                        text = subtitle,
+                        color = HexnilSecondaryText,
+                        fontSize = 10.sp,
+                        lineHeight = 13.sp
+                    )
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    color = HexnilSecondaryCard,
+                    border = BorderStroke(1.dp, HexnilBorder)
+                ) {
+                    Text(
+                        text = if (isExpanded) "▲ COLLAPSE" else "▼ EXPAND",
+                        color = HexnilAccentGlow,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                    )
+                }
+            }
+
+            if (isExpanded) {
+                Spacer(modifier = Modifier.height(10.dp))
+                content()
+            }
+        }
+    }
+}
+

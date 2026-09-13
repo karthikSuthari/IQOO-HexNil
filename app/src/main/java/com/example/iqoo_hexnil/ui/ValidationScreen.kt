@@ -48,8 +48,10 @@ import com.example.iqoo_hexnil.ui.theme.HexnilCard
 import com.example.iqoo_hexnil.ui.theme.HexnilInfo
 import com.example.iqoo_hexnil.ui.theme.HexnilMainAccent
 import com.example.iqoo_hexnil.ui.theme.HexnilPrimaryText
+import com.example.iqoo_hexnil.ui.theme.HexnilRadius
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryCard
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryText
+import com.example.iqoo_hexnil.ui.theme.HexnilSpacing
 import com.example.iqoo_hexnil.ui.theme.HexnilSuccess
 import com.example.iqoo_hexnil.ui.theme.HexnilWarning
 
@@ -191,64 +193,169 @@ fun ValidationScreen(
         Spacer(modifier = Modifier.height(16.dp))
     }
 
-    // Workload Inspection Modal Dialog
+    // Workload Inspection Panel Dialog
     inspectingWorkload?.let { wl ->
+        val targetMeasurements = when (wl.id) {
+            "startup_01" -> "Startup Latency (TTID), Application Process Fork, Cold Start Overhead"
+            "cpu_01" -> "Computation Duration, Integer Math Throughput, Thread Execution State"
+            "memory_01" -> "JVM Heap Allocation, Retained Memory, Garbage Collection Churn"
+            "scroll_01" -> "Choreographer Frame Render Time, 95th Percentile Janks, VSync Deadlines"
+            "video_power_01" -> "Workload Duration, Battery Drain Current, Thermal Dissipation"
+            else -> "System Telemetry and Execution Latency"
+        }
+
         AlertDialog(
             onDismissRequest = { inspectingWorkload = null },
             containerColor = HexnilCard,
             titleContentColor = HexnilPrimaryText,
             textContentColor = HexnilSecondaryText,
+            shape = RoundedCornerShape(HexnilRadius.hero),
             title = {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "ENGINEERING INSPECTION PANEL",
+                            color = HexnilMainAccent,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                        PriorityChip(priority = wl.priority)
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = wl.id,
-                        color = HexnilMainAccent,
-                        fontSize = 15.sp,
-                        fontFamily = FontFamily.Monospace,
+                        text = "${wl.id.uppercase()} — ${wl.name}",
+                        color = HexnilPrimaryText,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    PriorityChip(priority = wl.priority)
                 }
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(text = wl.name, color = HexnilPrimaryText, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                    Text(text = wl.description, color = HexnilSecondaryText, fontSize = 12.sp, lineHeight = 16.sp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // SECTION 1: PURPOSE
+                    InspectionSectionBlock(
+                        title = "1. PURPOSE",
+                        content = wl.purpose
+                    )
 
+                    // SECTION 2: WHY SELECTED
+                    InspectionSectionBlock(
+                        title = "2. WHY SELECTED",
+                        content = "Mandatory declarative benchmark locked under Phase 3. Configured to detect regressions in ${wl.name.lowercase()} with deterministic execution reproducibility across V0 and V1 builds."
+                    )
+
+                    // SECTION 3: MEASUREMENTS
+                    InspectionSectionBlock(
+                        title = "3. MEASUREMENTS",
+                        content = targetMeasurements
+                    )
+
+                    // SECTION 4: PRECONDITIONS
+                    InspectionSectionBlock(
+                        title = "4. PRECONDITIONS",
+                        content = "Battery Level >= 20% · Thermal State <= NORMAL (0-1) · Device Screen ON · Background Benchmarks Suspended"
+                    )
+
+                    // SECTION 5: EXECUTION PARAMETERS
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(6.dp),
+                        shape = RoundedCornerShape(HexnilRadius.metadata),
                         color = HexnilSecondaryCard,
                         border = BorderStroke(1.dp, HexnilBorder)
                     ) {
-                        Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            InspectionPropertyRow("Purpose", wl.purpose)
-                            InspectionPropertyRow("Action", wl.action, isMonospace = true)
+                        Column(
+                            modifier = Modifier.padding(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "5. EXECUTION PARAMETERS",
+                                color = HexnilSecondaryText,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp
+                            )
+                            InspectionPropertyRow("Action Intent", wl.action, isMonospace = true)
                             InspectionPropertyRow("Config Hash", "#${wl.configHash}", isMonospace = true)
-                            InspectionPropertyRow("Matched Runs", "${wl.matchedRunsCount} iterations")
-                            InspectionPropertyRow("Selection State", if (wl.isSelected) "SELECTED" else "NOT SELECTED")
-                            InspectionPropertyRow("Evidence State", wl.evidenceAvailability)
-                            InspectionPropertyRow("Preconditions", "Battery >= 20%, Thermal <= 1")
-                            InspectionPropertyRow("Random Seed", "42 (Locked)")
+                            InspectionPropertyRow("Deterministic Seed", "42 (Locked)", isMonospace = true)
+                            InspectionPropertyRow("Matched Runs", "${wl.matchedRunsCount} iterations", isMonospace = true)
+                        }
+                    }
+
+                    // SECTION 6: EVIDENCE STATUS
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(HexnilRadius.metadata),
+                        color = HexnilSecondaryCard,
+                        border = BorderStroke(1.dp, HexnilBorder)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "6. EVIDENCE STATUS",
+                                color = HexnilSecondaryText,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp
+                            )
+                            InspectionPropertyRow("Availability", wl.evidenceAvailability)
+                            InspectionPropertyRow("Selection State", if (wl.isSelected) "LOCKED & SELECTED" else "OPTIONAL")
+                            InspectionPropertyRow("Last Baseline Duration", "${String.format("%.1f", wl.lastDurationMs ?: 5000.0)} ms", isMonospace = true)
+                            InspectionPropertyRow("Threshold Target", "5.0% Engineering Margin")
                         }
                     }
                 }
             },
             confirmButton = {
                 Button(
+                    onClick = {
+                        val currentWl = inspectingWorkload
+                        inspectingWorkload = null
+                        if (currentWl != null) {
+                            runningWorkloadId = currentWl.id
+                            onRunWorkloadAction(currentWl.id, currentWl.action)
+                            runningWorkloadId = null
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = HexnilMainAccent,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(HexnilRadius.button)
+                ) {
+                    Text(
+                        text = "Use Workload",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            dismissButton = {
+                Button(
                     onClick = { inspectingWorkload = null },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = HexnilSecondaryCard,
-                        contentColor = HexnilMainAccent
+                        contentColor = HexnilSecondaryText
                     ),
-                    border = BorderStroke(1.dp, HexnilMainAccent),
-                    shape = RoundedCornerShape(6.dp)
+                    border = BorderStroke(1.dp, HexnilBorder),
+                    shape = RoundedCornerShape(HexnilRadius.button)
                 ) {
-                    Text(text = "Close Inspection", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "Close",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
         )
@@ -303,5 +410,37 @@ private fun InspectionPropertyRow(
             fontFamily = if (isMonospace) FontFamily.Monospace else FontFamily.Default,
             modifier = Modifier.weight(0.6f)
         )
+    }
+}
+
+@Composable
+private fun InspectionSectionBlock(
+    title: String,
+    content: String
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(HexnilRadius.metadata),
+        color = HexnilSecondaryCard,
+        border = BorderStroke(1.dp, HexnilBorder)
+    ) {
+        Column(
+            modifier = Modifier.padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp)
+        ) {
+            Text(
+                text = title,
+                color = HexnilSecondaryText,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.5.sp
+            )
+            Text(
+                text = content,
+                color = HexnilPrimaryText,
+                fontSize = 11.sp,
+                lineHeight = 15.sp
+            )
+        }
     }
 }

@@ -1,7 +1,9 @@
 package com.example.iqoo_hexnil.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,8 +27,10 @@ import com.example.iqoo_hexnil.ui.theme.HexnilBorder
 import com.example.iqoo_hexnil.ui.theme.HexnilCard
 import com.example.iqoo_hexnil.ui.theme.HexnilMainAccent
 import com.example.iqoo_hexnil.ui.theme.HexnilPrimaryText
+import com.example.iqoo_hexnil.ui.theme.HexnilRadius
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryCard
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryText
+import com.example.iqoo_hexnil.ui.theme.HexnilSpacing
 
 @Composable
 fun ClaimCard(
@@ -36,11 +40,11 @@ fun ClaimCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
+            .clip(RoundedCornerShape(HexnilRadius.card))
+            .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
         color = HexnilCard
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(HexnilSpacing.md)) {
             // Top row: ID, Subsystem & Status Chips
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -72,7 +76,7 @@ fun ClaimCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(HexnilSpacing.xs))
 
             // Claim Title & Validation Status
             Row(
@@ -92,7 +96,7 @@ fun ClaimCard(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Claim Description
+            // Claim Statement / Description
             Text(
                 text = claim.description,
                 color = HexnilSecondaryText,
@@ -100,23 +104,23 @@ fun ClaimCard(
                 lineHeight = 16.sp
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(HexnilSpacing.sm))
 
-            // Metadata Detail Table
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp),
-                color = HexnilSecondaryCard,
-                border = androidx.compose.foundation.BorderStroke(1.dp, HexnilBorder)
+            // Clean Metadata Details (Subtle background, no heavy nested border)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.metadata))
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
-                Column(modifier = Modifier.padding(10.dp)) {
-                    ClaimPropertyRow("Affected Subsystem", claim.subsystem)
-                    ClaimPropertyRow("Expected Direction", claim.expectedDirection)
-                    ClaimPropertyRow("Expected Metric", claim.targetMetric, isMonospace = true)
-                    ClaimPropertyRow("Recommended Workload", claim.recommendedWorkload, isMonospace = true)
-                    ClaimPropertyRow("Validation Status", claim.validationStatus)
-                    ClaimPropertyRow("Provenance Source", claim.predictionSource)
-                }
+                ClaimPropertyRow("Affected Subsystem", claim.subsystem)
+                ClaimPropertyRow("Expected Direction", claim.expectedDirection)
+                ClaimPropertyRow("Expected Metric", claim.targetMetric, isMonospace = true)
+                ClaimPropertyRow("Recommended Workload", claim.recommendedWorkload, isMonospace = true)
+                ClaimPropertyRow("Validation Status", claim.validationStatus)
+                ClaimPropertyRow("Evidence Availability", if (claim.validationStatus == "INCONCLUSIVE") "Inconclusive (Needs >3 runs)" else "Available (Direct telemetry)")
+                ClaimPropertyRow("Provenance Source", claim.predictionSource)
             }
         }
     }
@@ -129,21 +133,19 @@ private fun ClaimPropertyRow(
     isMonospace: Boolean = false
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 2.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = label,
             color = HexnilSecondaryText,
-            fontSize = 11.sp
+            fontSize = 10.sp
         )
         Text(
             text = value,
             color = if (isMonospace) HexnilAccentGlow else HexnilPrimaryText,
-            fontSize = 11.sp,
+            fontSize = 10.sp,
             fontWeight = FontWeight.Medium,
             fontFamily = if (isMonospace) FontFamily.Monospace else FontFamily.Default
         )

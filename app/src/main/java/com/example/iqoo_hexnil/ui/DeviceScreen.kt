@@ -40,8 +40,10 @@ import com.example.iqoo_hexnil.ui.theme.HexnilCard
 import com.example.iqoo_hexnil.ui.theme.HexnilError
 import com.example.iqoo_hexnil.ui.theme.HexnilMainAccent
 import com.example.iqoo_hexnil.ui.theme.HexnilPrimaryText
+import com.example.iqoo_hexnil.ui.theme.HexnilRadius
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryCard
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryText
+import com.example.iqoo_hexnil.ui.theme.HexnilSpacing
 import com.example.iqoo_hexnil.ui.theme.HexnilSuccess
 import com.example.iqoo_hexnil.ui.theme.HexnilWarning
 
@@ -59,9 +61,9 @@ fun DeviceScreen(
         modifier = modifier
             .fillMaxSize()
             .background(HexnilBackground)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(horizontal = HexnilSpacing.md, vertical = HexnilSpacing.sm)
             .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sm)
     ) {
         // Target Hardware State Card
         DeviceCard(device = device)
@@ -104,11 +106,11 @@ private fun CapabilityTaxonomyCard(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
+            .clip(RoundedCornerShape(HexnilRadius.card))
+            .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
         color = HexnilCard
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(HexnilSpacing.md)) {
             Text(
                 text = "CAPABILITY-AWARE TAXONOMY (PHASE 2)",
                 color = HexnilMainAccent,
@@ -146,8 +148,8 @@ private fun TaxonomyTile(
 ) {
     Surface(
         modifier = modifier
-            .clip(RoundedCornerShape(6.dp))
-            .border(1.dp, HexnilBorder, RoundedCornerShape(6.dp)),
+            .clip(RoundedCornerShape(HexnilRadius.metadata))
+            .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.metadata)),
         color = HexnilSecondaryCard
     ) {
         Column(
@@ -176,11 +178,11 @@ private fun LiveTelemetrySignalsCard(records: List<TelemetryRecord>) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
+            .clip(RoundedCornerShape(HexnilRadius.card))
+            .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
         color = HexnilCard
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(HexnilSpacing.md)) {
             val batteryText = if (batteryLevel != null) {
                 val stateText = if (batteryState != null) " ($batteryState)" else ""
                 "${"%.1f".format(batteryLevel)}%$stateText"

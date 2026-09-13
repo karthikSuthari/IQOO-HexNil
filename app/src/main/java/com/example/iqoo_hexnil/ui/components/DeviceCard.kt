@@ -35,7 +35,10 @@ import com.example.iqoo_hexnil.ui.theme.HexnilError
 import com.example.iqoo_hexnil.ui.theme.HexnilMainAccent
 import com.example.iqoo_hexnil.ui.theme.HexnilPrimaryText
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryCard
+import com.example.iqoo_hexnil.ui.theme.HexnilRadius
+import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryCard
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryText
+import com.example.iqoo_hexnil.ui.theme.HexnilSpacing
 import com.example.iqoo_hexnil.ui.theme.HexnilSuccess
 import com.example.iqoo_hexnil.ui.theme.HexnilWarning
 
@@ -47,11 +50,11 @@ fun DeviceCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
+            .clip(RoundedCornerShape(HexnilRadius.hero))
+            .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.hero)),
         color = HexnilCard
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(HexnilSpacing.md)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -138,11 +141,11 @@ fun BuildIdentityCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, HexnilBorder, RoundedCornerShape(12.dp)),
+            .clip(RoundedCornerShape(HexnilRadius.card))
+            .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
         color = HexnilCard
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(HexnilSpacing.md)) {
             Text(
                 text = "BUILD FINGERPRINT & PROVENANCE",
                 color = HexnilMainAccent,
@@ -165,9 +168,8 @@ fun BuildIdentityCard(
             Spacer(modifier = Modifier.height(2.dp))
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(6.dp),
-                color = HexnilSecondaryCard,
-                border = BorderStroke(1.dp, HexnilBorder)
+                shape = RoundedCornerShape(HexnilRadius.metadata),
+                color = HexnilSecondaryCard
             ) {
                 Text(
                     text = device.fingerprint,
@@ -191,8 +193,8 @@ private fun DeviceStatusTile(
 ) {
     Surface(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .border(1.dp, HexnilBorder, RoundedCornerShape(8.dp)),
+            .clip(RoundedCornerShape(HexnilRadius.metadata))
+            .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.metadata)),
         color = HexnilSecondaryCard
     ) {
         Column(modifier = Modifier.padding(10.dp)) {

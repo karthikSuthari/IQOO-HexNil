@@ -1584,7 +1584,11 @@ def handle_explain_generate(args: argparse.Namespace, config: HexnilConfig) -> i
         print(explanation.model_dump_json(indent=2))
         return 0
 
-    print(format_human_explanation(explanation))
+    text = format_human_explanation(explanation)
+    try:
+        print(text)
+    except UnicodeEncodeError:
+        print(text.encode("ascii", errors="replace").decode("ascii"))
     return 0
 
 
@@ -1604,7 +1608,11 @@ def handle_explain_show(args: argparse.Namespace, config: HexnilConfig) -> int:
         print(explanation.model_dump_json(indent=2))
         return 0
 
-    print(format_human_explanation(explanation))
+    text = format_human_explanation(explanation)
+    try:
+        print(text)
+    except UnicodeEncodeError:
+        print(text.encode("ascii", errors="replace").decode("ascii"))
     return 0
 
 

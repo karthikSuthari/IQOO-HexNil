@@ -22,40 +22,50 @@ def build_system_prompt() -> str:
 def build_user_prompt(package: EvidencePackage) -> str:
     """Return the user prompt containing the structured EvidencePackage and required output schema."""
     package_json = package.model_dump_json(indent=2)
+    package_severity = "NONE"
+    if package.verdicts and "severity" in package.verdicts[0]:
+        package_severity = str(package.verdicts[0]["severity"])
+    elif package.metrics:
+        package_severity = package.metrics[0].severity
 
-    schema_instruction = (
-        "Analyze the following verified EvidencePackage JSON and return a structured JSON response with exactly these fields:\n"
+    artifact_path = ""
+    if isinstance(package.provenance, dict):
+        artifact_path = package.provenance.get("comparison_path", "")
+
+    return (
+        f"EVIDENCE PACKAGE DATA:\n{package_json}\n\n"
+        "INSTRUCTIONS:\n"
+        "Analyze the above EvidencePackage and respond ONLY with a valid JSON object containing ALL 8 OF THE FOLLOWING KEYS:\n"
         "{\n"
-        '  "summary": "High-level 2-3 sentence executive engineering summary explaining the release outcome.",\n'
+        '  "summary": "2-3 sentence executive engineering summary explaining the release outcome.",\n'
         '  "claim_assessment": [\n'
         '    {\n'
-        '      "claim_id": "CLM-xxx",\n'
-        '      "claim_text": "...",\n'
-        '      "target_metric": "...",\n'
+        '      "claim_id": "CLM-001",\n'
+        '      "claim_text": "claim description",\n'
+        '      "target_metric": "metric_name",\n'
         '      "status": "SUPPORTED" | "CONTRADICTED" | "INCONCLUSIVE" | "UNSUPPORTED_METRIC",\n'
-        '      "explanation": "Why the measured evidence supports, contradicts, or leaves this claim inconclusive."\n'
+        '      "explanation": "why evidence supports or refutes"\n'
         '    }\n'
         '  ],\n'
         '  "observed_changes": [\n'
-        '    "Factual bullet point of measured metric shift (metric name, V0 -> V1, delta %, sample count)."\n'
+        '    "Factual string of measured metric shift (metric name, V0 -> V1, delta %, sample count)."\n'
         '  ],\n'
-        '  "statistical_interpretation": "Explanation of hypothesis test results, p-values, Cohen d effect size, and confidence intervals in plain engineering terms.",\n'
-        '  "severity": "' + (package.metrics[0].severity if package.metrics else "NONE") + '",\n'
+        '  "statistical_interpretation": "Detailed engineering explanation of p-values, confidence intervals, effect sizes, and thresholds.",\n'
+        f'  "severity": "{package_severity}",\n'
         '  "limitations": [\n'
-        '    "Explicit bullet point noting unsupported sensors (e.g. thermal restrictions on Android 16), sample size constraints, etc."\n'
+        '    "Bullet point noting sensor restrictions (e.g. Android 16 thermal sysfs), sample size limits, etc."\n'
         '  ],\n'
-        '  "recommended_next_step": "Actionable, concrete engineering next step based on the evidence.",\n'
+        '  "recommended_next_step": "Actionable, concrete engineering next step.",\n'
         '  "evidence_references": [\n'
         '    {\n'
-        '      "reference_id": "REF-xxx",\n'
-        '      "type": "metric" | "workload" | "comparison" | "experiment",\n'
-        '      "identifier": "...",\n'
-        '      "artifact_path": "...",\n'
-        '      "description": "..."\n'
+        '      "reference_id": "REF-001",\n'
+        '      "type": "comparison",\n'
+        '      "identifier": "' + package.comparison_id + '",\n'
+        f'      "artifact_path": "{artifact_path}",\n'
+        '      "description": "Master comparison record"\n'
         '    }\n'
         '  ]\n'
         "}\n\n"
-        "EVIDENCE PACKAGE DATA:\n"
-        f"{package_json}"
+        "CRITICAL: You MUST include ALL 8 keys: 'summary', 'claim_assessment', 'observed_changes', 'statistical_interpretation', 'severity', 'limitations', 'recommended_next_step', and 'evidence_references'. Do not truncate or omit any key."
     )
-    return schema_instruction
+

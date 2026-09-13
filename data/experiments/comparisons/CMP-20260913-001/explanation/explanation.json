@@ -1,113 +1,78 @@
 {
-  "explanation_id": "EXP-DET-CMP-20260913-001",
+  "explanation_id": "EXP-GROQ-CMP-20260913-001",
   "comparison_id": "CMP-20260913-001",
-  "source": "DETERMINISTIC_ANALYSIS",
-  "model": null,
+  "source": "GROQ_AI",
+  "model": "qwen/qwen3.8-27b",
   "verdict": "COMPLETED",
   "severity": "NONE",
-  "summary": "Deterministic analysis of comparison CMP-20260913-001 verified 13 metrics against baseline EXP-20260913-010. Zero regressions were detected. 8 metrics remained stable within engineering thresholds, while 5 metrics exhibited high runtime variance yielding inconclusive statistical significance.",
+  "summary": "The differential experiment on the vivo I2302 (Android 16) yielded no statistically significant performance regressions or improvements across the tested workloads. While several claims regarding battery, memory, and UI jank remain inconclusive due to insufficient sample sizes or missing telemetry, all measured metrics fell within the acceptable engineering threshold of 5.0%.",
   "claim_assessment": [
     {
       "claim_id": "CLM-001",
-      "claim_text": "- Improved battery efficiency during continuous background video playback and streaming",
+      "claim_text": "Improved battery efficiency during continuous background video playback and streaming",
       "target_metric": "battery_discharge_proxy",
       "status": "INCONCLUSIVE",
-      "explanation": "Observation variance yielded inconclusive statistical significance (p=None)."
+      "explanation": "The target metric 'battery_discharge_proxy' has a sample count of n=1, which is below the minimum requirement of n=3. Therefore, no statistical conclusion can be drawn regarding battery efficiency improvements."
     },
     {
       "claim_id": "CLM-002",
-      "claim_text": "- Faster cold app startup latency and eliminated splash screen launch delay",
+      "claim_text": "Faster cold app startup latency and eliminated splash screen launch delay",
       "target_metric": "startup_duration_ms",
       "status": "INCONCLUSIVE",
-      "explanation": "Observation variance yielded inconclusive statistical significance (p=0.21963)."
+      "explanation": "Although 'startup_duration_ms' showed a 22.86% increase (slower startup), the p-value of 0.2196 is not statistically significant (p >= 0.05). The wide confidence interval (-324.86 to 776.644 ms) indicates high variance, preventing a definitive conclusion on the claim."
     },
     {
       "claim_id": "CLM-003",
-      "claim_text": "- Optimized ART heap memory allocations to reduce memory pressure",
+      "claim_text": "Optimized ART heap memory allocations to reduce memory pressure",
       "target_metric": "app_heap_allocated_mb",
       "status": "INCONCLUSIVE",
-      "explanation": "Observation variance yielded inconclusive statistical significance (p=None)."
+      "explanation": "The target metric 'app_heap_allocated_mb' has a sample count of n=1, which is below the minimum requirement of n=3. Evidence is lacking to verify or refute the memory optimization claim."
     },
     {
       "claim_id": "CLM-004",
-      "claim_text": "- Smooth 120fps UI scrolling performance and eliminated jank frames",
+      "claim_text": "Smooth 120fps UI scrolling performance and eliminated jank frames",
       "target_metric": "ui_frame_jank_percent",
-      "status": "INCONCLUSIVE",
-      "explanation": "Observation variance yielded inconclusive statistical significance (p=None)."
+      "status": "UNSUPPORTED_METRIC",
+      "explanation": "No valid observations were found for 'ui_frame_jank_percent' (sample count = 0). The metric is unsupported in this experiment, making it impossible to assess the claim."
     },
     {
       "claim_id": "CLM-005",
-      "claim_text": "- Ultra-dynamic revolutionary AI camera enhancements and cinematic magic filters",
+      "claim_text": "Ultra-dynamic revolutionary AI camera enhancements and cinematic magic filters",
       "target_metric": "UNSUPPORTED",
       "status": "UNSUPPORTED_METRIC",
-      "explanation": "Target metric 'UNSUPPORTED' was not measured or supported in this test suite."
+      "explanation": "The claim is mapped to an 'UNSUPPORTED' metric with an 'UNKNOWN' expected direction. No telemetry exists to evaluate this feature claim."
     }
   ],
   "observed_changes": [
-    "Workload Duration Ms (ms) (startup_01): shifted by -2.35% (V0: 7984.895 ms -> V1: 7797.419 ms, n=3) [UNCHANGED]",
-    "Startup Duration Ms (ms) (startup_01): shifted by +22.86% (V0: 988.111 ms -> V1: 1214.003 ms, n=3) [INCONCLUSIVE]",
-    "Workload Duration Ms (ms) (cpu_01): shifted by +3.24% (V0: 9449.04 ms -> V1: 9755.448 ms, n=3) [UNCHANGED]",
-    "Compute Duration Ms (ms) (cpu_01): shifted by -0.70% (V0: 3224.466 ms -> V1: 3201.959 ms, n=3) [UNCHANGED]",
-    "Workload Duration Ms (ms) (memory_01): shifted by +0.72% (V0: 9281.27 ms -> V1: 9347.666 ms, n=3) [UNCHANGED]",
-    "Workload Duration Ms (ms) (scroll_01): shifted by -0.65% (V0: 10618.126 ms -> V1: 10549.056 ms, n=3) [UNCHANGED]",
-    "Scroll Duration Ms (ms) (scroll_01): shifted by -1.62% (V0: 4432.474 ms -> V1: 4360.461 ms, n=3) [UNCHANGED]",
-    "Ui Frame Jank Percent (scroll_01): Telemetry unsupported by physical device platform [INCONCLUSIVE]",
-    "Workload Duration Ms (ms) (video_power_01): shifted by +3.05% (V0: 12356.298 ms -> V1: 12733.545 ms, n=3) [UNCHANGED]",
-    "Playback Duration Ms (ms) (video_power_01): shifted by -0.09% (V0: 6189.829 ms -> V1: 6184.438 ms, n=3) [UNCHANGED]"
+    "workload_duration_ms (startup_01): 7984.895 ms -> 7797.419 ms (-2.35%, n=3)",
+    "startup_duration_ms (startup_01): 988.111 ms -> 1214.003 ms (+22.86%, n=3)",
+    "workload_duration_ms (cpu_01): 9449.04 ms -> 9755.448 ms (+3.24%, n=3)",
+    "compute_duration_ms (cpu_01): 3224.466 ms -> 3201.959 ms (-0.70%, n=3)",
+    "workload_duration_ms (memory_01): 9281.27 ms -> 9347.666 ms (+0.72%, n=3)",
+    "workload_duration_ms (scroll_01): 10618.126 ms -> 10549.056 ms (-0.65%, n=3)",
+    "scroll_duration_ms (scroll_01): 4432.474 ms -> 4360.461 ms (-1.62%, n=3)",
+    "workload_duration_ms (video_power_01): 12356.298 ms -> 12733.545 ms (+3.05%, n=3)",
+    "playback_duration_ms (video_power_01): 6189.829 ms -> 6184.438 ms (-0.09%, n=3)"
   ],
-  "statistical_interpretation": "Evaluation performed using paired difference testing across EXP-20260913-010 and EXP-20260913-012.\n• Workload Duration Ms (ms): p-value = 0.7319 (not statistically significant at alpha=0.05, 95% CI [-2236.917, 1861.965]). Reason: Observed change 2.4% (threshold: 5.0%) is within the acceptable engineering threshold.\n• Startup Duration Ms (ms): p-value = 0.2196 (not statistically significant at alpha=0.05, 95% CI [-324.86, 776.644]). Reason: Observed shift 22.9% (threshold: 5.0%) is not statistically significant (p=0.2196 >= 0.05).\n• Workload Duration Ms (ms): p-value = 0.2006 (not statistically significant at alpha=0.05, 95% CI [-394.346, 1007.163]). Reason: Observed change 3.2% (threshold: 5.0%) is within the acceptable engineering threshold.\n• Compute Duration Ms (ms): p-value = 0.7648 (not statistically significant at alpha=0.05, 95% CI [-305.464, 260.45]). Reason: Observed change 0.7% (threshold: 5.0%) is within the acceptable engineering threshold.\n• Workload Duration Ms (ms): p-value = 0.7165 (not statistically significant at alpha=0.05, 95% CI [-616.967, 749.76]). Reason: Observed change 0.7% (threshold: 5.0%) is within the acceptable engineering threshold.\n• Workload Duration Ms (ms): p-value = 0.7924 (not statistically significant at alpha=0.05, 95% CI [-1059.277, 921.138]). Reason: Observed change 0.7% (threshold: 5.0%) is within the acceptable engineering threshold.\n• Scroll Duration Ms (ms): p-value = 0.5099 (not statistically significant at alpha=0.05, 95% CI [-461.669, 317.641]). Reason: Observed change 1.6% (threshold: 5.0%) is within the acceptable engineering threshold.\n• Workload Duration Ms (ms): p-value = 0.0116 (statistically significant at alpha=0.05, 95% CI [201.021, 553.473]). Reason: Observed change 3.0% (threshold: 5.0%) is within the acceptable engineering threshold.\n• Playback Duration Ms (ms): p-value = 0.9260 (not statistically significant at alpha=0.05, 95% CI [-226.383, 215.601]). Reason: Observed change 0.1% (threshold: 5.0%) is within the acceptable engineering threshold.",
+  "statistical_interpretation": "The statistical engine applied a 5.0% engineering threshold for 'UNCHANGED' verdicts and a 0.05 alpha level for significance. All valid metrics (n>=3) were classified as 'UNCHANGED' because their absolute percent deltas fell within the 5.0% threshold, regardless of p-values. Notably, 'startup_duration_ms' exhibited a 22.86% shift, which exceeds the threshold, but was classified as 'INCONCLUSIVE' because the p-value (0.2196) failed to reach statistical significance, likely due to high variance (effect size 1.019) and small sample size (n=3). The 'video_power_01' workload showed a statistically significant increase in workload duration (p=0.01158), but the 3.05% delta remained within the 5.0% engineering tolerance, resulting in an 'UNCHANGED' verdict. No metrics met the criteria for 'REGRESSION' or 'IMPROVEMENT'.",
   "limitations": [
-    "Platform restrictions on device prevented collection of Ui Frame Jank Percent.",
-    "Sample size of 1 matched pairs provides limited statistical power; subtle regressions (<5%) may escape detection.",
-    "Fallback mode active: Offline mode explicitly requested."
+    "Sample size limitation: Multiple critical metrics (battery_discharge_proxy, app_heap_allocated_mb, device_memory_available_mb) had only n=1 samples, falling below the n=3 minimum requirement for statistical validity.",
+    "Missing telemetry: The 'ui_frame_jank_percent' metric had zero valid observations, preventing any assessment of UI smoothness claims.",
+    "High variance in startup metrics: The 'startup_duration_ms' metric showed a wide confidence interval (-324.86 to 776.644 ms), indicating high variability that obscures potential performance shifts.",
+    "Unsupported feature metrics: Claims related to AI camera enhancements (CLM-005) lack corresponding measurable metrics in the evidence package."
   ],
-  "recommended_next_step": "Execute an additional 5 matched iterations under stable thermal preconditions for inconclusive workloads (e.g. startup_01) to narrow the 95% confidence intervals.",
+  "recommended_next_step": "Increase the sample size for battery, memory, and startup workloads to at least n=10 to reduce variance and achieve statistical power for detecting the claimed improvements. Additionally, implement telemetry collection for 'ui_frame_jank_percent' and define measurable metrics for AI camera features to enable future validation.",
   "evidence_references": [
     {
       "reference_id": "REF-001",
       "type": "comparison",
       "identifier": "CMP-20260913-001",
-      "artifact_path": "data/experiments/comparisons/CMP-20260913-001/comparison.json",
-      "description": "Master differential comparison record"
-    },
-    {
-      "reference_id": "REF-002",
-      "type": "experiment",
-      "identifier": "EXP-20260913-010",
-      "artifact_path": "data/experiments/EXP-20260913-010/baseline.json",
-      "description": "V0 baseline experiment evidence"
-    },
-    {
-      "reference_id": "REF-003",
-      "type": "experiment",
-      "identifier": "EXP-20260913-012",
-      "artifact_path": "data/experiments/EXP-20260913-012/experiment.json",
-      "description": "V1 differential test experiment evidence"
-    },
-    {
-      "reference_id": "REF-004",
-      "type": "metric",
-      "identifier": "workload_duration_ms",
-      "artifact_path": "data/experiments/comparisons/CMP-20260913-001/statistical_analysis/metric_results.json",
-      "description": "Statistical analysis record for Workload Duration Ms (ms)"
-    },
-    {
-      "reference_id": "REF-005",
-      "type": "metric",
-      "identifier": "startup_duration_ms",
-      "artifact_path": "data/experiments/comparisons/CMP-20260913-001/statistical_analysis/metric_results.json",
-      "description": "Statistical analysis record for Startup Duration Ms (ms)"
-    },
-    {
-      "reference_id": "REF-006",
-      "type": "metric",
-      "identifier": "workload_duration_ms",
-      "artifact_path": "data/experiments/comparisons/CMP-20260913-001/statistical_analysis/metric_results.json",
-      "description": "Statistical analysis record for Workload Duration Ms (ms)"
+      "artifact_path": "",
+      "description": "Master comparison record"
     }
   ],
-  "created_at": "2026-09-13T10:54:31.884625+00:00",
-  "latency_ms": 0.0,
+  "created_at": "2026-09-13T11:24:11.765615+00:00",
+  "latency_ms": 3985.799699963536,
   "is_cached": false,
   "evidence_hash": "44333d6617b4e354a0cf3db53d9d07d7c853e2955773ad281d037ee4ff631e21"
 }

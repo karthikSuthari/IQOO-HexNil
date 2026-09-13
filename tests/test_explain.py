@@ -171,10 +171,11 @@ def test_06_invalid_artifact_rejected(tmp_path):
     assert loaded is None
 
 
-def test_07_missing_groq_key_uses_deterministic_fallback(sample_analysis_record):
+def test_07_missing_groq_key_uses_deterministic_fallback(sample_analysis_record, monkeypatch):
     """Scenario 7: Missing GROQ_API_KEY environment variable uses deterministic fallback."""
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
     package = build_evidence_package(sample_analysis_record)
-    client = GroqClient(api_key=None)
+    client = GroqClient(api_key=None, load_env=False)
     assert client.has_valid_key() is False
 
     with pytest.raises(GroqConfigurationError):

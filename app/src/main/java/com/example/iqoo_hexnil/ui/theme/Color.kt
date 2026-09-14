@@ -29,3 +29,13 @@ val HexnilError = Color(0xFFE55353)
 val HexnilErrorSubtle = Color(0x26E55353)
 val HexnilInfo = Color(0xFF3B82F6)
 val HexnilInfoSubtle = Color(0x263B82F6)
+
+// Classification & Intelligence Tokens
+val HexnilPreExisting = Color(0xFFE5A93C)
+val HexnilPreExistingSubtle = Color(0x2EE5A93C)
+val HexnilFixed = Color(0xFF10B981)
+val HexnilFixedSubtle = Color(0x2610B981)
+val HexnilCyan = Color(0xFF06B6D4)
+val HexnilCyanSubtle = Color(0x2606B6D4)
+val HexnilPurple = Color(0xFFA855F7)
+val HexnilPurpleSubtle = Color(0x26A855F7)

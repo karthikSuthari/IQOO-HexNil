@@ -66,6 +66,12 @@ from hexnil.explain import (
     validate_evidence_eligibility,
 )
 
+from hexnil.monitor.models import MonitoringPhase, MonitoringSession
+from hexnil.monitor.store import MonitoringStore
+from hexnil.monitor.orchestrator import MonitoringOrchestrator
+from hexnil.report.generator import ReportGenerator
+from hexnil.report.models import FinalEvidenceReport
+
 logger = logging.getLogger("hexnil.cli")
 
 
@@ -718,10 +724,24 @@ def format_human_comparison_quality(quality: ComparisonQualityReport, cmp_dir: O
         f"Summary Verdict:     [{quality.summary_verdict}]",
         f"Clean Comparison:    {'YES' if quality.is_clean_comparison else 'NO'}",
         "",
-        "Software Comparison:",
-        f"  V0 Baseline:       Version {quality.v0_version or 'unknown'} (SHA-256: {quality.v0_apk_sha256 or 'N/A'})",
-        f"  V1 Update:         Version {quality.v1_version or 'unknown'} (SHA-256: {quality.v1_apk_sha256 or 'N/A'})",
-        "",
+    ]
+    if getattr(quality, "update_type", "apk_update") == "os_update":
+        lines.extend([
+            "Update Mode:         Mobile OS Update",
+            f"  V0 OS Build:       {quality.v0_build_id or 'unknown'} (Android {quality.v0_os_version or 'N/A'})",
+            f"  V1 OS Build:       {quality.v1_build_id or 'unknown'} (Android {quality.v1_os_version or 'N/A'})",
+            f"  Workload Probe:    v{quality.v0_version or 'unknown'}",
+            "",
+        ])
+    else:
+        lines.extend([
+            "Software Comparison:",
+            f"  V0 Baseline:       Version {quality.v0_version or 'unknown'} (SHA-256: {quality.v0_apk_sha256 or 'N/A'})",
+            f"  V1 Update:         Version {quality.v1_version or 'unknown'} (SHA-256: {quality.v1_apk_sha256 or 'N/A'})",
+            "",
+        ])
+
+    lines.extend([
         "Workload Suite Matching:",
         f"  Requested:         {', '.join(quality.workloads_requested)}",
         f"  Matched Hashes:    {', '.join(quality.workloads_matched) if quality.workloads_matched else 'None'}",
@@ -734,7 +754,7 @@ def format_human_comparison_quality(quality: ComparisonQualityReport, cmp_dir: O
         f"  Matched Run Pairs: {quality.matched_pairs_count}",
         f"  Unmatched Runs:    {quality.unmatched_pairs_count}",
         f"  Evidence Coverage: {quality.evidence_coverage}",
-    ]
+    ])
     if quality.contamination_flags:
         lines.append("")
         lines.append("Contamination Flags:")
@@ -750,31 +770,56 @@ def format_human_comparison_quality(quality: ComparisonQualityReport, cmp_dir: O
 
 def format_human_comparison_show(record: ComparisonRecord) -> str:
     """Format ComparisonRecord into human-readable summary output."""
+    is_os = getattr(record, "update_type", "apk_update") == "os_update"
+    update_label = "Mobile OS Update" if is_os else "Mobile App (APK) Update"
+
     lines = [
         "Hexnil V0 -> V1 Differential Comparison Record",
         "----------------------------------------------",
         f"Comparison ID:       {record.comparison_id}",
         f"Created At:          {record.created_at}",
         f"Status:              {record.status}",
+        f"Update Mode:         {update_label}",
         f"V0 Baseline ID:      {record.v0_experiment_id}",
         f"V1 Update ID:        {record.v1_experiment_id}",
         f"Device:              {record.device.manufacturer} {record.device.model} ({record.device.serial})",
         "",
-        "V0 Software (Baseline):",
-        f"  Package:           {record.v0_software.package}",
-        f"  Version:           {record.v0_software.version_name} (code: {record.v0_software.version_code})",
-        f"  APK SHA-256:       {record.v0_software.apk_sha256 or 'N/A'}",
-        "",
-        "V1 Software (Update):",
-        f"  Package:           {record.v1_software.package}",
-        f"  Version:           {record.v1_software.version_name} (code: {record.v1_software.version_code})",
-        f"  APK SHA-256:       {record.v1_software.apk_sha256 or 'N/A'}",
-        f"  Install Duration:  {record.install_result.duration_ms:.1f} ms -> {record.install_result.outcome.value}",
-        "",
+    ]
+    if is_os:
+        lines.extend([
+            "V0 OS Baseline:",
+            f"  Android OS:        {record.v0_software.android_os_version or record.device.android_version or 'N/A'}",
+            f"  Build ID:          {record.v0_software.build_id or 'N/A'}",
+            f"  Build Fingerprint: {record.v0_software.build_fingerprint or 'N/A'}",
+            f"  Workload Probe:    {record.v0_software.package} v{record.v0_software.version_name}",
+            "",
+            "V1 OS Update:",
+            f"  Android OS:        {record.v1_software.android_os_version or record.device.android_version or 'N/A'}",
+            f"  Build ID:          {record.v1_software.build_id or 'N/A'}",
+            f"  Build Fingerprint: {record.v1_software.build_fingerprint or 'N/A'}",
+            f"  Transition Status: {record.install_result.outcome.value}",
+            "",
+        ])
+    else:
+        lines.extend([
+            "V0 Software (Baseline):",
+            f"  Package:           {record.v0_software.package}",
+            f"  Version:           {record.v0_software.version_name} (code: {record.v0_software.version_code})",
+            f"  APK SHA-256:       {record.v0_software.apk_sha256 or 'N/A'}",
+            "",
+            "V1 Software (Update):",
+            f"  Package:           {record.v1_software.package}",
+            f"  Version:           {record.v1_software.version_name} (code: {record.v1_software.version_code})",
+            f"  APK SHA-256:       {record.v1_software.apk_sha256 or 'N/A'}",
+            f"  Install Duration:  {record.install_result.duration_ms:.1f} ms -> {record.install_result.outcome.value}",
+            "",
+        ])
+
+    lines.extend([
         "Environment Drift:",
         f"  Battery Delta:     {record.environment_comparison.battery_level_delta_percent or 0.0:+.1f}%",
         f"  Thermal Transition:{record.environment_comparison.thermal_status_transition}",
-    ]
+    ])
     if record.environment_comparison.drift_summary:
         for d in record.environment_comparison.drift_summary:
             lines.append(f"    - {d}")
@@ -813,6 +858,8 @@ def handle_diff_inspect(args: argparse.Namespace, config: HexnilConfig) -> int:
     print(f"Package:             {inspection['package']}")
     print(f"Version:             {inspection['version']}")
     print(f"APK SHA-256:         {inspection['apk_sha256'] or 'N/A'}")
+    if inspection.get("build_id"):
+        print(f"OS Build ID:         {inspection['build_id']} (Android {inspection.get('android_os_version', 'N/A')})")
     print(f"Workloads Count:     {inspection['workloads_count']}")
     print(f"Valid Runs Count:    {inspection['valid_runs_count']}")
     print(f"Baseline Verdict:    [{inspection['verdict']}]")
@@ -821,7 +868,16 @@ def handle_diff_inspect(args: argparse.Namespace, config: HexnilConfig) -> int:
 
 
 def handle_diff_run(args: argparse.Namespace, config: HexnilConfig) -> int:
-    """Execute a V0 -> V1 differential experiment with APK update and matched runs."""
+    """Execute a V0 -> V1 differential experiment with OS update or APK update and matched runs."""
+    is_os_update = getattr(args, "os_update", False)
+    apk_arg = getattr(args, "apk", None)
+
+    if not is_os_update and not apk_arg:
+        raise HexnilError(
+            "Either --os-update or --apk <path> must be specified.",
+            suggestion="Specify --os-update to validate after a mobile OS update, or --apk <path> for app update validation.",
+        )
+
     adb_client = AdbClient(adb_path=config.adb_path)
     discovery = DeviceDiscovery(adb_client)
     target_device = discovery.select_device(target_serial=args.serial)
@@ -830,7 +886,7 @@ def handle_diff_run(args: argparse.Namespace, config: HexnilConfig) -> int:
     comp_store = ComparisonStore(config.data_dir / "comparisons")
     orchestrator = DifferentialExperimentOrchestrator(adb_client, exp_store, comp_store)
 
-    v1_apk_path = Path(args.apk)
+    v1_apk_path = Path(apk_arg) if apk_arg else None
     iterations = getattr(args, "iterations", 3) or 3
     cooldown = getattr(args, "cooldown", 2.0) or 2.0
     policy = StabilizationPolicy(stabilization_cooldown_seconds=cooldown)
@@ -841,6 +897,7 @@ def handle_diff_run(args: argparse.Namespace, config: HexnilConfig) -> int:
         serial=target_device.serial,
         iterations=iterations,
         stabilization_policy=policy,
+        is_os_update=is_os_update,
     )
 
     if getattr(args, "json", False):
@@ -1616,13 +1673,164 @@ def handle_explain_show(args: argparse.Namespace, config: HexnilConfig) -> int:
     return 0
 
 
+def handle_monitor_start(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Start an autonomous end-to-end OS update monitoring session."""
+    from hexnil.diff.store import ComparisonStore
+
+    adb_client = AdbClient(
+        adb_path=args.adb_path or config.adb_path,
+        default_timeout=config.adb_timeout_seconds,
+    )
+    exp_store = ExperimentStore(config.data_dir)
+    comp_store = ComparisonStore(config.data_dir / "comparisons")
+    monitor_store = MonitoringStore(config.sessions_dir)
+
+    orchestrator = MonitoringOrchestrator(
+        adb=adb_client,
+        exp_store=exp_store,
+        comp_store=comp_store,
+        monitor_store=monitor_store,
+    )
+
+    report = orchestrator.run_session(
+        serial=args.serial,
+        iterations=getattr(args, "iterations", 3),
+        poll_interval=getattr(args, "poll_interval", config.monitor_poll_interval),
+        release_notes_path=getattr(args, "release_notes", None),
+        pre_monitoring_samples=getattr(args, "pre_samples", 10),
+    )
+
+    if getattr(args, "json", False):
+        print(report.model_dump_json(indent=2))
+    else:
+        gen = ReportGenerator()
+        print(gen.format_text(report))
+
+    return 0
+
+
+def handle_monitor_status(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Check monitoring session status."""
+    monitor_store = MonitoringStore(config.sessions_dir)
+    session = monitor_store.load_session(args.session_id)
+
+    if getattr(args, "json", False):
+        print(session.model_dump_json(indent=2))
+        return 0
+
+    lines = [
+        "Hexnil Monitoring Session Status",
+        "--------------------------------",
+        f"Session ID:      {session.session_id}",
+        f"Device:          {session.device_model} ({session.device_serial})",
+        f"Phase:           {session.phase.value}",
+        f"Status:          {session.status}",
+        f"Created:         {session.created_at}",
+    ]
+    if session.v0_os_state:
+        lines.append(f"V0 Build:        {session.v0_os_state.build_id} (Android {session.v0_os_state.android_version})")
+    if session.v1_os_state:
+        lines.append(f"V1 Build:        {session.v1_os_state.build_id} (Android {session.v1_os_state.android_version})")
+    if session.update_detected_at:
+        lines.append(f"Update detected: {session.update_detected_at}")
+    if session.baseline_experiment_id:
+        lines.append(f"Baseline Exp:    {session.baseline_experiment_id}")
+    if session.comparison_id:
+        lines.append(f"Comparison ID:   {session.comparison_id}")
+    if session.report_id:
+        lines.append(f"Report ID:       {session.report_id}")
+    if session.completed_at:
+        lines.append(f"Completed:       {session.completed_at}")
+    if session.error_message:
+        lines.append(f"Error:           {session.error_message}")
+
+    print("\n".join(lines))
+    return 0
+
+
+def handle_monitor_list(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """List all monitoring sessions."""
+    monitor_store = MonitoringStore(config.sessions_dir)
+    sessions = monitor_store.list_sessions()
+
+    if getattr(args, "json", False):
+        print(json.dumps([s.model_dump() for s in sessions], indent=2, default=str))
+        return 0
+
+    print(f"Hexnil Monitoring Sessions ({len(sessions)} found)")
+    print("--------------------------------------------------")
+    if not sessions:
+        print("No monitoring sessions found.")
+        return 0
+
+    for s in sessions:
+        v0_build = s.v0_os_state.build_id if s.v0_os_state else "?"
+        print(
+            f"• {s.session_id} | {s.created_at} | {s.device_model} | "
+            f"Phase: {s.phase.value} | Build: {v0_build} | Status: {s.status}"
+        )
+
+    return 0
+
+
+def handle_monitor_show(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Show complete monitoring session details."""
+    monitor_store = MonitoringStore(config.sessions_dir)
+    session = monitor_store.load_session(args.session_id)
+
+    if getattr(args, "json", False):
+        print(session.model_dump_json(indent=2))
+        return 0
+
+    # Try to show the report text if available
+    session_dir = monitor_store.base_dir / args.session_id
+    report_txt = session_dir / "report.txt"
+    if report_txt.exists():
+        print(report_txt.read_text(encoding="utf-8"))
+    else:
+        # Fall back to session summary
+        return handle_monitor_status(args, config)
+
+    return 0
+
+
+def handle_report_show(args: argparse.Namespace, config: HexnilConfig) -> int:
+    """Show the final evidence report for a monitoring session."""
+    monitor_store = MonitoringStore(config.sessions_dir)
+    session_dir = monitor_store.base_dir / args.session_id
+
+    report_json_path = session_dir / "report.json"
+    report_txt_path = session_dir / "report.txt"
+
+    if getattr(args, "json", False):
+        if report_json_path.exists():
+            data = json.loads(report_json_path.read_text(encoding="utf-8"))
+            print(json.dumps(data, indent=2))
+        else:
+            print(json.dumps({"error": f"No report found for session '{args.session_id}'"}))
+        return 0
+
+    if report_txt_path.exists():
+        print(report_txt_path.read_text(encoding="utf-8"))
+    elif report_json_path.exists():
+        data = json.loads(report_json_path.read_text(encoding="utf-8"))
+        report = FinalEvidenceReport(**data)
+        gen = ReportGenerator()
+        print(gen.format_text(report))
+    else:
+        print(f"No report found for session '{args.session_id}'.")
+        return 1
+
+    return 0
+
+
 def create_parser() -> argparse.ArgumentParser:
 
 
     """Construct CLI argument parser."""
     parser = argparse.ArgumentParser(
         prog="hexnil",
-        description="Hexnil: Mobile release-validation intelligence system.",
+        description="Hexnil: Android OS/Software/Security Update Impact Intelligence System.",
     )
     parser.add_argument(
         "--adb-path",
@@ -1910,15 +2118,21 @@ def create_parser() -> argparse.ArgumentParser:
         help="Output inspection results as JSON.",
     )
 
-    # diff run <v0_experiment_id> --apk <v1_apk_path>
+    # diff run <v0_experiment_id> [--apk <v1_apk_path> | --os-update]
     diff_run_parser = diff_subparsers.add_parser(
-        "run", help="Run V0 -> V1 differential experiment with APK install and matched runs"
+        "run", help="Run V0 -> V1 differential experiment with OS update or APK install and matched runs"
     )
     diff_run_parser.add_argument("v0_experiment_id", help="V0 Experiment ID baseline reference")
     diff_run_parser.add_argument(
         "--apk",
-        required=True,
-        help="Path to target V1 APK file to install and evaluate",
+        required=False,
+        default=None,
+        help="Path to target V1 APK file to install and evaluate (for APK update mode)",
+    )
+    diff_run_parser.add_argument(
+        "--os-update",
+        action="store_true",
+        help="Validate after a Mobile OS / firmware update (OS update mode)",
     )
     diff_run_parser.add_argument(
         "--serial",
@@ -2211,6 +2425,100 @@ def create_parser() -> argparse.ArgumentParser:
         help="Output explanation as JSON.",
     )
 
+    # 10. 'monitor' command group (Phase 9)
+    monitor_parser = subparsers.add_parser(
+        "monitor", help="Phase 9 autonomous OS update monitoring lifecycle"
+    )
+    monitor_subparsers = monitor_parser.add_subparsers(
+        dest="subcommand", help="Monitor subcommands"
+    )
+
+    # monitor start
+    mon_start_parser = monitor_subparsers.add_parser(
+        "start", help="Start an autonomous end-to-end OS update monitoring session"
+    )
+    mon_start_parser.add_argument(
+        "--serial", "-s",
+        help="Target specific device by ADB serial.",
+        required=True,
+    )
+    mon_start_parser.add_argument(
+        "--iterations", "-i",
+        type=int, default=3,
+        help="Number of repeated iterations per workload (default: 3).",
+    )
+    mon_start_parser.add_argument(
+        "--poll-interval",
+        type=int, default=60,
+        help="Seconds between OS state polling checks (default: 60).",
+    )
+    mon_start_parser.add_argument(
+        "--release-notes",
+        default=None,
+        help="Path to release notes text file for claim prediction.",
+    )
+    mon_start_parser.add_argument(
+        "--pre-samples",
+        type=int, default=10,
+        help="Number of pre-update monitoring samples to collect (default: 10).",
+    )
+    mon_start_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output results as JSON.",
+    )
+
+    # monitor status <session_id>
+    mon_status_parser = monitor_subparsers.add_parser(
+        "status", help="Check monitoring session status"
+    )
+    mon_status_parser.add_argument("session_id", help="Session ID to check")
+    mon_status_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output status as JSON.",
+    )
+
+    # monitor list
+    mon_list_parser = monitor_subparsers.add_parser(
+        "list", help="List all monitoring sessions"
+    )
+    mon_list_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output list as JSON.",
+    )
+
+    # monitor show <session_id>
+    mon_show_parser = monitor_subparsers.add_parser(
+        "show", help="Show complete monitoring session details"
+    )
+    mon_show_parser.add_argument("session_id", help="Session ID to display")
+    mon_show_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output session as JSON.",
+    )
+
+    # 11. 'report' command group (Phase 12)
+    report_parser = subparsers.add_parser(
+        "report", help="Phase 12 final OS update impact evidence report"
+    )
+    report_subparsers = report_parser.add_subparsers(
+        dest="subcommand", help="Report subcommands"
+    )
+
+    # report show <session_id>
+    rpt_show_parser = report_subparsers.add_parser(
+        "show", help="Show the final evidence report for a monitoring session"
+    )
+    rpt_show_parser.add_argument("session_id", help="Session ID to display")
+    rpt_show_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output report as JSON.",
+    )
+
     return parser
 
 
@@ -2343,6 +2651,26 @@ def main(argv=None) -> int:
                 return handle_explain_generate(args, config)
             elif args.subcommand == "show":
                 return handle_explain_show(args, config)
+            else:
+                parser.print_help()
+                return 1
+
+        elif args.command == "monitor":
+            if args.subcommand == "start":
+                return handle_monitor_start(args, config)
+            elif args.subcommand == "status":
+                return handle_monitor_status(args, config)
+            elif args.subcommand == "list":
+                return handle_monitor_list(args, config)
+            elif args.subcommand == "show":
+                return handle_monitor_show(args, config)
+            else:
+                parser.print_help()
+                return 1
+
+        elif args.command == "report":
+            if args.subcommand in (None, "show"):
+                return handle_report_show(args, config)
             else:
                 parser.print_help()
                 return 1

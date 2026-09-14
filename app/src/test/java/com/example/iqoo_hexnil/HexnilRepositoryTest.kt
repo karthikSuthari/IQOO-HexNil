@@ -128,4 +128,66 @@ class HexnilRepositoryTest {
         assertTrue(fallbackExplanation.summary.contains("fallback"))
     }
 
+    @Test
+    fun testLifecycleStateTransitions() {
+        assertEquals(com.example.iqoo_hexnil.data.HexnilLifecycleState.REPORT_READY, HexnilRepository.getLifecycleState())
+        HexnilRepository.setLifecycleState(com.example.iqoo_hexnil.data.HexnilLifecycleState.AWAITING_UPDATE)
+        assertEquals(com.example.iqoo_hexnil.data.HexnilLifecycleState.AWAITING_UPDATE, HexnilRepository.getLifecycleState())
+        // Reset to REPORT_READY
+        HexnilRepository.setLifecycleState(com.example.iqoo_hexnil.data.HexnilLifecycleState.REPORT_READY)
+    }
+
+    @Test
+    fun testUpdateTransitionIntegrity() {
+        val transition = HexnilRepository.getUpdateTransition()
+        assertEquals("TRN-20260913-001", transition.transitionId)
+        assertEquals(com.example.iqoo_hexnil.data.TransitionType.SECURITY_PATCH, transition.transitionType)
+        assertEquals("2026-08-01", transition.preState.securityPatchLevel)
+        assertEquals("2026-09-01", transition.postState.securityPatchLevel)
+        assertEquals(42, transition.preState.bootCount)
+        assertEquals(43, transition.postState.bootCount)
+    }
+
+    @Test
+    fun testIssueReportIntegrity() {
+        val issueReport = HexnilRepository.getIssueReport()
+        assertEquals(13, issueReport.totalClassified)
+        assertEquals("Zero new regressions must be fabricated", 0, issueReport.newRegressionsCount)
+        assertEquals("Pre-existing startup jitter must be persisted", 1, issueReport.persistedCount)
+        assertEquals(11, issueReport.unchangedCount)
+        assertEquals(1, issueReport.inconclusiveCount)
+    }
+
+    @Test
+    fun testPredictionEvaluationSummary() {
+        val summary = HexnilRepository.getPredictionEvaluationSummary()
+        assertEquals(4, summary.totalEvaluated)
+        assertEquals(2, summary.trueNegatives)
+        assertEquals(2, summary.falsePositives)
+        assertEquals(0, summary.falseNegatives)
+        assertEquals(0, summary.truePositives)
+        assertEquals(50.0, summary.accuracyPercent, 0.01)
+    }
+
+    @Test
+    fun testFinalEvidenceReportIntegrity() {
+        val report = HexnilRepository.getFinalEvidenceReport()
+        assertEquals("REP-20260913-001", report.reportId)
+        assertEquals(com.example.iqoo_hexnil.data.ExecutiveVerdict.SAFE_TO_ROLLOUT, report.executiveVerdict)
+        assertEquals("9 / 13", report.evidenceCoverage)
+        assertTrue(report.recommendations.isNotEmpty())
+        assertTrue(report.preUpdateAnomalies.isNotEmpty())
+    }
+
+    @Test
+    fun testHistoricalUpdatesIntegrity() {
+        val history = HexnilRepository.getHistoricalUpdates()
+        assertEquals(3, history.size)
+        val latest = history.first()
+        assertEquals("UPD-20260913-001", latest.updateId)
+        assertEquals(com.example.iqoo_hexnil.data.TransitionType.SECURITY_PATCH, latest.transitionType)
+        assertEquals(com.example.iqoo_hexnil.data.ExecutiveVerdict.SAFE_TO_ROLLOUT, latest.verdict)
+    }
+
 }
+

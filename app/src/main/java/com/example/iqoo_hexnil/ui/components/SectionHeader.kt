@@ -83,3 +83,19 @@ fun SectionHeader(
     }
 }
 
+@Composable
+fun SectionHeader(
+    title: String,
+    actionLabel: String? = null,
+    onActionClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    SectionHeader(
+        category = title,
+        actionText = actionLabel,
+        onActionClick = onActionClick,
+        modifier = modifier
+    )
+}
+
+

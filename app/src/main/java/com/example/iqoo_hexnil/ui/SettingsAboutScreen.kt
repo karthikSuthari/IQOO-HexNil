@@ -3,6 +3,7 @@ package com.example.iqoo_hexnil.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,6 +18,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,10 +27,14 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.iqoo_hexnil.data.HexnilLifecycleState
+import com.example.iqoo_hexnil.data.HexnilRepository
 import com.example.iqoo_hexnil.ui.components.SectionHeader
 import com.example.iqoo_hexnil.ui.theme.HexnilAccentGlow
+import com.example.iqoo_hexnil.ui.theme.HexnilAccentSubtle
 import com.example.iqoo_hexnil.ui.theme.HexnilBackground
 import com.example.iqoo_hexnil.ui.theme.HexnilBorder
+import com.example.iqoo_hexnil.ui.theme.HexnilBorderSubtle
 import com.example.iqoo_hexnil.ui.theme.HexnilCard
 import com.example.iqoo_hexnil.ui.theme.HexnilMainAccent
 import com.example.iqoo_hexnil.ui.theme.HexnilPrimaryText
@@ -35,7 +42,6 @@ import com.example.iqoo_hexnil.ui.theme.HexnilRadius
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryCard
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryText
 import com.example.iqoo_hexnil.ui.theme.HexnilSpacing
-import com.example.iqoo_hexnil.ui.theme.HexnilSuccess
 
 @Composable
 fun SettingsAboutScreen(
@@ -108,7 +114,76 @@ fun SettingsAboutScreen(
             }
         }
 
-        // Core Data Honesty Rules Card (Clean list without nested border spam)
+        // Interactive Demo Lifecycle State Switcher
+        SectionHeader(
+            category = "DEMO LIFECYCLE STATE SWITCHER",
+            subtitle = "Switch system state to preview UI adaptation across all 14 lifecycle stages."
+        )
+
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(HexnilRadius.card))
+                .border(1.dp, HexnilBorder, RoundedCornerShape(HexnilRadius.card)),
+            color = HexnilCard
+        ) {
+            Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
+                val currentState = remember { mutableStateOf(HexnilRepository.getLifecycleState()) }
+
+                Text(
+                    text = "ACTIVE STATE: ${currentState.value.name}",
+                    color = HexnilMainAccent,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "${currentState.value.label} — ${currentState.value.description}",
+                    color = HexnilSecondaryText,
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                val demoStates: List<HexnilLifecycleState> = listOf(
+                    HexnilLifecycleState.MONITORING,
+                    HexnilLifecycleState.BASELINE_BUILDING,
+                    HexnilLifecycleState.V0_LOCKED,
+                    HexnilLifecycleState.AWAITING_UPDATE,
+                    HexnilLifecycleState.UPDATE_DETECTED,
+                    HexnilLifecycleState.VALIDATING,
+                    HexnilLifecycleState.REPORT_READY
+                )
+
+                demoStates.chunked(2).forEach { pair ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 3.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        pair.forEach { state ->
+                            StatePill(
+                                state = state,
+                                isSelected = state == currentState.value,
+                                onClick = {
+                                    HexnilRepository.setLifecycleState(state)
+                                    currentState.value = state
+                                },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        if (pair.size == 1) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+        }
+
+        // Core Data Honesty Rules Card
         SectionHeader(
             category = "DATA HONESTY & EVIDENCE PRINCIPLES",
             subtitle = "Non-negotiable mathematical guardrails governing all verdicts."
@@ -130,6 +205,34 @@ fun SettingsAboutScreen(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+@Composable
+private fun StatePill(
+    state: HexnilLifecycleState,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .clip(RoundedCornerShape(6.dp))
+            .border(
+                BorderStroke(1.dp, if (isSelected) HexnilMainAccent else HexnilBorderSubtle),
+                RoundedCornerShape(6.dp)
+            )
+            .clickable { onClick() },
+        color = if (isSelected) HexnilAccentSubtle else HexnilSecondaryCard
+    ) {
+        Text(
+            text = state.label,
+            color = if (isSelected) HexnilAccentGlow else HexnilPrimaryText,
+            fontSize = 11.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            modifier = Modifier.padding(8.dp),
+            maxLines = 1
+        )
     }
 }
 
@@ -166,4 +269,3 @@ private fun RuleItem(title: String, desc: String) {
         Text(text = desc, color = HexnilSecondaryText, fontSize = 13.sp, lineHeight = 19.sp)
     }
 }
-

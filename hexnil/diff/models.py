@@ -9,9 +9,10 @@ from hexnil.device.models import DeviceMetadata
 
 
 class InstallOutcome(str, Enum):
-    """Classification of APK update installation outcomes."""
+    """Classification of APK or OS update installation outcomes."""
 
     SUCCESS = "SUCCESS"
+    SUCCESS_OS_UPDATE = "SUCCESS_OS_UPDATE"
     INSTALL_FAILED_ALREADY_EXISTS = "INSTALL_FAILED_ALREADY_EXISTS"
     INSTALL_FAILED_INVALID_APK = "INSTALL_FAILED_INVALID_APK"
     INSTALL_FAILED_VERSION_DOWNGRADE = "INSTALL_FAILED_VERSION_DOWNGRADE"
@@ -22,7 +23,7 @@ class InstallOutcome(str, Enum):
 
 
 class InstallResult(BaseModel):
-    """Outcome of attempting to install a target V1 update APK via ADB."""
+    """Outcome of attempting to install a target V1 update APK or verify an OS update via ADB."""
 
     apk_path: str
     apk_sha256: str
@@ -31,6 +32,7 @@ class InstallResult(BaseModel):
     duration_ms: float
     success: bool
     error_message: Optional[str] = None
+    update_type: str = "apk_update"
 
     model_config = ConfigDict(extra="ignore")
 
@@ -111,10 +113,15 @@ class ComparisonQualityReport(BaseModel):
     v1_experiment_id: str
     device_serial: str
     device_model: str
+    update_type: str = "apk_update"
     v0_version: Optional[str] = None
     v1_version: Optional[str] = None
     v0_apk_sha256: Optional[str] = None
     v1_apk_sha256: Optional[str] = None
+    v0_build_id: Optional[str] = None
+    v1_build_id: Optional[str] = None
+    v0_os_version: Optional[str] = None
+    v1_os_version: Optional[str] = None
     workloads_requested: List[str] = Field(default_factory=list)
     workloads_matched: List[str] = Field(default_factory=list)
     workloads_mismatched: List[str] = Field(default_factory=list)
@@ -136,6 +143,7 @@ class ComparisonRecord(BaseModel):
 
     comparison_id: str
     phase: str = "05_v0_v1_differential"
+    update_type: str = "apk_update"
     created_at: str
     v0_experiment_id: str
     v1_experiment_id: str

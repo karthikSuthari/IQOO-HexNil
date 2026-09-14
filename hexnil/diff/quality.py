@@ -26,6 +26,11 @@ def evaluate_comparison_quality(
     v1_valid_runs_count: int,
     pairs: List[ComparisonRunPair],
     contamination_flags: List[str],
+    update_type: str = "apk_update",
+    v0_build_id: Optional[str] = None,
+    v1_build_id: Optional[str] = None,
+    v0_os_version: Optional[str] = None,
+    v1_os_version: Optional[str] = None,
 ) -> ComparisonQualityReport:
     """Audit differential experiment quality, evidence coverage, and run pairing completeness."""
     matched_pairs = [p for p in pairs if p.pair_status == PairStatus.MATCHED]
@@ -43,7 +48,10 @@ def evaluate_comparison_quality(
         flags.append(f"{len(unmatched_pairs)} run pair(s) were unmatched or invalid")
 
     # Determine verdict
-    if contamination_flags or any("fingerprint mismatch" in f.lower() for f in flags):
+    has_fingerprint_contamination = (
+        update_type == "apk_update" and any("fingerprint mismatch" in f.lower() for f in flags)
+    )
+    if contamination_flags or has_fingerprint_contamination:
         verdict = "CONTAMINATED_COMPARISON"
         is_clean = False
     elif workloads_mismatched:
@@ -65,10 +73,15 @@ def evaluate_comparison_quality(
         v1_experiment_id=v1_experiment_id,
         device_serial=device_serial,
         device_model=device_model,
+        update_type=update_type,
         v0_version=v0_version,
         v1_version=v1_version,
         v0_apk_sha256=v0_apk_sha256,
         v1_apk_sha256=v1_apk_sha256,
+        v0_build_id=v0_build_id,
+        v1_build_id=v1_build_id,
+        v0_os_version=v0_os_version,
+        v1_os_version=v1_os_version,
         workloads_requested=workloads_requested,
         workloads_matched=workloads_matched,
         workloads_mismatched=workloads_mismatched,

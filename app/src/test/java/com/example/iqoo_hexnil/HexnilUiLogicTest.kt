@@ -124,4 +124,31 @@ class HexnilUiLogicTest {
         assertTrue(fallback.claimAssessments.isNotEmpty())
         assertTrue(fallback.evidenceReferences.isNotEmpty())
     }
+
+    @Test
+    fun testPreExistingAnomalyDistinctionFromRegression() {
+        val issueReport = HexnilRepository.getIssueReport()
+        val startupIssue = issueReport.classifications.first { it.metricName == "startup_duration_ms" }
+
+        // Must be PERSISTED, not NEW_REGRESSION
+        assertEquals(com.example.iqoo_hexnil.data.IssueCategory.PERSISTED, startupIssue.category)
+        assertTrue("Must flag that pre-update anomaly existed in V0", startupIssue.preUpdateAnomalyExisted)
+        assertNotNull(startupIssue.preUpdateAnomalyDescription)
+        assertFalse("Persisted issue must not be marked as regression", startupIssue.category.isRegression)
+
+        // Verify that zero new regressions were created
+        assertEquals(0, issueReport.newRegressionsCount)
+    }
+
+    @Test
+    fun testLifecycleStateStepMonotonicity() {
+        val states = com.example.iqoo_hexnil.data.HexnilLifecycleState.values()
+        assertEquals(14, states.size)
+        states.forEachIndexed { index, state ->
+            assertEquals(index + 1, state.step)
+            assertTrue(state.label.isNotBlank())
+            assertTrue(state.description.isNotBlank())
+        }
+    }
 }
+

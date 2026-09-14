@@ -27,14 +27,20 @@ import com.example.iqoo_hexnil.telemetry.TelemetryEngine
 import com.example.iqoo_hexnil.telemetry.TelemetryRecord
 import com.example.iqoo_hexnil.ui.AiExplanationScreen
 import com.example.iqoo_hexnil.ui.AppDestination
+import com.example.iqoo_hexnil.ui.AwaitingUpdateScreen
 import com.example.iqoo_hexnil.ui.BottomTab
 import com.example.iqoo_hexnil.ui.ClaimsScreen
 import com.example.iqoo_hexnil.ui.DeviceScreen
 import com.example.iqoo_hexnil.ui.ExperimentDetailScreen
+import com.example.iqoo_hexnil.ui.FinalEvidenceReportScreen
 import com.example.iqoo_hexnil.ui.MetricDetailScreen
+import com.example.iqoo_hexnil.ui.MonitorScreen
 import com.example.iqoo_hexnil.ui.OverviewScreen
 import com.example.iqoo_hexnil.ui.ResultsScreen
 import com.example.iqoo_hexnil.ui.SettingsAboutScreen
+import com.example.iqoo_hexnil.ui.UpdateDetectedScreen
+import com.example.iqoo_hexnil.ui.UpdatesScreen
+import com.example.iqoo_hexnil.ui.V0BaselineScreen
 import com.example.iqoo_hexnil.ui.V0V1ComparisonScreen
 import com.example.iqoo_hexnil.ui.ValidationScreen
 import com.example.iqoo_hexnil.ui.components.HexnilBottomBar
@@ -54,7 +60,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         Log.i(TAG, "==================================================")
-        Log.i(TAG, "[INIT] Hexnil Companion App Engine Started")
+        Log.i(TAG, "[INIT] Hexnil OS Update Impact Intelligence Platform Started")
         Log.i(TAG, "[INIT] Target Device: ${Build.MANUFACTURER} ${Build.MODEL} (Android ${Build.VERSION.RELEASE}, SDK ${Build.VERSION.SDK_INT})")
         Log.i(TAG, "==================================================")
 
@@ -148,8 +154,8 @@ fun HexnilCompanionApp(
             // Synchronize bottom tab if root
             when (previous) {
                 is AppDestination.Overview -> selectedBottomTab = BottomTab.OVERVIEW
-                is AppDestination.AiExplanation -> selectedBottomTab = BottomTab.AI_ANALYST
-                is AppDestination.Validation -> selectedBottomTab = BottomTab.VALIDATION
+                is AppDestination.Monitor -> selectedBottomTab = BottomTab.MONITOR
+                is AppDestination.Updates -> selectedBottomTab = BottomTab.UPDATES
                 is AppDestination.Results -> selectedBottomTab = BottomTab.RESULTS
                 is AppDestination.Device -> selectedBottomTab = BottomTab.DEVICE
                 else -> {}
@@ -162,8 +168,8 @@ fun HexnilCompanionApp(
         backStack = emptyList() // reset stack on tab switch
         currentDestination = when (tab) {
             BottomTab.OVERVIEW -> AppDestination.Overview
-            BottomTab.AI_ANALYST -> AppDestination.AiExplanation
-            BottomTab.VALIDATION -> AppDestination.Validation
+            BottomTab.MONITOR -> AppDestination.Monitor
+            BottomTab.UPDATES -> AppDestination.Updates
             BottomTab.RESULTS -> AppDestination.Results
             BottomTab.DEVICE -> AppDestination.Device
         }
@@ -172,21 +178,6 @@ fun HexnilCompanionApp(
     // Handle system back button
     BackHandler(enabled = backStack.isNotEmpty()) {
         navigateBack()
-    }
-
-    LaunchedEffect(Unit) {
-        Log.i(TAG, "[HEXNIL_DATA] Loading baseline and update comparison...")
-        Log.i(TAG, "[HEXNIL_DATA] Analysis ID: ${analysis.analysisId}")
-        Log.i(TAG, "[HEXNIL_DATA] Comparison: ${analysis.v0ExperimentId} -> ${analysis.v1ExperimentId}")
-        Log.i(TAG, "[HEXNIL_DATA] Metrics: ${analysis.metricsAnalyzed} analyzed | 0 Regressions | ${analysis.metricsUnchanged} Unchanged | ${analysis.metricsInconclusive} Inconclusive")
-        Log.i(TAG, "[HEXNIL_DATA] Loaded ${workloads.size} declarative benchmark workloads")
-        workloads.forEach { wl ->
-            Log.i(TAG, "  -> Workload: ${wl.id} (${wl.name}) | Priority: ${wl.priority.label} | Status: ${wl.status.name}")
-        }
-        Log.i(TAG, "[HEXNIL_DATA] Loaded ${claims.size} OEM release claims")
-        claims.forEach { clm ->
-            Log.i(TAG, "  -> Claim: ${clm.id} (${clm.title}) | Risk: ${clm.riskLevel.label} | Status: ${clm.validationStatus}")
-        }
     }
 
     LaunchedEffect(selectedBottomTab) {
@@ -240,25 +231,26 @@ fun HexnilCompanionApp(
                 is AppDestination.Overview -> OverviewScreen(
                     analysis = analysis,
                     device = deviceInfo,
+                    onNavigateToMonitor = { selectBottomTab(BottomTab.MONITOR) },
+                    onNavigateToUpdates = { selectBottomTab(BottomTab.UPDATES) },
                     onNavigateToResults = { selectBottomTab(BottomTab.RESULTS) },
-                    onNavigateToClaims = { navigateTo(AppDestination.Claims) },
-                    onNavigateToValidation = { selectBottomTab(BottomTab.VALIDATION) },
+                    onNavigateToDevice = { selectBottomTab(BottomTab.DEVICE) },
                     onNavigateToComparison = { navigateTo(AppDestination.V0V1Comparison) },
-                    onNavigateToProvenance = { navigateTo(AppDestination.ExperimentDetail) },
-                    onNavigateToAiExplanation = { navigateTo(AppDestination.AiExplanation) },
+                    onNavigateToReport = { navigateTo(AppDestination.FinalEvidenceReport) },
                     onNavigateToMetricDetail = { metricKey ->
                         navigateTo(AppDestination.MetricDetail(metricKey))
                     }
                 )
 
-                is AppDestination.Validation -> ValidationScreen(
-                    workloads = workloads,
-                    onRunWorkloadAction = { wid, action ->
-                        Log.i(TAG, "[WORKLOAD] User triggered execution for: $wid ($action)")
-                        isRunningWorkload = true
-                        telemetryRecords = onExecuteSession(analysis.v1ExperimentId, wid, action, 5000)
-                        isRunningWorkload = false
-                    }
+                is AppDestination.Monitor -> MonitorScreen(
+                    device = deviceInfo,
+                    onNavigateToBaseline = { navigateTo(AppDestination.V0Baseline) }
+                )
+
+                is AppDestination.Updates -> UpdatesScreen(
+                    onNavigateToComparison = { navigateTo(AppDestination.V0V1Comparison) },
+                    onNavigateToAwaitingUpdate = { navigateTo(AppDestination.AwaitingUpdate) },
+                    onNavigateToUpdateDetected = { navigateTo(AppDestination.UpdateDetected) }
                 )
 
                 is AppDestination.Results -> ResultsScreen(
@@ -281,8 +273,14 @@ fun HexnilCompanionApp(
                     }
                 )
 
-                is AppDestination.Claims -> ClaimsScreen(
-                    claims = claims
+                is AppDestination.V0Baseline -> V0BaselineScreen(
+                    onNavigateToClaims = { navigateTo(AppDestination.Claims) }
+                )
+
+                is AppDestination.AwaitingUpdate -> AwaitingUpdateScreen()
+
+                is AppDestination.UpdateDetected -> UpdateDetectedScreen(
+                    onProceedToValidation = { navigateTo(AppDestination.Validation) }
                 )
 
                 is AppDestination.V0V1Comparison -> V0V1ComparisonScreen(
@@ -297,11 +295,41 @@ fun HexnilCompanionApp(
                     )
                 }
 
-                is AppDestination.ExperimentDetail -> ExperimentDetailScreen(
+                is AppDestination.IssueClassification -> ResultsScreen(
+                    analysis = analysis,
+                    onNavigateToMetricDetail = { metricKey ->
+                        navigateTo(AppDestination.MetricDetail(metricKey))
+                    }
+                )
+
+                is AppDestination.PredictionEvaluation -> ResultsScreen(
+                    analysis = analysis,
+                    onNavigateToMetricDetail = { metricKey ->
+                        navigateTo(AppDestination.MetricDetail(metricKey))
+                    }
+                )
+
+                is AppDestination.FinalEvidenceReport -> FinalEvidenceReportScreen()
+
+                is AppDestination.AiExplanation -> AiExplanationScreen(
                     analysis = analysis
                 )
 
-                is AppDestination.AiExplanation -> AiExplanationScreen(
+                is AppDestination.Validation -> ValidationScreen(
+                    workloads = workloads,
+                    onRunWorkloadAction = { wid, action ->
+                        Log.i(TAG, "[WORKLOAD] User triggered execution for: $wid ($action)")
+                        isRunningWorkload = true
+                        telemetryRecords = onExecuteSession(analysis.v1ExperimentId, wid, action, 5000)
+                        isRunningWorkload = false
+                    }
+                )
+
+                is AppDestination.Claims -> ClaimsScreen(
+                    claims = claims
+                )
+
+                is AppDestination.ExperimentDetail -> ExperimentDetailScreen(
                     analysis = analysis
                 )
 

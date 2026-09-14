@@ -100,6 +100,7 @@ class HexnilConfig:
     adb_path: Optional[str] = None
     data_dir: Path = field(default_factory=lambda: Path("data/experiments"))
     adb_timeout_seconds: float = 10.0
+    monitor_poll_interval: int = 60
 
     @property
     def predictions_dir(self) -> Path:
@@ -108,19 +109,30 @@ class HexnilConfig:
             return self.data_dir.parent / "predictions"
         return self.data_dir / "predictions"
 
+    @property
+    def sessions_dir(self) -> Path:
+        """Directory for Phase 9 monitoring sessions (default: data/sessions)."""
+        if self.data_dir.name == "experiments":
+            return self.data_dir.parent / "sessions"
+        return self.data_dir / "sessions"
+
     @classmethod
     def load(
         cls,
         adb_path: Optional[str] = None,
         data_dir: Optional[Path] = None,
         timeout: float = 10.0,
+        monitor_poll_interval: int = 60,
     ) -> "HexnilConfig":
         resolved_adb = find_adb_executable(adb_path)
         resolved_data = data_dir or Path(
             os.environ.get("HEXNIL_DATA_DIR", "data/experiments")
         )
+        poll = int(os.environ.get("HEXNIL_POLL_INTERVAL", str(monitor_poll_interval)))
         return cls(
             adb_path=resolved_adb,
             data_dir=resolved_data.resolve(),
             adb_timeout_seconds=timeout,
+            monitor_poll_interval=poll,
         )
+

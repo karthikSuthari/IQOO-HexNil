@@ -33,6 +33,8 @@ object HexnilRadius {
     val hero: Dp = 20.dp
     val button: Dp = 12.dp
     val pill: Dp = 24.dp
+    val badge: Dp = 6.dp
 }
+
 
 

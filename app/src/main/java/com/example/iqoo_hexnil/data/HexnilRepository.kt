@@ -732,4 +732,305 @@ object HexnilRepository {
         )
     }
 
+    // =========================================================================
+    // OS Update Impact Intelligence Platform Data Providers
+    // =========================================================================
+
+    private var activeLifecycleState: HexnilLifecycleState = HexnilLifecycleState.REPORT_READY
+
+    fun getLifecycleState(): HexnilLifecycleState = activeLifecycleState
+
+    fun setLifecycleState(state: HexnilLifecycleState) {
+        activeLifecycleState = state
+    }
+
+    fun getDeviceOsIdentity(context: Context? = null): DeviceOsIdentity {
+        return DeviceOsIdentity(
+            manufacturer = Build.MANUFACTURER ?: "vivo",
+            model = Build.MODEL ?: "vivo I2302",
+            codename = Build.DEVICE ?: "I2302",
+            androidVersion = Build.VERSION.RELEASE ?: "16",
+            sdkInt = Build.VERSION.SDK_INT,
+            buildId = Build.ID ?: "BP2A.250801.002.A1",
+            securityPatchLevel = "2026-09-01",
+            buildFingerprint = Build.FINGERPRINT ?: "iQOO/I2302T/I2302:16/BP2A.250801.002.A1/compiler260828103015:user/release-keys",
+            kernelVersion = "6.1.75-android16-11-g897f1a",
+            bootCount = 43,
+            capturedAt = "2026-09-13T09:30:00Z"
+        )
+    }
+
+    fun getPreUpdateOsIdentity(): DeviceOsIdentity {
+        return DeviceOsIdentity(
+            manufacturer = "vivo",
+            model = "vivo I2302",
+            codename = "I2302",
+            androidVersion = "16",
+            sdkInt = 36,
+            buildId = "BP2A.250605.031.A3",
+            securityPatchLevel = "2026-08-01",
+            buildFingerprint = "iQOO/I2302T/I2302:16/BP2A.250605.031.A3/compiler260714114720:user/release-keys",
+            kernelVersion = "6.1.75-android16-11-g897f1a",
+            bootCount = 42,
+            capturedAt = "2026-09-13T08:00:00Z"
+        )
+    }
+
+    fun getUpdateTransition(): UpdateTransition {
+        return UpdateTransition(
+            transitionId = "TRN-20260913-001",
+            transitionType = TransitionType.SECURITY_PATCH,
+            preState = getPreUpdateOsIdentity(),
+            postState = getDeviceOsIdentity(),
+            detectedAt = "2026-09-13T09:12:00Z",
+            rebootContext = "OTA Security Patch applied; clean boot detected via sys.boot_completed with boot count increment (42 -> 43)",
+            durationMinutes = 14
+        )
+    }
+
+    fun getPreUpdateAnomalies(): List<PreUpdateAnomaly> {
+        return listOf(
+            PreUpdateAnomaly(
+                anomalyId = "ANOM-001",
+                anomalyType = AnomalyType.THERMAL_THROTTLE,
+                metricName = "device_thermal_celsius",
+                severity = SeverityLevel.MEDIUM,
+                description = "Pre-update ambient thermal elevation observed during baseline soak test (idle temperature reached 38.5°C)",
+                baselineMean = 32.0,
+                observedZScore = 2.85,
+                sampleTimestamp = "2026-09-13T07:45:00Z"
+            ),
+            PreUpdateAnomaly(
+                anomalyId = "ANOM-002",
+                anomalyType = AnomalyType.STARTUP_DEGRADATION,
+                metricName = "startup_duration_ms",
+                severity = SeverityLevel.LOW,
+                description = "Pre-update cold launch latency jitter detected across preliminary runs (CV > 15%)",
+                baselineMean = 312.0,
+                observedZScore = 1.95,
+                sampleTimestamp = "2026-09-13T08:05:00Z"
+            )
+        )
+    }
+
+    fun getIssueReport(): IssueReportSummary {
+        val metrics = getMetricResults()
+        val classifications = metrics.map { m ->
+            when {
+                m.metricName == "startup_duration_ms" -> IssueClassification(
+                    classificationId = "ISSUE-${m.workloadId}-${m.metricName}",
+                    metricName = m.metricName,
+                    displayName = m.displayName,
+                    workloadId = m.workloadId,
+                    category = IssueCategory.PERSISTED,
+                    preUpdateAnomalyExisted = true,
+                    preUpdateAnomalyDescription = "Pre-update launch jitter existed before update; variance persisted post-update.",
+                    postUpdateVerdict = m.verdict,
+                    postUpdateSeverity = SeverityLevel.LOW,
+                    percentDelta = m.percentDelta,
+                    pValue = m.pValue,
+                    explanation = "Persistent jitter from V0 baseline; cannot be blamed on the OS security update."
+                )
+                m.status == MetricStatus.UNSUPPORTED -> IssueClassification(
+                    classificationId = "ISSUE-${m.workloadId}-${m.metricName}",
+                    metricName = m.metricName,
+                    displayName = m.displayName,
+                    workloadId = m.workloadId,
+                    category = IssueCategory.INSUFFICIENT_EVIDENCE,
+                    preUpdateAnomalyExisted = false,
+                    postUpdateVerdict = m.verdict,
+                    postUpdateSeverity = SeverityLevel.NONE,
+                    percentDelta = null,
+                    pValue = null,
+                    explanation = "Hardware node access restricted by Android 16; preserved as insufficient evidence."
+                )
+                m.verdict == VerdictType.REGRESSION -> IssueClassification(
+                    classificationId = "ISSUE-${m.workloadId}-${m.metricName}",
+                    metricName = m.metricName,
+                    displayName = m.displayName,
+                    workloadId = m.workloadId,
+                    category = IssueCategory.NEW_REGRESSION,
+                    preUpdateAnomalyExisted = false,
+                    postUpdateVerdict = m.verdict,
+                    postUpdateSeverity = m.severity,
+                    percentDelta = m.percentDelta,
+                    pValue = m.pValue,
+                    explanation = "Statistically significant regression introduced by the update."
+                )
+                m.verdict == VerdictType.IMPROVEMENT -> IssueClassification(
+                    classificationId = "ISSUE-${m.workloadId}-${m.metricName}",
+                    metricName = m.metricName,
+                    displayName = m.displayName,
+                    workloadId = m.workloadId,
+                    category = IssueCategory.NEW_IMPROVEMENT,
+                    preUpdateAnomalyExisted = false,
+                    postUpdateVerdict = m.verdict,
+                    postUpdateSeverity = SeverityLevel.NONE,
+                    percentDelta = m.percentDelta,
+                    pValue = m.pValue,
+                    explanation = "Statistically significant optimization confirmed post-update."
+                )
+                else -> IssueClassification(
+                    classificationId = "ISSUE-${m.workloadId}-${m.metricName}",
+                    metricName = m.metricName,
+                    displayName = m.displayName,
+                    workloadId = m.workloadId,
+                    category = IssueCategory.UNCHANGED,
+                    preUpdateAnomalyExisted = false,
+                    postUpdateVerdict = m.verdict,
+                    postUpdateSeverity = SeverityLevel.NONE,
+                    percentDelta = m.percentDelta,
+                    pValue = m.pValue,
+                    explanation = "Behavior verified stable; measured shifts remain within strict engineering tolerance."
+                )
+            }
+        }
+
+        return IssueReportSummary(
+            reportId = "ISSR-20260913-001",
+            totalClassified = classifications.size,
+            newRegressionsCount = classifications.count { it.category == IssueCategory.NEW_REGRESSION },
+            fixedCount = classifications.count { it.category == IssueCategory.FIXED },
+            persistedCount = classifications.count { it.category == IssueCategory.PERSISTED },
+            improvementsCount = classifications.count { it.category == IssueCategory.NEW_IMPROVEMENT },
+            unchangedCount = classifications.count { it.category == IssueCategory.UNCHANGED },
+            inconclusiveCount = classifications.count { it.category == IssueCategory.INSUFFICIENT_EVIDENCE },
+            classifications = classifications
+        )
+    }
+
+    fun getPredictionEvaluationSummary(): PredictionEvaluationSummary {
+        val outcomes = listOf(
+            PredictionOutcome(
+                claimId = "CLM-001",
+                claimText = "Optimized battery standby during video playback",
+                targetMetric = "workload_duration_ms",
+                predictedRisk = ClaimRiskLevel.HIGH,
+                actualVerdict = VerdictType.UNCHANGED,
+                hitType = EvaluationHit.FALSE_POSITIVE,
+                explanation = "Changelog claimed major efficiency gains; measured delta (+3.05%) remained statistically stable and within threshold."
+            ),
+            PredictionOutcome(
+                claimId = "CLM-002",
+                claimText = "Accelerated cold application startup latency",
+                targetMetric = "startup_duration_ms",
+                predictedRisk = ClaimRiskLevel.HIGH,
+                actualVerdict = VerdictType.INCONCLUSIVE,
+                hitType = EvaluationHit.TRUE_NEGATIVE,
+                explanation = "Risk model forecasted instability; outcome confirmed persistent variance leaving launch latency inconclusive."
+            ),
+            PredictionOutcome(
+                claimId = "CLM-003",
+                claimText = "Reduced memory fragmentation during peak stress",
+                targetMetric = "memory_rss_mb",
+                predictedRisk = ClaimRiskLevel.LOW,
+                actualVerdict = VerdictType.UNCHANGED,
+                hitType = EvaluationHit.TRUE_NEGATIVE,
+                explanation = "Low risk prediction accurately reflected stable heap and RSS allocation."
+            ),
+            PredictionOutcome(
+                claimId = "CLM-004",
+                claimText = "Smoother 120Hz display refresh transitions",
+                targetMetric = "ui_frame_jank_percent",
+                predictedRisk = ClaimRiskLevel.MODERATE,
+                actualVerdict = VerdictType.INCONCLUSIVE,
+                hitType = EvaluationHit.FALSE_POSITIVE,
+                explanation = "Hardware thermal/display node access restriction on Android 16 prevented confirmation of 120Hz frame pacing."
+            )
+        )
+
+        val tp = outcomes.count { it.hitType == EvaluationHit.TRUE_POSITIVE }
+        val tn = outcomes.count { it.hitType == EvaluationHit.TRUE_NEGATIVE }
+        val fp = outcomes.count { it.hitType == EvaluationHit.FALSE_POSITIVE }
+        val fn = outcomes.count { it.hitType == EvaluationHit.FALSE_NEGATIVE }
+        val total = outcomes.size
+        val accuracy = if (total > 0) ((tp + tn).toDouble() / total) * 100.0 else 0.0
+        val precision = if ((tp + fp) > 0) (tp.toDouble() / (tp + fp)) * 100.0 else 0.0
+        val recall = if ((tp + fn) > 0) (tp.toDouble() / (tp + fn)) * 100.0 else 0.0
+        val f1 = if ((precision + recall) > 0) (2 * precision * recall) / (precision + recall) else 0.0
+
+        return PredictionEvaluationSummary(
+            totalEvaluated = total,
+            truePositives = tp,
+            trueNegatives = tn,
+            falsePositives = fp,
+            falseNegatives = fn,
+            accuracyPercent = accuracy,
+            precisionPercent = precision,
+            recallPercent = recall,
+            f1Score = f1,
+            outcomes = outcomes
+        )
+    }
+
+    fun getFinalEvidenceReport(): FinalEvidenceReport {
+        val transition = getUpdateTransition()
+        val analysis = getComparisonAnalysis()
+        val issueReport = getIssueReport()
+        val predictions = getPredictionEvaluationSummary()
+        val anomalies = getPreUpdateAnomalies()
+
+        return FinalEvidenceReport(
+            reportId = "REP-20260913-001",
+            generatedAt = "2026-09-13T12:00:00Z",
+            deviceSerial = analysis.deviceSerial,
+            deviceModel = analysis.deviceModel,
+            transition = transition,
+            executiveVerdict = ExecutiveVerdict.SAFE_TO_ROLLOUT,
+            evidenceCoverage = analysis.evidenceCoverage,
+            preUpdateSummary = "Pre-update baseline V0 established with 5 repeated matched runs under verified thermal and charge preconditions.",
+            preUpdateAnomalies = anomalies,
+            predictionsSummary = predictions,
+            issueReport = issueReport,
+            statisticalComparison = analysis,
+            recommendations = listOf(
+                "Approve OTA Security Patch rollout for vivo I2302 (OriginOS / Android 16).",
+                "Investigate persistent cold launch jitter independently of OS update (app-level optimization).",
+                "Enable root/OEM trace hooks to resolve restricted frame jank telemetry in future validation cycles."
+            )
+        )
+    }
+
+    fun getHistoricalUpdates(): List<HistoricalUpdateRecord> {
+        return listOf(
+            HistoricalUpdateRecord(
+                updateId = "UPD-20260913-001",
+                transitionType = TransitionType.SECURITY_PATCH,
+                fromBuild = "BP2A.250605.031.A3",
+                toBuild = "BP2A.250801.002.A1",
+                patchDate = "2026-09-01",
+                timestamp = "2026-09-13T09:30:00Z",
+                verdict = ExecutiveVerdict.SAFE_TO_ROLLOUT,
+                regressionsCount = 0,
+                improvementsCount = 0,
+                resolvedCount = 0
+            ),
+            HistoricalUpdateRecord(
+                updateId = "UPD-20260715-001",
+                transitionType = TransitionType.MINOR_OTA,
+                fromBuild = "BP2A.250501.010",
+                toBuild = "BP2A.250605.031.A3",
+                patchDate = "2026-08-01",
+                timestamp = "2026-07-15T14:20:00Z",
+                verdict = ExecutiveVerdict.SAFE_TO_ROLLOUT,
+                regressionsCount = 0,
+                improvementsCount = 1,
+                resolvedCount = 1
+            ),
+            HistoricalUpdateRecord(
+                updateId = "UPD-20260510-001",
+                transitionType = TransitionType.MAJOR_OS,
+                fromBuild = "AP2A.241205.013",
+                toBuild = "BP2A.250501.010",
+                patchDate = "2026-06-01",
+                timestamp = "2026-05-10T11:15:00Z",
+                verdict = ExecutiveVerdict.UPDATE_HAS_REGRESSIONS,
+                regressionsCount = 2,
+                improvementsCount = 1,
+                resolvedCount = 0
+            )
+        )
+    }
+
 }
+

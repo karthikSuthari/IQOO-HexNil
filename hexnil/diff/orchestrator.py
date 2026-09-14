@@ -82,6 +82,8 @@ class DifferentialExperimentOrchestrator:
             "package": v0_software.package if v0_software else "unknown",
             "version": v0_software.version_name if v0_software else "unknown",
             "apk_sha256": v0_software.apk_sha256 if v0_software else None,
+            "build_id": v0_software.build_id if v0_software else None,
+            "android_os_version": v0_software.android_os_version if v0_software else v0_record.device.android_version,
             "build_fingerprint": v0_record.device.build_fingerprint,
             "workloads_count": len(v0_workloads),
             "valid_runs_count": len([r for r in v0_runs if r.status.value == "SUCCESS"]),
@@ -92,11 +94,12 @@ class DifferentialExperimentOrchestrator:
     def run_differential_experiment(
         self,
         v0_experiment_id: str,
-        v1_apk_path: Path,
-        serial: str,
+        v1_apk_path: Optional[Path] = None,
+        serial: str = "",
         iterations: int = 3,
         stabilization_policy: Optional[StabilizationPolicy] = None,
         package_name: str = "com.example.iqoo_hexnil",
+        is_os_update: bool = False,
     ) -> ComparisonQualityReport:
         """Execute complete, controlled V0 -> V1 differential experiment."""
         policy = stabilization_policy or StabilizationPolicy()
@@ -141,17 +144,59 @@ class DifferentialExperimentOrchestrator:
                 f"Workload configuration hash mismatch on: {', '.join(mismatched_wids)}"
             )
 
-        # 5. Install V1 Target APK Update
-        install_res = self.installer.install_v1_update(serial, v1_apk_path)
-        if not install_res.success:
-            raise HexnilError(
-                f"Failed to install V1 update APK: {install_res.error_message}",
-                suggestion="Verify APK compatibility and signature matching with existing package.",
+        # 5. Apply or Verify Update (OS Update vs. APK Update)
+        if is_os_update:
+            # Verify probe app is present on the updated device
+            pm_out = self.adb.run_serial_cmd(serial, ["shell", "pm", "path", package_name], check=False).strip()
+            if not pm_out or "package:" not in pm_out:
+                raise HexnilError(
+                    f"Target workload probe app '{package_name}' is not installed on device '{serial}'.",
+                    suggestion=f"Install probe app '{package_name}' before validating OS update.",
+                )
+
+            props = self.adb.get_all_props(serial)
+            v1_build_id = props.get("ro.build.id") or props.get("ro.build.display.id") or "unknown"
+            v1_os_version = props.get("ro.build.version.release") or "unknown"
+            v1_fingerprint = props.get("ro.build.fingerprint") or "unknown"
+
+            v0_build_id = v0_software.build_id if v0_software else (v0_record.device.build_fingerprint or "unknown")
+            v0_os_version = v0_software.android_os_version if v0_software else (v0_record.device.android_version or "unknown")
+
+            logger.info(
+                "Validating Mobile OS Update: OS %s (%s) -> OS %s (%s)",
+                v0_build_id,
+                v0_os_version,
+                v1_build_id,
+                v1_os_version,
             )
 
+            install_res = InstallResult(
+                apk_path="[SYSTEM_OS_UPDATE]",
+                apk_sha256="",
+                outcome=InstallOutcome.SUCCESS_OS_UPDATE,
+                raw_output=f"OS update transition verified: {v0_build_id} (Android {v0_os_version}) -> {v1_build_id} (Android {v1_os_version})",
+                duration_ms=0.0,
+                success=True,
+                update_type="os_update",
+            )
+            update_method = "system_os_update"
+        else:
+            if not v1_apk_path:
+                raise HexnilError(
+                    "Missing target V1 APK path for APK differential experiment.",
+                    suggestion="Provide --apk <path> or use --os-update for mobile OS validation.",
+                )
+            install_res = self.installer.install_v1_update(serial, v1_apk_path)
+            if not install_res.success:
+                raise HexnilError(
+                    f"Failed to install V1 update APK: {install_res.error_message}",
+                    suggestion="Verify APK compatibility and signature matching with existing package.",
+                )
+            update_method = "adb_install_replace"
+
         # 6. Verify Installed V1 Software Identity
-        v1_software = capture_v1_software_identity(self.adb, serial, package_name)
-        if v1_software.apk_sha256 != install_res.apk_sha256:
+        v1_software = capture_v1_software_identity(self.adb, serial, package_name, update_method=update_method)
+        if not is_os_update and v1_software.apk_sha256 != install_res.apk_sha256:
             logger.warning(
                 "Installed APK SHA-256 on device (%s) differs from host package (%s)",
                 v1_software.apk_sha256,
@@ -174,10 +219,15 @@ class DifferentialExperimentOrchestrator:
         cmp_dir = self.comp_store.ensure_comparison_dir(comparison_id)
 
         now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        v1_device = v0_record.device.model_copy()
+        if is_os_update:
+            v1_device.android_version = v1_software.android_os_version or v1_device.android_version
+            v1_device.build_fingerprint = v1_software.build_fingerprint or v1_device.build_fingerprint
+
         v1_exp_record = ExperimentRecord(
             experiment_id=v1_exp_id,
             created_at=now_iso,
-            device=v0_record.device,
+            device=v1_device,
             adb=AdbStatus(state="device", connected=True),
             phase="05_v0_v1_differential",
             status="running",
@@ -227,7 +277,7 @@ class DifferentialExperimentOrchestrator:
         )
 
         # 11. Evaluate Comparison Quality
-        dev_display = f"{v0_record.device.manufacturer or ''} {v0_record.device.model or ''}".strip()
+        dev_display = f"{v1_device.manufacturer or ''} {v1_device.model or ''}".strip()
         quality_report = evaluate_comparison_quality(
             comparison_id=comparison_id,
             v0_experiment_id=v0_experiment_id,
@@ -246,6 +296,11 @@ class DifferentialExperimentOrchestrator:
             v1_valid_runs_count=len([r for r in v1_runs if r.status.value == "SUCCESS"]),
             pairs=pairs,
             contamination_flags=contamination_flags,
+            update_type="os_update" if is_os_update else "apk_update",
+            v0_build_id=v0_software.build_id if v0_software else None,
+            v1_build_id=v1_software.build_id,
+            v0_os_version=v0_software.android_os_version if v0_software else None,
+            v1_os_version=v1_software.android_os_version,
         )
 
         # 12. Provenance & Artifact Integrity Hashes
@@ -262,7 +317,7 @@ class DifferentialExperimentOrchestrator:
             analysis_version="1.0.0",
             created_at=now_iso,
             device_serial=serial,
-            build_fingerprint=v0_record.device.build_fingerprint or "unknown",
+            build_fingerprint=v1_device.build_fingerprint or "unknown",
             apk_sha256=v1_software.apk_sha256,
             workloads={},
             artifact_hashes=artifact_hashes,
@@ -272,10 +327,11 @@ class DifferentialExperimentOrchestrator:
         comp_record = ComparisonRecord(
             comparison_id=comparison_id,
             phase="05_v0_v1_differential",
+            update_type="os_update" if is_os_update else "apk_update",
             created_at=now_iso,
             v0_experiment_id=v0_experiment_id,
             v1_experiment_id=v1_exp_id,
-            device=v0_record.device,
+            device=v1_device,
             v0_software=v0_software,
             v1_software=v1_software,
             workload_suite=v0_suite,

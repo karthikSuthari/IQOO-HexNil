@@ -4,7 +4,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,10 +34,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.iqoo_hexnil.data.ComparisonAnalysis
+import com.example.iqoo_hexnil.data.HexnilRepository
+import com.example.iqoo_hexnil.data.IssueCategory
 import com.example.iqoo_hexnil.data.VerdictType
-import com.example.iqoo_hexnil.ui.components.EmptyState
-import com.example.iqoo_hexnil.ui.components.EvidenceCoverageCard
+import com.example.iqoo_hexnil.ui.components.ExecutiveVerdictCard
+import com.example.iqoo_hexnil.ui.components.IssueClassificationCard
 import com.example.iqoo_hexnil.ui.components.MetricCard
+import com.example.iqoo_hexnil.ui.components.PredictionOutcomeCard
 import com.example.iqoo_hexnil.ui.components.SectionHeader
 import com.example.iqoo_hexnil.ui.theme.HexnilAccentGlow
 import com.example.iqoo_hexnil.ui.theme.HexnilAccentSubtle
@@ -43,18 +48,16 @@ import com.example.iqoo_hexnil.ui.theme.HexnilBackground
 import com.example.iqoo_hexnil.ui.theme.HexnilBorder
 import com.example.iqoo_hexnil.ui.theme.HexnilBorderSubtle
 import com.example.iqoo_hexnil.ui.theme.HexnilCard
+import com.example.iqoo_hexnil.ui.theme.HexnilCyan
 import com.example.iqoo_hexnil.ui.theme.HexnilError
-import com.example.iqoo_hexnil.ui.theme.HexnilErrorSubtle
+import com.example.iqoo_hexnil.ui.theme.HexnilFixed
 import com.example.iqoo_hexnil.ui.theme.HexnilMainAccent
+import com.example.iqoo_hexnil.ui.theme.HexnilPreExisting
 import com.example.iqoo_hexnil.ui.theme.HexnilPrimaryText
 import com.example.iqoo_hexnil.ui.theme.HexnilRadius
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryCard
 import com.example.iqoo_hexnil.ui.theme.HexnilSecondaryText
-import com.example.iqoo_hexnil.ui.theme.DisplayLargeNumber
 import com.example.iqoo_hexnil.ui.theme.HexnilSpacing
-import com.example.iqoo_hexnil.ui.theme.HexnilSuccess
-import com.example.iqoo_hexnil.ui.theme.HexnilSuccessSubtle
-import com.example.iqoo_hexnil.ui.theme.HexnilWarning
 
 @Composable
 fun ResultsScreen(
@@ -63,12 +66,17 @@ fun ResultsScreen(
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
-    var selectedFilter by remember { mutableStateOf<VerdictType?>(null) }
+    val filterScrollState = rememberScrollState()
+    val report = remember { HexnilRepository.getFinalEvidenceReport() }
+    val issueReport = remember { HexnilRepository.getIssueReport() }
+    val predictionSummary = remember { HexnilRepository.getPredictionEvaluationSummary() }
 
-    val filteredMetrics = if (selectedFilter != null) {
-        analysis.metricResults.filter { it.verdict == selectedFilter }
+    var selectedCategoryFilter by remember { mutableStateOf<IssueCategory?>(null) }
+
+    val filteredIssues = if (selectedCategoryFilter != null) {
+        issueReport.classifications.filter { it.category == selectedCategoryFilter }
     } else {
-        analysis.metricResults
+        issueReport.classifications
     }
 
     Column(
@@ -79,325 +87,144 @@ fun ResultsScreen(
             .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(HexnilSpacing.sectionSpacing)
     ) {
-        // Authoritative Outcome Hero
+        // 1. Master Executive Verdict Card
+        ExecutiveVerdictCard(
+            verdict = report.executiveVerdict,
+            evidenceCoverage = report.evidenceCoverage,
+            regressionsCount = issueReport.newRegressionsCount,
+            improvementsCount = issueReport.improvementsCount,
+            persistedCount = issueReport.persistedCount,
+            unchangedCount = issueReport.unchangedCount,
+            inconclusiveCount = issueReport.inconclusiveCount
+        )
+
+        // 2. Filter Bar for Issue Classifications
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(filterScrollState),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            CategoryFilterPill(
+                label = "ALL (${issueReport.totalClassified})",
+                isSelected = selectedCategoryFilter == null,
+                onClick = { selectedCategoryFilter = null }
+            )
+            CategoryFilterPill(
+                label = "NEW REGRESSIONS (${issueReport.newRegressionsCount})",
+                isSelected = selectedCategoryFilter == IssueCategory.NEW_REGRESSION,
+                color = HexnilError,
+                onClick = { selectedCategoryFilter = IssueCategory.NEW_REGRESSION }
+            )
+            CategoryFilterPill(
+                label = "PRE-EXISTING (${issueReport.persistedCount})",
+                isSelected = selectedCategoryFilter == IssueCategory.PERSISTED,
+                color = HexnilPreExisting,
+                onClick = { selectedCategoryFilter = IssueCategory.PERSISTED }
+            )
+            CategoryFilterPill(
+                label = "STABLE (${issueReport.unchangedCount})",
+                isSelected = selectedCategoryFilter == IssueCategory.UNCHANGED,
+                color = HexnilPrimaryText,
+                onClick = { selectedCategoryFilter = IssueCategory.UNCHANGED }
+            )
+            CategoryFilterPill(
+                label = "INSUFFICIENT (${issueReport.inconclusiveCount})",
+                isSelected = selectedCategoryFilter == IssueCategory.INSUFFICIENT_EVIDENCE,
+                color = HexnilSecondaryText,
+                onClick = { selectedCategoryFilter = IssueCategory.INSUFFICIENT_EVIDENCE }
+            )
+        }
+
+        // 3. Classified Issues List
+        SectionHeader(
+            title = "CLASSIFIED UPDATE ISSUES",
+            actionLabel = "${filteredIssues.size} Showing",
+            onActionClick = {}
+        )
+
+        filteredIssues.forEach { issue ->
+            IssueClassificationCard(
+                issue = issue,
+                onClick = { onNavigateToMetricDetail("${issue.workloadId}_${issue.metricName}") }
+            )
+        }
+
+        // 4. Prediction Accuracy Evaluation
+        SectionHeader(
+            title = "PREDICTION VS ACTUAL OUTCOME",
+            actionLabel = "Accuracy: ${predictionSummary.accuracyPercent.toInt()}%",
+            onActionClick = {}
+        )
+
+        // Contingency Stats Box
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(HexnilRadius.hero))
-                .border(
-                    BorderStroke(
-                        1.dp,
-                        if (analysis.metricsRegressions == 0) HexnilSuccess.copy(alpha = 0.4f) else HexnilError.copy(alpha = 0.5f)
-                    ),
-                    RoundedCornerShape(HexnilRadius.hero)
-                ),
+                .clip(RoundedCornerShape(HexnilRadius.card))
+                .border(BorderStroke(1.dp, HexnilBorder), RoundedCornerShape(HexnilRadius.card)),
             color = HexnilCard
         ) {
-            Column(modifier = Modifier.padding(HexnilSpacing.cardPadding)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "V0 VS V1 COMPARISON MATRIX",
-                        color = HexnilMainAccent,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
-                    )
-                    Text(
-                        text = analysis.comparisonId,
-                        color = HexnilAccentGlow,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Monospace
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Hero Number + Verdict
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Bottom
-                ) {
-                    Column {
-                        Text(
-                            text = "${analysis.metricsRegressions}",
-                            style = DisplayLargeNumber.copy(
-                                color = if (analysis.metricsRegressions == 0) HexnilSuccess else HexnilError,
-                                fontSize = 38.sp
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = if (analysis.metricsRegressions == 0) "0 REGRESSIONS DETECTED" else "${analysis.metricsRegressions} REGRESSIONS DETECTED",
-                            color = if (analysis.metricsRegressions == 0) HexnilSuccess else HexnilError,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.8.sp
-                        )
-                    }
-
-                    Surface(
-                        shape = RoundedCornerShape(HexnilRadius.pill),
-                        color = if (analysis.metricsRegressions == 0) HexnilSuccessSubtle else HexnilErrorSubtle,
-                        border = BorderStroke(1.dp, if (analysis.metricsRegressions == 0) HexnilSuccess.copy(alpha = 0.4f) else HexnilError.copy(alpha = 0.4f))
-                    ) {
-                        Text(
-                            text = if (analysis.metricsRegressions == 0) "✓ PASS" else "⚠ FAIL",
-                            color = if (analysis.metricsRegressions == 0) HexnilSuccess else HexnilError,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = if (analysis.metricsRegressions == 0)
-                        "No statistically supported regressions detected. Paired t-test comparisons across 13 metrics demonstrate that observed shifts remain safely within the 5.0% engineering threshold."
-                    else
-                        "${analysis.metricsRegressions} metric(s) exceeded the 5.0% threshold with statistical significance.",
-                    color = HexnilSecondaryText,
-                    fontSize = 13.sp,
-                    lineHeight = 19.sp
-                )
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Lineage Metadata (Structured & Spacious)
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(HexnilSecondaryCard, RoundedCornerShape(HexnilRadius.md))
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "COMPARISON LINEAGE",
-                            color = HexnilMainAccent,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.8.sp
-                        )
-                        Text(
-                            text = "3 paired iterations",
-                            color = HexnilSecondaryText,
-                            fontSize = 11.sp,
-                            fontFamily = FontFamily.Monospace
-                        )
-                    }
-                    Text(
-                        text = "V0: ${analysis.v0ExperimentId}  ➔  V1: ${analysis.v1ExperimentId}",
-                        color = HexnilPrimaryText,
-                        fontSize = 12.sp,
-                        fontFamily = FontFamily.Monospace
-                    )
-                }
-            }
-        }
-
-        // Spacious 2x2 Outcome Breakdown Grid
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceAround
             ) {
-                ResultsMetricTile(
-                    label = "Regressions",
-                    count = "${analysis.metricsRegressions}",
-                    subtitle = "0 Exceeded Tolerance",
-                    color = if (analysis.metricsRegressions == 0) HexnilSuccess else HexnilError,
-                    modifier = Modifier.weight(1f)
-                )
-                ResultsMetricTile(
-                    label = "Improvements",
-                    count = "${analysis.metricsImprovements}",
-                    subtitle = "Statistically Confirmed",
-                    color = HexnilSuccess,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                ResultsMetricTile(
-                    label = "Unchanged",
-                    count = "${analysis.metricsUnchanged}",
-                    subtitle = "Within Tolerances",
-                    color = HexnilPrimaryText,
-                    modifier = Modifier.weight(1f)
-                )
-                ResultsMetricTile(
-                    label = "Inconclusive",
-                    count = "${analysis.metricsInconclusive}",
-                    subtitle = "p ≥ 0.05 Variance",
-                    color = HexnilWarning,
-                    modifier = Modifier.weight(1f)
-                )
+                ContingencyPill("True Pos", "${predictionSummary.truePositives}", HexnilFixed)
+                ContingencyPill("True Neg", "${predictionSummary.trueNegatives}", HexnilFixed)
+                ContingencyPill("False Pos", "${predictionSummary.falsePositives}", HexnilPreExisting)
+                ContingencyPill("False Neg", "${predictionSummary.falseNegatives}", HexnilError)
             }
         }
 
-        // Honest Principle Banner
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(HexnilRadius.md),
-            color = HexnilSecondaryCard,
-            border = BorderStroke(1.dp, HexnilBorderSubtle)
-        ) {
-            Text(
-                text = "STATISTICAL RIGOR: Inconclusive ≠ Regression · Unsupported ≠ Zero · Tolerance: ≤ 5.0%",
-                color = HexnilSecondaryText,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                letterSpacing = 0.4.sp,
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
-            )
+        predictionSummary.outcomes.forEach { outcome ->
+            PredictionOutcomeCard(outcome = outcome)
         }
 
-        // Filter Verdict Chips Row
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            FilterVerdictChip(
-                label = "ALL (${analysis.metricsAnalyzed})",
-                isSelected = selectedFilter == null,
-                color = HexnilMainAccent,
-                onClick = { selectedFilter = null },
-                modifier = Modifier.weight(1f)
-            )
-            FilterVerdictChip(
-                label = "UNCHANGED (${analysis.metricsUnchanged})",
-                isSelected = selectedFilter == VerdictType.UNCHANGED,
-                color = HexnilSuccess,
-                onClick = { selectedFilter = VerdictType.UNCHANGED },
-                modifier = Modifier.weight(1.3f)
-            )
-            FilterVerdictChip(
-                label = "INCONCL. (${analysis.metricsInconclusive})",
-                isSelected = selectedFilter == VerdictType.INCONCLUSIVE,
-                color = HexnilWarning,
-                onClick = { selectedFilter = VerdictType.INCONCLUSIVE },
-                modifier = Modifier.weight(1.2f)
-            )
-            FilterVerdictChip(
-                label = "REG. (${analysis.metricsRegressions})",
-                isSelected = selectedFilter == VerdictType.REGRESSION,
-                color = HexnilError,
-                onClick = { selectedFilter = VerdictType.REGRESSION },
-                modifier = Modifier.weight(0.9f)
-            )
-        }
-
-        // Section Title
+        // 5. Statistical Evidence by Metric
         SectionHeader(
-            category = "METRIC-BY-METRIC STATISTICAL TABLE",
-            subtitle = "Tap any metric card to inspect raw run observations, 95% CI, p-value, and threshold reasoning."
+            title = "MEASURED STATISTICAL METRICS",
+            actionLabel = "${analysis.metricResults.size} Metrics",
+            onActionClick = {}
         )
 
-        // Empty state when filtering by Regressions
-        if (filteredMetrics.isEmpty()) {
-            EmptyState(
-                title = "Zero Regressions Detected",
-                message = "The statistical engine authoritatively detected 0 regressions in this comparison. All shifts remain within acceptable engineering thresholds.",
-                actionText = "Show All Metrics",
-                onActionClick = { selectedFilter = null }
+        analysis.metricResults.forEach { metric ->
+            MetricCard(
+                metric = metric,
+                onClick = { onNavigateToMetricDetail(metric.key) }
             )
-        } else {
-            // List of Metric Cards
-            filteredMetrics.forEach { metric ->
-                MetricCard(
-                    metric = metric,
-                    onClick = { onNavigateToMetricDetail(metric.key) }
-                )
-            }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
 @Composable
-private fun FilterVerdictChip(
+private fun CategoryFilterPill(
     label: String,
     isSelected: Boolean,
-    color: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    color: Color = HexnilMainAccent,
+    onClick: () -> Unit
 ) {
-    val bgColor = if (isSelected) HexnilAccentSubtle else HexnilSecondaryCard
-    val borderColor = if (isSelected) color else HexnilBorderSubtle
-
     Surface(
-        modifier = modifier.clickable { onClick() },
-        shape = RoundedCornerShape(HexnilRadius.md),
-        color = bgColor,
-        border = BorderStroke(1.dp, borderColor)
+        shape = RoundedCornerShape(HexnilRadius.badge),
+        color = if (isSelected) color.copy(alpha = 0.2f) else HexnilSecondaryCard,
+        border = BorderStroke(1.dp, if (isSelected) color else HexnilBorderSubtle),
+        modifier = Modifier.clickable { onClick() }
     ) {
         Text(
             text = label,
             color = if (isSelected) color else HexnilSecondaryText,
-            fontSize = 11.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
-            modifier = Modifier.padding(vertical = 9.dp, horizontal = 4.dp),
-            maxLines = 1
+            fontSize = 10.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
         )
     }
 }
 
 @Composable
-private fun ResultsMetricTile(
-    label: String,
-    count: String,
-    subtitle: String,
-    color: Color,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(HexnilRadius.md),
-        color = HexnilSecondaryCard,
-        border = BorderStroke(1.dp, HexnilBorderSubtle)
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)
-        ) {
-            Text(
-                text = count,
-                color = color,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Black,
-                fontFamily = FontFamily.Monospace
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = label,
-                color = HexnilPrimaryText,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = subtitle,
-                color = HexnilSecondaryText,
-                fontSize = 11.sp,
-                maxLines = 1
-            )
-        }
+private fun ContingencyPill(label: String, count: String, color: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = count, color = color, fontSize = 16.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+        Text(text = label, color = HexnilSecondaryText, fontSize = 10.sp)
     }
 }
-

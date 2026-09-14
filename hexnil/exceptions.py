@@ -199,3 +199,40 @@ class GroqApiError(HexnilError):
             "Check network connectivity, rate limits, and API status, or run with --offline."
         )
         super().__init__(msg, suggestion or default_suggestion)
+
+
+class MonitoringSessionError(HexnilError):
+    """Raised when a monitoring session encounters a lifecycle error."""
+
+    def __init__(self, session_id: str, reason: str, suggestion: Optional[str] = None):
+        msg = f"Monitoring session '{session_id}' failed: {reason}"
+        default_suggestion = (
+            f"Check the session status with 'python -m hexnil monitor status {session_id}'. "
+            "Ensure the device is connected, authorized, and not rebooting."
+        )
+        super().__init__(msg, suggestion or default_suggestion)
+        self.session_id = session_id
+
+
+class UpdateDetectionError(HexnilError):
+    """Raised when the OS update detection gate encounters a failure."""
+
+    def __init__(self, serial: str, reason: str, suggestion: Optional[str] = None):
+        msg = f"Update detection failed for device '{serial}': {reason}"
+        default_suggestion = (
+            "Ensure the device completed the OTA update and rebooted into the new build. "
+            "Verify with: adb shell getprop ro.build.fingerprint"
+        )
+        super().__init__(msg, suggestion or default_suggestion)
+
+
+class ClassificationError(HexnilError):
+    """Raised when issue classification fails."""
+
+    def __init__(self, reason: str, suggestion: Optional[str] = None):
+        msg = f"Issue classification failed: {reason}"
+        default_suggestion = (
+            "Ensure that both statistical analysis and anomaly detection completed successfully."
+        )
+        super().__init__(msg, suggestion or default_suggestion)
+

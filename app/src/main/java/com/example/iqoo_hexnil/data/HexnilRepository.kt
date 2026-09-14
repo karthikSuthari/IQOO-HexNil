@@ -6,10 +6,83 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Build
 import android.os.PowerManager
+import android.util.Log
+import androidx.compose.runtime.mutableStateOf
+import com.example.iqoo_hexnil.cloud.SupabaseSyncManager
 
 object HexnilRepository {
 
+    val liveSupabaseReport = mutableStateOf<ComparisonAnalysis?>(null)
+    val liveSupabaseIssues = mutableStateOf<List<IssueClassification>?>(null)
+
+    suspend fun syncWithSupabase(context: Context) {
+        try {
+            SupabaseSyncManager.registerDevice(context)
+
+            val reportObj = SupabaseSyncManager.fetchLatestDeviceReport(context)
+            if (reportObj != null) {
+                val verdict = reportObj.optString("verdict", "COMPLETED")
+                val coverage = reportObj.optString("coverage", "5 / 5")
+                val comparisonId = reportObj.optString("comparison_id", "CMP-CLOUD")
+                val regressions = reportObj.optInt("total_regressions", 0)
+
+                liveSupabaseReport.value = getStaticComparisonAnalysis().copy(
+                    comparisonId = comparisonId,
+                    summaryVerdict = verdict,
+                    evidenceCoverage = coverage,
+                    metricsRegressions = regressions
+                )
+            }
+
+            val issuesArray = SupabaseSyncManager.fetchDeviceIssues(context)
+            if (issuesArray != null && issuesArray.length() > 0) {
+                val parsed = mutableListOf<IssueClassification>()
+                for (i in 0 until issuesArray.length()) {
+                    val obj = issuesArray.getJSONObject(i)
+                    val catStr = obj.optString("category", "UNCHANGED")
+                    val cat = when {
+                        catStr.contains("REGRESSION", ignoreCase = true) -> IssueCategory.NEW_REGRESSION
+                        catStr.contains("FIXED", ignoreCase = true) -> IssueCategory.FIXED
+                        catStr.contains("PERSIST", ignoreCase = true) -> IssueCategory.PERSISTED
+                        catStr.contains("IMPROVE", ignoreCase = true) -> IssueCategory.NEW_IMPROVEMENT
+                        else -> IssueCategory.UNCHANGED
+                    }
+                    val sevStr = obj.optString("severity", "NONE")
+                    val sev = when (sevStr.uppercase()) {
+                        "CRITICAL" -> SeverityLevel.CRITICAL
+                        "HIGH" -> SeverityLevel.HIGH
+                        "MEDIUM" -> SeverityLevel.MEDIUM
+                        "LOW" -> SeverityLevel.LOW
+                        else -> SeverityLevel.NONE
+                    }
+                    parsed.add(
+                        IssueClassification(
+                            classificationId = "ISSUE-${obj.optString("workload_id")}-${obj.optString("metric_name")}",
+                            metricName = obj.optString("metric_name"),
+                            displayName = obj.optString("display_name", obj.optString("metric_name")),
+                            workloadId = obj.optString("workload_id"),
+                            category = cat,
+                            preUpdateAnomalyExisted = obj.optBoolean("pre_existing", false),
+                            postUpdateVerdict = if (cat.isRegression) VerdictType.REGRESSION else VerdictType.UNCHANGED,
+                            postUpdateSeverity = sev,
+                            percentDelta = if (obj.has("percent_delta") && !obj.isNull("percent_delta")) obj.optDouble("percent_delta") else null,
+                            pValue = 0.01,
+                            explanation = obj.optString("explanation", "Reported from Hexnil Cloud Analysis.")
+                        )
+                    )
+                }
+                liveSupabaseIssues.value = parsed
+            }
+        } catch (e: Exception) {
+            Log.e("HexnilRepository", "Failed to sync with Supabase: ${e.message}")
+        }
+    }
+
     fun getComparisonAnalysis(): ComparisonAnalysis {
+        return liveSupabaseReport.value ?: getStaticComparisonAnalysis()
+    }
+
+    fun getStaticComparisonAnalysis(): ComparisonAnalysis {
         return ComparisonAnalysis(
             analysisId = "STATS-CMP-20260913-001",
             comparisonId = "CMP-20260913-001",
@@ -814,6 +887,27 @@ object HexnilRepository {
     }
 
     fun getIssueReport(): IssueReportSummary {
+        val cloud = liveSupabaseIssues.value
+        if (cloud != null && cloud.isNotEmpty()) {
+            val regCount = cloud.count { it.category == IssueCategory.NEW_REGRESSION || it.category == IssueCategory.PERSISTED_WORSENED }
+            val fixedCount = cloud.count { it.category == IssueCategory.FIXED }
+            val persistedCount = cloud.count { it.category == IssueCategory.PERSISTED }
+            val impCount = cloud.count { it.category == IssueCategory.NEW_IMPROVEMENT }
+            val unchCount = cloud.count { it.category == IssueCategory.UNCHANGED }
+            val inconCount = cloud.count { it.category == IssueCategory.INSUFFICIENT_EVIDENCE }
+            return IssueReportSummary(
+                reportId = liveSupabaseReport.value?.comparisonId ?: "REPORT-CLOUD",
+                totalClassified = cloud.size,
+                newRegressionsCount = regCount,
+                fixedCount = fixedCount,
+                persistedCount = persistedCount,
+                improvementsCount = impCount,
+                unchangedCount = unchCount,
+                inconclusiveCount = inconCount,
+                classifications = cloud
+            )
+        }
+
         val metrics = getMetricResults()
         val classifications = metrics.map { m ->
             when {

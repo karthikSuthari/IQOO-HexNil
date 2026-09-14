@@ -55,6 +55,9 @@ object TelemetryEngine {
         allRecords.addAll(BatteryTelemetry.collect(context, experimentId, device, workload))
         allRecords.addAll(MemoryTelemetry.collect(context, experimentId, device, workload))
         allRecords.addAll(ThermalTelemetry.collect(context, experimentId, device, workload))
+        allRecords.addAll(DisplayTelemetry.collect(context, experimentId, device, workload))
+        allRecords.addAll(StorageTelemetry.collect(context, experimentId, device, workload))
+        allRecords.addAll(NetworkTelemetry.collect(context, experimentId, device, workload))
 
         // 3. Execute deterministic workload
         val workloadResult = WorkloadRunner.execute(
@@ -71,6 +74,8 @@ object TelemetryEngine {
         allRecords.addAll(BatteryTelemetry.collect(context, experimentId, device, workload))
         allRecords.addAll(MemoryTelemetry.collect(context, experimentId, device, workload))
         allRecords.addAll(ThermalTelemetry.collect(context, experimentId, device, workload))
+        allRecords.addAll(DisplayTelemetry.collect(context, experimentId, device, workload))
+        allRecords.addAll(StorageTelemetry.collect(context, experimentId, device, workload))
 
         // 5. UI Jank Metric status declaration
         allRecords.add(

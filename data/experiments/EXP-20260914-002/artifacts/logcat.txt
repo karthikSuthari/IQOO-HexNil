@@ -1,0 +1,6 @@
+--------- beginning of main
+09-14 08:42:25.781 19945 19945 I adbd    : adbd service requested 'shell,v2,raw:am start -n com.example.iqoo_hexnil/.MainActivity -a com.example.iqoo_hexnil.ACTION_RUN_WORKLOAD --es experiment_id EXP-20260914-002 --es workload_id workload_step'
+09-14 08:42:25.839   921   921 E cmd     : BBinder_init Processname  cmd  
+09-14 08:42:25.840   921   921 E cmd     : BBinder_init hasGetProcessName  cmd
+09-14 08:42:28.040 19945 19945 I adbd    : adbd service requested 'shell,v2,raw:run-as com.example.iqoo_hexnil cat files/telemetry.jsonl'
+09-14 08:42:28.144 19945 19945 I adbd    : adbd service requested 'shell,v2:export ANDROID_LOG_TAGS=''; exec logcat '-d' '-t' '200''

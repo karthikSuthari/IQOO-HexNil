@@ -1,4 +1,0 @@
---------- beginning of main
-09-13 13:39:41.625  3782  3782 E cmd     : BBinder_init Processname  cmd  
-09-13 13:39:41.627  3782  3782 E cmd     : BBinder_init hasGetProcessName  cmd
-09-13 13:39:42.602 24310 24372 D ULogGuard: Monitoring: 12 threads, 0 requests, 0 time-bombs; 2 guards. ResetFlags = 0x7

@@ -1,0 +1,38 @@
+{
+  "experiment_id": "EXP-20260914-002",
+  "baseline_type": "V0",
+  "device_serial": "adb-10BE38254U0003T-PJiTJm._adb-tls-connect._tcp",
+  "device_model": "vivo I2302",
+  "v0_software": {
+    "package": "com.example.iqoo_hexnil",
+    "version_name": "1.1",
+    "version_code": 2,
+    "apk_path": "/data/app/~~HeSJIWo27ZG_xpzi4dPWjQ==/com.example.iqoo_hexnil-HFzxm8Bftpjnu2leEGeVoQ==/base.apk",
+    "apk_sha256": "d2f72b369f30c4f59e2752cd1432c415c55439d462395aa56357c82a1aa1a555",
+    "android_os_version": "16",
+    "build_id": "BP2A.250605.031.A3",
+    "build_fingerprint": "iQOO/I2302T/I2302:16/BP2A.250605.031.A3/compiler260714114720:user/release-keys",
+    "captured_at": "2026-09-14T03:11:34.241466+00:00",
+    "software_type": "V0_ORIGINAL"
+  },
+  "workloads_requested": [
+    "startup_01",
+    "cpu_01",
+    "memory_01",
+    "scroll_01",
+    "video_power_01"
+  ],
+  "iterations_requested_per_workload": 1,
+  "total_iterations_requested": 5,
+  "total_runs_completed": 5,
+  "valid_runs_count": 5,
+  "invalid_runs_count": 0,
+  "failed_runs_count": 0,
+  "precondition_failures_count": 0,
+  "telemetry_records_count": 280,
+  "artifacts_count": 25,
+  "evidence_coverage": "5/5 workloads validated with evidence",
+  "contamination_flags": [],
+  "is_clean_baseline": true,
+  "summary_verdict": "TRUSTED_V0_BASELINE"
+}

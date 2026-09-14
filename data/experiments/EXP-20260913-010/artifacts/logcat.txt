@@ -1,6 +1,0 @@
---------- beginning of main
-09-13 14:03:24.681 20223 20223 E cmd     : BBinder_init Processname  cmd  
-09-13 14:03:24.681 20223 20223 E cmd     : BBinder_init hasGetProcessName  cmd
---------- beginning of system
-09-13 14:03:24.686  1742  3363 D BatteryStatsService: noteFpsPipe  : POWER_ID_FPS_PIPE initFps=2,fpsPipe=1
-09-13 14:03:25.400 24310 24372 D ULogGuard: Monitoring: 12 threads, 0 requests, 0 time-bombs; 2 guards. ResetFlags = 0x7

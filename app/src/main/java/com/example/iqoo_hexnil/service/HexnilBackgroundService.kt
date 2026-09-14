@@ -17,8 +17,12 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import com.example.iqoo_hexnil.MainActivity
 import com.example.iqoo_hexnil.R
+import com.example.iqoo_hexnil.cloud.SupabaseSyncManager
 import com.example.iqoo_hexnil.telemetry.BatteryTelemetry
+import com.example.iqoo_hexnil.telemetry.DisplayTelemetry
 import com.example.iqoo_hexnil.telemetry.MemoryTelemetry
+import com.example.iqoo_hexnil.telemetry.NetworkTelemetry
+import com.example.iqoo_hexnil.telemetry.StorageTelemetry
 import com.example.iqoo_hexnil.telemetry.TelemetryEngine
 import com.example.iqoo_hexnil.telemetry.ThermalTelemetry
 import com.example.iqoo_hexnil.telemetry.WorkloadIdentity
@@ -52,6 +56,9 @@ class HexnilBackgroundService : Service() {
         val lastSampleTime = mutableStateOf<String?>(null)
         val lastBatteryText = mutableStateOf<String?>(null)
         val lastMemoryText = mutableStateOf<String?>(null)
+        val lastRefreshRateText = mutableStateOf<String?>(null)
+        val lastThermalText = mutableStateOf<String?>(null)
+        val lastStorageText = mutableStateOf<String?>(null)
 
         fun start(context: Context) {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -121,6 +128,15 @@ class HexnilBackgroundService : Service() {
     private fun startSampling() {
         if (samplingJob?.isActive == true) return
 
+        // Register device with Supabase fleet table
+        serviceScope.launch {
+            try {
+                SupabaseSyncManager.registerDevice(this@HexnilBackgroundService)
+            } catch (e: Exception) {
+                Log.w(TAG, "[SUPABASE] Device registration deferred: ${e.message}")
+            }
+        }
+
         samplingJob = serviceScope.launch {
             Log.i(TAG, "[SAMPLER] Background telemetry polling loop started (interval: 15s)")
             while (isActive) {
@@ -142,6 +158,19 @@ class HexnilBackgroundService : Service() {
         val batteryRecords = BatteryTelemetry.collect(this, expId, device, workload)
         val memoryRecords = MemoryTelemetry.collect(this, expId, device, workload)
         val thermalRecords = ThermalTelemetry.collect(this, expId, device, workload)
+        val displayRecords = DisplayTelemetry.collect(this, expId, device, workload)
+        val storageRecords = StorageTelemetry.collect(this, expId, device, workload)
+        val networkRecords = NetworkTelemetry.collect(this, expId, device, workload)
+        val allRecords = batteryRecords + memoryRecords + thermalRecords + displayRecords + storageRecords + networkRecords
+
+        // Asynchronously stream telemetry batch to Supabase
+        serviceScope.launch {
+            try {
+                SupabaseSyncManager.uploadTelemetryBatch(this@HexnilBackgroundService, allRecords)
+            } catch (e: Exception) {
+                Log.w(TAG, "[SUPABASE] Background telemetry batch skipped: ${e.message}")
+            }
+        }
 
         sampleCount.value += 1
 
@@ -163,15 +192,32 @@ class HexnilBackgroundService : Service() {
         } ?: "N/A"
         lastMemoryText.value = freeRam
 
-        val thermalState = thermalRecords.find { it.metric.name == "thermal_status" }?.metric?.value?.toString() ?: "NORMAL"
+        val refreshRate = displayRecords.find { it.metric.name == "display_refresh_rate_hz" }?.metric?.value?.let { 
+            "${(it as Number).toInt()} Hz" 
+        } ?: "60 Hz"
+        lastRefreshRateText.value = refreshRate
+
+        val thermalState = thermalRecords.find { it.metric.name == "thermal_status_name" }?.metric?.value?.toString() 
+            ?: thermalRecords.find { it.metric.name == "thermal_status" }?.metric?.value?.toString() ?: "NORMAL"
+        lastThermalText.value = thermalState
+
+        val storageAvail = storageRecords.find { it.metric.name == "storage_available_mb" }?.metric?.value?.let { value ->
+            val mb = (value as? Number)?.toDouble() ?: 0.0
+            if (mb >= 1024.0) {
+                String.format(java.util.Locale.US, "%.1f GB free", mb / 1024.0)
+            } else {
+                "${mb.toInt()} MB free"
+            }
+        } ?: "N/A"
+        lastStorageText.value = storageAvail
 
         Log.i(
             TAG,
-            "[SAMPLE #${sampleCount.value}] Time=$timeStr | Battery=$batteryLevel ($batteryState) | RAM=$freeRam | Thermal=$thermalState"
+            "[SAMPLE #${sampleCount.value}] Time=$timeStr | Battery=$batteryLevel ($batteryState) | RAM=$freeRam | Display=$refreshRate | Thermal=$thermalState | Storage=$storageAvail"
         )
 
         // Update notification
-        updateNotification("Active · ${sampleCount.value} samples ($timeStr)")
+        updateNotification("Active · ${sampleCount.value} samples ($timeStr · $refreshRate · $batteryLevel)")
     }
 
     private fun stopSampling() {

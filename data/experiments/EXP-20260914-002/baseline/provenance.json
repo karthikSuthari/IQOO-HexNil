@@ -1,0 +1,94 @@
+{
+  "experiment_id": "EXP-20260914-002",
+  "analysis_version": "1.0.0",
+  "created_at": "2026-09-14T03:11:34.697696+00:00",
+  "device_serial": "adb-10BE38254U0003T-PJiTJm._adb-tls-connect._tcp",
+  "build_fingerprint": "iQOO/I2302T/I2302:16/BP2A.250605.031.A3/compiler260714114720:user/release-keys",
+  "apk_sha256": "d2f72b369f30c4f59e2752cd1432c415c55439d462395aa56357c82a1aa1a555",
+  "workloads": {
+    "startup_01": {
+      "workload_id": "startup_01",
+      "workload_version": "1.0.0",
+      "configuration_hash": "085d1a2b54a0c08d",
+      "run_ids": [
+        "RUN-20260914-031139-001-D717"
+      ],
+      "valid_run_ids": [
+        "RUN-20260914-031139-001-D717"
+      ],
+      "telemetry_files": [
+        "telemetry/android.jsonl",
+        "telemetry/adb.jsonl"
+      ]
+    },
+    "cpu_01": {
+      "workload_id": "cpu_01",
+      "workload_version": "1.0.0",
+      "configuration_hash": "6e7f4490bb4eef72",
+      "run_ids": [
+        "RUN-20260914-031147-001-5D98"
+      ],
+      "valid_run_ids": [
+        "RUN-20260914-031147-001-5D98"
+      ],
+      "telemetry_files": [
+        "telemetry/android.jsonl",
+        "telemetry/adb.jsonl"
+      ]
+    },
+    "memory_01": {
+      "workload_id": "memory_01",
+      "workload_version": "1.0.0",
+      "configuration_hash": "d57a0caea43ad47f",
+      "run_ids": [
+        "RUN-20260914-031157-001-A4B3"
+      ],
+      "valid_run_ids": [
+        "RUN-20260914-031157-001-A4B3"
+      ],
+      "telemetry_files": [
+        "telemetry/android.jsonl",
+        "telemetry/adb.jsonl"
+      ]
+    },
+    "scroll_01": {
+      "workload_id": "scroll_01",
+      "workload_version": "1.0.0",
+      "configuration_hash": "be7217ff86a2ef88",
+      "run_ids": [
+        "RUN-20260914-031207-001-4369"
+      ],
+      "valid_run_ids": [
+        "RUN-20260914-031207-001-4369"
+      ],
+      "telemetry_files": [
+        "telemetry/android.jsonl",
+        "telemetry/adb.jsonl"
+      ]
+    },
+    "video_power_01": {
+      "workload_id": "video_power_01",
+      "workload_version": "1.0.0",
+      "configuration_hash": "b794a8f175d4aa46",
+      "run_ids": [
+        "RUN-20260914-031218-001-981D"
+      ],
+      "valid_run_ids": [
+        "RUN-20260914-031218-001-981D"
+      ],
+      "telemetry_files": [
+        "telemetry/android.jsonl",
+        "telemetry/adb.jsonl"
+      ]
+    }
+  },
+  "artifact_hashes": {
+    "artifacts/dumpsys_batterystats.txt": "3b0a87f64e339a3a870cdf4e4ee1ecdc53cb5a32d3dd1195f11018b98a3bdf24",
+    "artifacts/dumpsys_gfxinfo.txt": "20aba5f8a9580b8cb29321e870d1708c35479d5b7e58db2174fd98b681cfdf48",
+    "artifacts/dumpsys_meminfo.txt": "e01f96e09341e44402d6adb1c74c545a7b99752cf4a5ef89cd9b5fe38c2074b0",
+    "artifacts/dumpsys_thermalservice.txt": "8f4cbbd9b645cd939769b14a6822548f35c90f1bdfbd5b68a992c5477f0adcf5",
+    "artifacts/logcat.txt": "8365f86c35041b0bd5688cdae0ddda64b5e755f85a1ea0fb9b8d9949d5adfd5c",
+    "telemetry/adb.jsonl": "ecb40bbaf484e304bd2fe7fa293eb4c7abf478df14f0d004edca355fa2b265a0",
+    "telemetry/android.jsonl": "ae51dde27f4b024a53ec43291812f26e9aa9449d6d852df2bc6e321a84c7d813"
+  }
+}

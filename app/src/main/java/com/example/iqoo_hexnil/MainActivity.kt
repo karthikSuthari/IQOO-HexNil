@@ -9,6 +9,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -74,6 +76,11 @@ class MainActivity : ComponentActivity() {
             HexnilBackgroundService.start(this)
         }
 
+        // Sync with Supabase cloud on app startup
+        lifecycleScope.launch {
+            HexnilRepository.syncWithSupabase(this@MainActivity)
+        }
+
         setContent {
             IQOOHEXNILTheme {
                 HexnilCompanionApp(
@@ -89,6 +96,9 @@ class MainActivity : ComponentActivity() {
                             operations = ops
                         )
                         Log.i(TAG, "[WORKLOAD] Completed session $wid. Generated ${records.size} telemetry records.")
+                        lifecycleScope.launch {
+                            com.example.iqoo_hexnil.cloud.SupabaseSyncManager.uploadTelemetryBatch(this@MainActivity, records)
+                        }
                         records
                     }
                 )
@@ -110,7 +120,7 @@ class MainActivity : ComponentActivity() {
             val action = intent.getStringExtra("workload_action") ?: "compute_work"
             val operations = intent.getIntExtra("operations_count", 5000)
             val expId = pendingExperimentId ?: "EXP-LOCAL-001"
-            TelemetryEngine.executeSession(
+            val records = TelemetryEngine.executeSession(
                 context = this,
                 experimentId = expId,
                 workloadId = workloadId,
@@ -118,6 +128,9 @@ class MainActivity : ComponentActivity() {
                 action = action,
                 operations = operations
             )
+            lifecycleScope.launch {
+                com.example.iqoo_hexnil.cloud.SupabaseSyncManager.uploadTelemetryBatch(this@MainActivity, records)
+            }
         }
     }
 }

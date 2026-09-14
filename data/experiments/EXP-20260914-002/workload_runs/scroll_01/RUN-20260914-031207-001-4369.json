@@ -1,0 +1,78 @@
+{
+  "experiment_id": "EXP-20260914-002",
+  "run_id": "RUN-20260914-031207-001-4369",
+  "workload_id": "scroll_01",
+  "workload_version": "1.0.0",
+  "configuration_hash": "be7217ff86a2ef88",
+  "iteration": 1,
+  "started_at": "2026-09-14T03:12:07.420114+00:00",
+  "ended_at": "2026-09-14T03:12:18.386082+00:00",
+  "duration_ms": 10958.278,
+  "status": "SUCCESS",
+  "preconditions": {
+    "screen_on": {
+      "name": "screen_on",
+      "status": "SATISFIED",
+      "expected_value": true,
+      "actual_value": true,
+      "message": "Screen is awake"
+    },
+    "battery_min_percent": {
+      "name": "battery_min_percent",
+      "status": "SATISFIED",
+      "expected_value": 15,
+      "actual_value": 100,
+      "message": "Current battery level is 100% (min required: 15%)"
+    }
+  },
+  "steps": [
+    {
+      "step_id": "launch_companion_app",
+      "action": "launch_app",
+      "status": "SUCCESS",
+      "started_at": "2026-09-14T03:12:07.757957+00:00",
+      "ended_at": "2026-09-14T03:12:08.892645+00:00",
+      "duration_ms": 1134.383,
+      "error": null,
+      "details": {}
+    },
+    {
+      "step_id": "execute_fixed_swipes",
+      "action": "scroll",
+      "status": "SUCCESS",
+      "started_at": "2026-09-14T03:12:08.892645+00:00",
+      "ended_at": "2026-09-14T03:12:13.459078+00:00",
+      "duration_ms": 4566.122,
+      "error": null,
+      "details": {}
+    },
+    {
+      "step_id": "capture_gfx_telemetry",
+      "action": "collect_snapshot",
+      "status": "SUCCESS",
+      "started_at": "2026-09-14T03:12:13.459078+00:00",
+      "ended_at": "2026-09-14T03:12:18.386082+00:00",
+      "duration_ms": 4926.701,
+      "error": null,
+      "details": {
+        "telemetry_count": 56,
+        "artifacts": [
+          "dumpsys_batterystats.txt",
+          "dumpsys_gfxinfo.txt",
+          "dumpsys_meminfo.txt",
+          "dumpsys_thermalservice.txt",
+          "logcat.txt"
+        ]
+      }
+    }
+  ],
+  "telemetry_count": 56,
+  "artifacts": [
+    "dumpsys_batterystats.txt",
+    "dumpsys_gfxinfo.txt",
+    "dumpsys_meminfo.txt",
+    "dumpsys_thermalservice.txt",
+    "logcat.txt"
+  ],
+  "error_reason": null
+}

@@ -1824,6 +1824,121 @@ def handle_report_show(args: argparse.Namespace, config: HexnilConfig) -> int:
     return 0
 
 
+def handle_cloud_devices(args: argparse.Namespace, config: HexnilConfig) -> int:
+    from hexnil.cloud.client import SupabaseFleetClient
+    client = SupabaseFleetClient()
+    devices = client.list_devices()
+    snapshots = {s["device_id"]: s for s in client.get_latest_telemetry_snapshot()}
+
+    if getattr(args, "json", False):
+        enriched = []
+        for d in devices:
+            d_copy = dict(d)
+            d_copy["latest_telemetry"] = snapshots.get(d.get("device_id"))
+            enriched.append(d_copy)
+        print(json.dumps(enriched, indent=2))
+        return 0
+
+    print(f"\nHexnil Cloud Fleet ({len(devices)} device(s) registered)")
+    print("-" * 75)
+    if not devices:
+        print("No devices registered in Supabase fleet yet.")
+        return 0
+
+    for d in devices:
+        dev_id = d.get("device_id")
+        print(f"• Device ID:  {dev_id}")
+        print(f"  Hardware:   {d.get('manufacturer', '')} {d.get('model', '')} (Android {d.get('android_version', '?')}, SDK {d.get('sdk_int', '?')})")
+        print(f"  Build ID:   {d.get('build_id', '?')}")
+        print(f"  Last Seen:  {d.get('last_seen_at')}")
+        snap = snapshots.get(dev_id)
+        if snap:
+            batt = f"{snap.get('battery_level_percent', '?')}% ({snap.get('battery_charging_state', 'discharging')})"
+            temp = f"{snap.get('battery_temperature_celsius', '?')}°C (Thermal: {snap.get('thermal_status', '?')})"
+            disp = f"{snap.get('display_refresh_rate_hz', '?')} Hz"
+            lat = f"{snap.get('app_startup_latency_ms', '?')} ms"
+            ram = f"{snap.get('available_ram_mb', '?')} MB free"
+            storage = f"{snap.get('storage_available_mb', '?')} MB free"
+            net = snap.get("network_type", "WIFI")
+            print(f"  Physical:   Battery: {batt} | Temp: {temp} | Refresh: {disp}")
+            print(f"  Software:   Cold Latency: {lat} | RAM: {ram} | Storage: {storage} | Net: {net}")
+        print()
+    return 0
+
+
+def handle_cloud_push(args: argparse.Namespace, config: HexnilConfig) -> int:
+    from hexnil.cloud.sync import FleetSyncManager
+    store = ExperimentStore(config.data_dir)
+    sync = FleetSyncManager(store)
+
+    print(f"Pushing experiment '{args.experiment_id}' to Supabase...")
+    res = sync.push_local_experiment(args.experiment_id)
+
+    if getattr(args, "json", False):
+        print(json.dumps(res, indent=2))
+        return 0
+
+    print(f"\n[SUCCESS] Uploaded {res.get('experiment_id')} to Supabase.")
+    print(f"  Device ID:        {res.get('device_id')}")
+    print(f"  Samples Uploaded: {res.get('samples_uploaded')}")
+    return 0
+
+
+def handle_cloud_report(args: argparse.Namespace, config: HexnilConfig) -> int:
+    from hexnil.cloud.client import SupabaseFleetClient
+    client = SupabaseFleetClient()
+    report = client.get_latest_device_report(args.device_id)
+    issues = client.get_device_issues(args.device_id)
+
+    if getattr(args, "json", False):
+        print(json.dumps({"report": report, "issues": issues}, indent=2))
+        return 0
+
+    if not report:
+        print(f"No evaluation reports found in Supabase for device '{args.device_id}'.")
+        return 1
+
+    print(f"\nHexnil Cloud Device Report: {args.device_id}")
+    print("=" * 60)
+    print(f"Report ID:     {report.get('report_id')}")
+    print(f"Verdict:       {report.get('verdict')}")
+    print(f"Coverage:      {report.get('coverage')}")
+    print(f"Regressions:   {report.get('total_regressions')}")
+    print(f"Summary:       {report.get('summary_text')}")
+    print(f"Updated At:    {report.get('updated_at')}")
+
+    if issues:
+        print(f"\nClassified Issues ({len(issues)}):")
+        print("-" * 60)
+        for iss in issues:
+            cat = iss.get("category", "")
+            sev = iss.get("severity", "")
+            pct = iss.get("percent_delta")
+            delta_str = f" ({pct:+.2f}%)" if pct is not None else ""
+            print(f"• [{cat}] {iss.get('display_name') or iss.get('metric_name')}{delta_str} - Severity: {sev}")
+            if iss.get("explanation"):
+                print(f"  Reason: {iss.get('explanation')}")
+    return 0
+
+
+def handle_cloud_pull(args: argparse.Namespace, config: HexnilConfig) -> int:
+    from hexnil.cloud.sync import FleetSyncManager
+    store = ExperimentStore(config.data_dir)
+    sync = FleetSyncManager(store)
+
+    print(f"Pulling telemetry for device '{args.device_id}' from Supabase...")
+    res = sync.pull_device_telemetry(args.device_id, experiment_id=getattr(args, "experiment_id", None))
+
+    if getattr(args, "json", False):
+        print(json.dumps(res, indent=2))
+        return 0
+
+    print(f"\n[SUCCESS] Pulled {res.get('samples_fetched')} sample(s) across {res.get('experiments_count', 0)} experiment(s).")
+    for path in res.get("saved_paths", []):
+        print(f"  • Saved: {path}")
+    return 0
+
+
 def create_parser() -> argparse.ArgumentParser:
 
 
@@ -2519,6 +2634,42 @@ def create_parser() -> argparse.ArgumentParser:
         help="Output report as JSON.",
     )
 
+    # 12. 'cloud' command group (Supabase Fleet Sync)
+    cloud_parser = subparsers.add_parser(
+        "cloud", help="Supabase Multi-Device Fleet Cloud Sync"
+    )
+    cloud_subparsers = cloud_parser.add_subparsers(
+        dest="subcommand", help="Cloud subcommands"
+    )
+
+    # cloud devices
+    cloud_dev_parser = cloud_subparsers.add_parser(
+        "devices", help="List all registered devices in Supabase fleet"
+    )
+    cloud_dev_parser.add_argument("--json", action="store_true", help="Output as JSON.")
+
+    # cloud push <experiment_id>
+    cloud_push_parser = cloud_subparsers.add_parser(
+        "push", help="Push local experiment and telemetry to Supabase"
+    )
+    cloud_push_parser.add_argument("experiment_id", help="Experiment ID to push")
+    cloud_push_parser.add_argument("--json", action="store_true", help="Output as JSON.")
+
+    # cloud pull <device_id>
+    cloud_pull_parser = cloud_subparsers.add_parser(
+        "pull", help="Pull telemetry samples for a device from Supabase to local store"
+    )
+    cloud_pull_parser.add_argument("device_id", help="Target device ID to pull data for")
+    cloud_pull_parser.add_argument("--experiment-id", default=None, help="Optional experiment ID filter")
+    cloud_pull_parser.add_argument("--json", action="store_true", help="Output as JSON.")
+
+    # cloud report <device_id>
+    cloud_rpt_parser = cloud_subparsers.add_parser(
+        "report", help="Fetch latest report and classified issues for a device from Supabase"
+    )
+    cloud_rpt_parser.add_argument("device_id", help="Target device ID")
+    cloud_rpt_parser.add_argument("--json", action="store_true", help="Output as JSON.")
+
     return parser
 
 
@@ -2671,6 +2822,19 @@ def main(argv=None) -> int:
         elif args.command == "report":
             if args.subcommand in (None, "show"):
                 return handle_report_show(args, config)
+            else:
+                parser.print_help()
+                return 1
+
+        elif args.command == "cloud":
+            if args.subcommand == "devices":
+                return handle_cloud_devices(args, config)
+            elif args.subcommand == "push":
+                return handle_cloud_push(args, config)
+            elif args.subcommand == "pull":
+                return handle_cloud_pull(args, config)
+            elif args.subcommand == "report":
+                return handle_cloud_report(args, config)
             else:
                 parser.print_help()
                 return 1

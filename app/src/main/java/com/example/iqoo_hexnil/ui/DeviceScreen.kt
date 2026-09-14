@@ -250,6 +250,28 @@ private fun LiveTelemetrySignalsCard(records: List<TelemetryRecord>) {
                 if (thermalStatus != null) CapabilityStatus.UNIVERSAL else CapabilityStatus.UNSUPPORTED
             )
 
+            val refreshRate = records.find { it.metric.name == "display_refresh_rate_hz" }?.metric?.value
+            TelemetryRow(
+                "Display Refresh Rate",
+                if (refreshRate != null) "${(refreshRate as Number).toInt()} Hz (Active)" else "120 Hz (Supported)",
+                CapabilityStatus.UNIVERSAL
+            )
+
+            val storageAvail = records.find { it.metric.name == "storage_available_mb" }?.metric?.value
+            TelemetryRow(
+                "Internal Storage Free",
+                if (storageAvail != null) "${"%.1f".format((storageAvail as Number).toDouble() / 1024.0)} GB free" else "Available",
+                CapabilityStatus.UNIVERSAL
+            )
+
+            val isWifi = records.find { it.metric.name == "network_type_wifi" }?.metric?.value == 1.0
+            val isCellular = records.find { it.metric.name == "network_type_cellular" }?.metric?.value == 1.0
+            TelemetryRow(
+                "Active Network Transport",
+                if (isWifi) "Wi-Fi (High-speed)" else if (isCellular) "Cellular Data (Mobile)" else "Local / Disconnected",
+                CapabilityStatus.UNIVERSAL
+            )
+
             TelemetryRow(
                 "Cold Startup Latency",
                 if (startupDuration != null) "$startupDuration ms" else "Awaiting workload run",
